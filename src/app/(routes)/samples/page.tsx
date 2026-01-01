@@ -1,12 +1,11 @@
-import Samples from '@/pages/Samples'
-import React from 'react'
+import Samples from "@/pages/Samples";
+import { Metadata } from "next";
 
-const page = () => {
-  return (
-    <div>
-      {/* <Samples/> */}
-    </div>
-  )
+export const metadata: Metadata = {
+  title: "Samples",
+  description: "View and manage laboratory sample inventory and tracking.",
+};
+
+export default function SamplesPage() {
+  return <Samples />;
 }
-
-export default page

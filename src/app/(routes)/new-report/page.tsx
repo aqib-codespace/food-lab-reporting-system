@@ -1,12 +1,12 @@
-import NewReport from '@/pages/NewReport'
-import React from 'react'
+import NewReport from "@/pages/NewReport";
+import { Metadata } from "next";
 
-const page = () => {
-  return (
-    <div>
-      <NewReport/>
-    </div>
-  )
+export const metadata: Metadata = {
+  title: "New Report",
+  description:
+    "Create a new laboratory report with sample tracking and professional PDF/Word export.",
+};
+
+export default function NewReportPage() {
+  return <NewReport />;
 }
-
-export default page

@@ -731,13 +731,13 @@ export default function Employees() {
               <Button
                 onClick={() => setIsDeleteModalOpen(false)}
                 variant="outline"
-                className="border-gray-300 dark:border-gray-700"
+                className="border-gray-300 border rounded-lg dark:border-gray-700"
               >
                 Cancel
               </Button>
               <Button
                 onClick={handleConfirmDelete}
-                className="bg-red-600 text-white hover:bg-red-700 hover:shadow-lg transition-all"
+                className="bg-red-600 text-white rounded-lg hover:bg-red-700 hover:shadow-lg transition-all"
               >
                 <Trash2 className="w-4 h-4 mr-2" />
                 Delete Employee

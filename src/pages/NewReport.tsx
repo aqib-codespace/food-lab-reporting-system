@@ -63,7 +63,7 @@ const getDefaultContainer = (): ContainerEntry => ({
 
 export default function NewReport() {
   const [showPreview, setShowPreview] = useState(false);
-  const [validationErrors, setValidationErrors] = useState<string[]>([]);
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [reportData, setReportData] = useState<ReportData>({
     refNumber: "",
     employee: null,
@@ -167,15 +167,26 @@ export default function NewReport() {
     const result = reportSchema.safeParse(reportData);
 
     if (!result.success) {
-      const errors = result.error.issues.map((issue) => {
-        const field = issue.path.join(" → ");
-        return `${field}: ${issue.message}`;
+      const errors: Record<string, string> = {};
+      result.error.issues.forEach((issue) => {
+        const path = issue.path.join(".");
+        errors[path] = issue.message;
       });
-      setValidationErrors(errors);
+      setFieldErrors(errors);
+
+      // Scroll to first error
+      const firstErrorElement = document.querySelector('[data-error="true"]');
+      if (firstErrorElement) {
+        firstErrorElement.scrollIntoView({
+          behavior: "smooth",
+          block: "center",
+        });
+      }
+
       return false;
     }
 
-    setValidationErrors([]);
+    setFieldErrors({});
     return true;
   };
 
@@ -184,24 +195,32 @@ export default function NewReport() {
     const result = reportSchema.safeParse(reportData);
 
     if (!result.success) {
-      // Extract all error messages
-      const errors = result.error.issues.map((issue) => {
-        const field = issue.path.join(" → ");
-        return `${field}: ${issue.message}`;
+      const errors: Record<string, string> = {};
+      result.error.issues.forEach((issue) => {
+        const path = issue.path.join(".");
+        errors[path] = issue.message;
       });
+      setFieldErrors(errors);
 
-      setValidationErrors(errors);
+      // Scroll to first error
+      const firstErrorElement = document.querySelector('[data-error="true"]');
+      if (firstErrorElement) {
+        firstErrorElement.scrollIntoView({
+          behavior: "smooth",
+          block: "center",
+        });
+      }
 
       toast({
         title: "Validation Error",
-        description: "Please fix the errors before generating the report.",
+        description: "Please fill in all required fields correctly.",
         variant: "destructive",
       });
       return;
     }
 
     // Clear validation errors
-    setValidationErrors([]);
+    setFieldErrors({});
 
     // Save report data to localStorage
     try {
@@ -260,31 +279,6 @@ export default function NewReport() {
         </p>
       </div>
 
-      {/* Validation Errors Display */}
-      {validationErrors.length > 0 && (
-        <Card className="mb-6 border-red-500 bg-red-50 dark:bg-red-900/20">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-base font-semibold flex items-center gap-2 text-red-600 dark:text-red-400">
-              <AlertTriangle className="w-5 h-5" />
-              Please Fix the Following Errors
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <ul className="space-y-2">
-              {validationErrors.map((error, index) => (
-                <li
-                  key={index}
-                  className="text-sm text-red-600 dark:text-red-400 flex items-start gap-2"
-                >
-                  <span className="mt-0.5">•</span>
-                  <span>{error}</span>
-                </li>
-              ))}
-            </ul>
-          </CardContent>
-        </Card>
-      )}
-
       <div className="grid grid-cols-1 gap-6 pb-24">
         <div className="space-y-6">
           {/* Basic Information */}
@@ -297,8 +291,8 @@ export default function NewReport() {
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="refNumber">Reference Number</Label>
+                <div className="space-y-2" data-error={!!fieldErrors.refNumber}>
+                  <Label htmlFor="refNumber">Reference Number *</Label>
                   <Input
                     id="refNumber"
                     placeholder="Enter 6 digits"
@@ -310,23 +304,42 @@ export default function NewReport() {
                         e.target.value.replace(/\D/g, "").slice(0, 6)
                       )
                     }
-                    className="input-focus"
+                    className={cn(
+                      "input-focus",
+                      fieldErrors.refNumber &&
+                        "border-red-500 focus:ring-red-500"
+                    )}
                   />
+                  {fieldErrors.refNumber && (
+                    <p className="text-sm text-red-600 dark:text-red-400 flex items-center gap-1">
+                      <AlertTriangle className="w-4 h-4" />
+                      {fieldErrors.refNumber}
+                    </p>
+                  )}
                 </div>
-                <div className="space-y-2">
+                <div className="space-y-2" data-error={!!fieldErrors.date}>
                   <Label htmlFor="date">Date</Label>
                   <Input
                     id="date"
                     type="date"
                     value={reportData.date}
                     onChange={(e) => updateField("date", e.target.value)}
-                    className="input-focus"
+                    className={cn(
+                      "input-focus",
+                      fieldErrors.date && "border-red-500 focus:ring-red-500"
+                    )}
                   />
+                  {fieldErrors.date && (
+                    <p className="text-sm text-red-600 dark:text-red-400 flex items-center gap-1">
+                      <AlertTriangle className="w-4 h-4" />
+                      {fieldErrors.date}
+                    </p>
+                  )}
                 </div>
               </div>
 
-              <div className="space-y-2">
-                <Label>Select Employee</Label>
+              <div className="space-y-2" data-error={!!fieldErrors.employee}>
+                <Label>Select Employee *</Label>
                 <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
                   {EMPLOYEES.map((emp) => (
                     <button
@@ -336,6 +349,8 @@ export default function NewReport() {
                       className={`flex flex-col items-center gap-1 p-3 rounded-lg border-2 transition-all ${
                         reportData.employee?.id === emp.id
                           ? "border-accent bg-accent/5"
+                          : fieldErrors.employee
+                          ? "border-red-500 hover:border-red-600"
                           : "border-border hover:border-accent/50"
                       }`}
                     >
@@ -351,6 +366,12 @@ export default function NewReport() {
                     </button>
                   ))}
                 </div>
+                {fieldErrors.employee && (
+                  <p className="text-sm text-red-600 dark:text-red-400 flex items-center gap-1">
+                    <AlertTriangle className="w-4 h-4" />
+                    {fieldErrors.employee}
+                  </p>
+                )}
               </div>
 
               {reportData.employee && (
@@ -791,47 +812,46 @@ export default function NewReport() {
                           className="input-focus h-9 "
                         />
                       </div>
-                    
                     </div>
-                      <div>
-                        <Label className="text-xs font-medium mb-1.5 block">
-                          Pure/Total
-                        </Label>
-                        <Select
-                          value={sample.pureOrTotal}
-                          onChange={(value) =>
-                            updateSample(sample.id, {
-                              pureOrTotal: value as "pure" | "total",
-                            })
-                          }
-                          options={[
-                            { label: "Pure", value: "pure" },
-                            { label: "Total", value: "total" },
-                          ]}
-                          className="input-focus h-9"
-                        />
-                      </div>
-                      <div>
-                        <Label className="text-xs font-medium mb-1.5 block">
-                          Weight Used (g)
-                        </Label>
-                        <Input
-                          type="number"
-                          step="0.01"
-                          value={sample.weightUsed || ""}
-                          onChange={(e) =>
-                            updateSample(sample.id, {
-                              weightUsed: parseFloat(e.target.value) || 0,
-                            })
-                          }
-                          className="input-focus h-9"
-                          placeholder="0.00 g"
-                        />
-                      </div>
+                    <div>
+                      <Label className="text-xs font-medium mb-1.5 block">
+                        Pure/Total
+                      </Label>
+                      <Select
+                        value={sample.pureOrTotal}
+                        onChange={(value) =>
+                          updateSample(sample.id, {
+                            pureOrTotal: value as "pure" | "total",
+                          })
+                        }
+                        options={[
+                          { label: "Pure", value: "pure" },
+                          { label: "Total", value: "total" },
+                        ]}
+                        className="input-focus h-9"
+                      />
+                    </div>
+                    <div>
+                      <Label className="text-xs font-medium mb-1.5 block">
+                        Weight Used (g)
+                      </Label>
+                      <Input
+                        type="number"
+                        step="0.01"
+                        value={sample.weightUsed || ""}
+                        onChange={(e) =>
+                          updateSample(sample.id, {
+                            weightUsed: parseFloat(e.target.value) || 0,
+                          })
+                        }
+                        className="input-focus h-9"
+                        placeholder="0.00 g"
+                      />
+                    </div>
                   </div>
 
                   <div className="space-y-3 gap-6  grid sm:grid-cols-2">
-                     <div>
+                    <div>
                       <Label className="text-xs font-medium mb-2 block">
                         Storage Location
                       </Label>
@@ -896,7 +916,6 @@ export default function NewReport() {
                         />
                       </div>
                     </div>
-                   
                   </div>
                 </div>
               ))}
@@ -908,46 +927,35 @@ export default function NewReport() {
       {/* Fixed Bottom Action Bar */}
       <div className="fixed bottom-0 left-0 lg:left-64 right-0 bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-800 shadow-lg z-50">
         <div className="max-w-7xl mx-auto px-6 py-4">
-          <div className="flex items-center justify-between gap-4">
-            <div className="flex items-center gap-3">
-              {validationErrors.length > 0 && (
-                <div className="flex items-center gap-2 text-red-600 dark:text-red-400">
-                  <AlertTriangle className="w-5 h-5" />
-                  <span className="text-sm font-medium">
-                    {validationErrors.length} error(s) found
-                  </span>
-                </div>
-              )}
-            </div>
-            <div className="flex items-center gap-3">
-              <Button
-                onClick={() => {
-                  if (validateForm()) {
-                    setShowPreview(true);
-                  } else {
-                    toast({
-                      title: "Validation Failed",
-                      description: "Please fix all errors before previewing.",
-                      variant: "destructive",
-                    });
-                  }
-                }}
-                variant="outline"
-                size="lg"
-                className="min-w-35 border  rounded-lg"
-              >
-                <Eye className="w-4 h-4 mr-2" />
-                Preview
-              </Button>
-              <Button
-                onClick={handleGenerateReport}
-                size="lg"
-                className="min-w-45 bg-linear-to-r from-blue-600 to-teal-500 text-white rounded-lg"
-              >
-                <FileDown className="w-4 h-4 mr-2" />
-                Generate Report
-              </Button>
-            </div>
+          <div className="flex items-center justify-end gap-3">
+            <Button
+              onClick={() => {
+                if (validateForm()) {
+                  setShowPreview(true);
+                } else {
+                  toast({
+                    title: "Validation Failed",
+                    description:
+                      "Please fill in all required fields correctly.",
+                    variant: "destructive",
+                  });
+                }
+              }}
+              variant="outline"
+              size="lg"
+              className="min-w-35 border rounded-lg"
+            >
+              <Eye className="w-4 h-4 mr-2" />
+              Preview
+            </Button>
+            <Button
+              onClick={handleGenerateReport}
+              size="lg"
+              className="min-w-45 bg-linear-to-r from-blue-600 to-teal-500 text-white rounded-lg"
+            >
+              <FileDown className="w-4 h-4 mr-2" />
+              Generate Report
+            </Button>
           </div>
         </div>
       </div>

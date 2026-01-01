@@ -333,4 +333,11 @@
   .animate-slide-in {
     animation: slideInRight 0.4s ease-out;
   }
+
+  /* Body background colors */
+  body {
+    background-color: hsl(var(--background));
+    color: hsl(var(--foreground));
+    transition: background-color 0.3s ease, color 0.3s ease;
+  }
 }

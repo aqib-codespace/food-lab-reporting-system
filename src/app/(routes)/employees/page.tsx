@@ -1,12 +1,11 @@
-import Employees from '@/pages/Employees'
-import React from 'react'
+import Employees from "@/pages/Employees";
+import { Metadata } from "next";
 
-const page = () => {
-  return (
-    <div>
-      <Employees/>
-    </div>
-  )
+export const metadata: Metadata = {
+  title: "Employees",
+  description: "Manage laboratory employees and staff information.",
+};
+
+export default function EmployeesPage() {
+  return <Employees />;
 }
-
-export default page

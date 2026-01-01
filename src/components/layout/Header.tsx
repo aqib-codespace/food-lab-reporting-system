@@ -1,5 +1,6 @@
 import { Menu, Bell, Search, User, LogOut } from "lucide-react";
 import { Input } from "@/components/ui/input";
+import { ThemeToggle } from "@/components/theme-toggle";
 import { cn } from "@/lib/utils";
 
 interface HeaderProps {
@@ -22,12 +23,14 @@ export function Header({ onMenuClick }: HeaderProps) {
           <Input
             type="text"
             placeholder="Search reports, samples, employees..."
-            className="w-full"
+            className="w-full bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700"
           />
         </div>
       </div>
 
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-3">
+        <ThemeToggle />
+
         <div className="flex items-center gap-3 bg-gray-100 dark:bg-gray-800 px-3 py-2 rounded-xl hover:shadow-lg transition-all duration-200 cursor-pointer group">
           <div className="w-9 h-9 rounded-full bg-linear-to-br from-blue-600 to-teal-500 flex items-center justify-center shadow-lg group-hover:scale-105 transition-transform">
             <User className="w-5 h-5 text-white" />
