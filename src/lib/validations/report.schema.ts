@@ -1,17 +1,13 @@
 import { z } from "zod";
 
-/**
- * Container Entry Schema - All optional
- */
+
 export const containerEntrySchema = z.object({
   id: z.string(),
   quantity: z.number().optional(),
   type: z.string().optional(),
 });
 
-/**
- * Sample Schema - All optional
- */
+
 export const sampleSchema = z.object({
   id: z.string(),
   sampleNumber: z.string().optional(),
@@ -38,10 +34,7 @@ export const employeeSchema = z.object({
   signature: z.string().optional(),
 });
 
-/**
- * Main Report Data Schema
- * Only refNumber and employee are required
- */
+
 export const reportSchema = z.object({
   refNumber: z
     .string()
@@ -61,9 +54,7 @@ export const reportSchema = z.object({
   reportNumber: z.string().optional().default("In System"),
 });
 
-/**
- * TypeScript types inferred from Zod schemas
- */
+
 export type ContainerEntryInput = z.infer<typeof containerEntrySchema>;
 export type SampleInput = z.infer<typeof sampleSchema>;
 export type EmployeeInput = z.infer<typeof employeeSchema>;

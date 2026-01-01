@@ -73,7 +73,6 @@ const samples = [
 export default function Samples() {
   return (
     <DashboardLayout>
-      {/* Page Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
         <div>
           <h1 className="text-3xl font-bold bg-linear-to-r from-gray-900 to-gray-600 dark:from-white dark:to-gray-300 bg-clip-text text-transparent">
@@ -85,7 +84,6 @@ export default function Samples() {
         </div>
       </div>
 
-      {/* Search */}
       <Card className="mb-6">
         <CardContent className="p-4">
           <div className="relative max-w-md">
@@ -95,7 +93,6 @@ export default function Samples() {
         </CardContent>
       </Card>
 
-      {/* Samples Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {samples.map((sample) => (
           <Card key={sample.id} className="hover:shadow-lg">

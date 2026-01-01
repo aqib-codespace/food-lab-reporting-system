@@ -129,7 +129,6 @@ export default function Employees() {
     signature?: string;
   }>({});
 
-  // Photo dropzone
   const onDropPhoto = useCallback((acceptedFiles: File[]) => {
     const file = acceptedFiles[0];
     if (file) {
@@ -152,7 +151,6 @@ export default function Employees() {
     multiple: false,
   });
 
-  // Signature dropzone
   const onDropSignature = useCallback((acceptedFiles: File[]) => {
     const file = acceptedFiles[0];
     if (file) {
@@ -175,7 +173,6 @@ export default function Employees() {
     multiple: false,
   });
 
-  // Generate initials from name
   const generateInitials = (name: string) => {
     const words = name.trim().split(" ");
     if (words.length === 1) {
@@ -184,12 +181,10 @@ export default function Employees() {
     return (words[0][0] + words[words.length - 1][0]).toUpperCase();
   };
 
-  // Generate random color
   const getRandomColor = () => {
     return RANDOM_COLORS[Math.floor(Math.random() * RANDOM_COLORS.length)];
   };
 
-  // Open modal for adding
   const handleAddClick = () => {
     setEditingEmployee(null);
     setFormData({
@@ -205,7 +200,6 @@ export default function Employees() {
     setIsModalOpen(true);
   };
 
-  // Open modal for editing
   const handleEditClick = (employee: Employee) => {
     setEditingEmployee(employee);
     setFormData({
@@ -221,9 +215,7 @@ export default function Employees() {
     setIsModalOpen(true);
   };
 
-  // Save employee (add or edit)
   const handleSaveEmployee = () => {
-    // Validate using Zod
     const result = employeeFormSchema.safeParse({
       name: formData.name,
       email: formData.email,
@@ -233,7 +225,6 @@ export default function Employees() {
     });
 
     if (!result.success) {
-      // Extract errors and set them in state
       const errors: {
         name?: string;
         email?: string;
@@ -254,11 +245,9 @@ export default function Employees() {
       return;
     }
 
-    // Clear validation errors on success
     setValidationErrors({});
 
     if (editingEmployee) {
-      // Edit existing employee
       setEmployees((prev) =>
         prev.map((emp) =>
           emp.id === editingEmployee.id
@@ -275,7 +264,6 @@ export default function Employees() {
         )
       );
     } else {
-      // Add new employee
       const newEmployee: Employee = {
         id: Date.now().toString(),
         name: formData.name,
@@ -303,13 +291,11 @@ export default function Employees() {
     setSignaturePreview(null);
   };
 
-  // Open delete confirmation
   const handleDeleteClick = (employeeId: string) => {
     setDeletingEmployeeId(employeeId);
     setIsDeleteModalOpen(true);
   };
 
-  // Confirm delete
   const handleConfirmDelete = () => {
     if (deletingEmployeeId) {
       setEmployees((prev) =>
@@ -320,7 +306,6 @@ export default function Employees() {
     }
   };
 
-  // Filter employees
   const filteredEmployees = useMemo(() => {
     return employees.filter(
       (emp) =>
@@ -332,7 +317,6 @@ export default function Employees() {
 
   return (
     <DashboardLayout>
-      {/* Page Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
         <div>
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
@@ -344,14 +328,13 @@ export default function Employees() {
         </div>
         <Button
           onClick={handleAddClick}
-          className="bg-linear-to-r from-blue-600 to-teal-500 text-white hover:shadow-lg transition-all gap-2 rounded-lg px-4 py-2"
+          className="bg-gray-800 text-white hover:shadow-lg transition-all gap-2 rounded-lg px-4 py-2"
         >
           <Plus className="w-4 h-4" />
           Add Employee
         </Button>
       </div>
 
-      {/* Search */}
       <Card className="mb-6">
         <CardContent className="p-4">
           <div className="relative max-w-md">
@@ -366,7 +349,6 @@ export default function Employees() {
         </CardContent>
       </Card>
 
-      {/* Employees Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {filteredEmployees.map((employee) => (
           <Card key={employee.id} className="hover:shadow-lg transition-shadow">
@@ -459,11 +441,9 @@ export default function Employees() {
         </Card>
       )}
 
-      {/* Add/Edit Modal */}
       {isModalOpen && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
           <div className="bg-white dark:bg-gray-900 rounded-xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-            {/* Modal Header */}
             <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-800 sticky top-0 bg-white dark:bg-gray-900 z-10">
               <h2 className="text-xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
                 <User className="w-5 h-5 text-blue-600" />
@@ -477,11 +457,8 @@ export default function Employees() {
               </button>
             </div>
 
-            {/* Modal Body */}
             <div className="p-6 space-y-5">
-              {/* Photo and Signature Upload Row */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {/* Photo Upload */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                     Employee Photo <span className="text-red-500">*</span>
@@ -530,7 +507,6 @@ export default function Employees() {
                   )}
                 </div>
 
-                {/* Signature Upload */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                     Signature <span className="text-red-500">*</span>
@@ -583,7 +559,6 @@ export default function Employees() {
               </div>
 
               <div className="space-y-4">
-                {/* Name */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
                     Full Name <span className="text-red-500">*</span>
@@ -610,7 +585,6 @@ export default function Employees() {
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {/* Email */}
                   <div>
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
                       Email <span className="text-red-500">*</span>
@@ -642,7 +616,6 @@ export default function Employees() {
                     )}
                   </div>
 
-                  {/* Phone */}
                   <div>
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
                       Phone <span className="text-red-500">*</span>
@@ -677,7 +650,6 @@ export default function Employees() {
               </div>
             </div>
 
-            {/* Modal Footer */}
             <div className="flex items-center justify-end gap-3 p-6 border-t border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/50">
               <Button
                 onClick={() => setIsModalOpen(false)}
@@ -688,7 +660,7 @@ export default function Employees() {
               </Button>
               <Button
                 onClick={handleSaveEmployee}
-                className="bg-linear-to-r from-blue-600 to-teal-500 rounded-lg text-white hover:shadow-lg transition-all"
+                className="bg-gray-800 rounded-lg text-white hover:shadow-lg transition-all"
               >
                 {editingEmployee ? "Update Employee" : "Add Employee"}
               </Button>
@@ -697,11 +669,9 @@ export default function Employees() {
         </div>
       )}
 
-      {/* Delete Confirmation Modal */}
       {isDeleteModalOpen && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
           <div className="bg-white dark:bg-gray-900 rounded-xl shadow-2xl w-full max-w-md">
-            {/* Modal Header */}
             <div className="p-6 border-b border-gray-200 dark:border-gray-800">
               <div className="flex items-center gap-3">
                 <div className="w-12 h-12 rounded-full bg-red-100 dark:bg-red-900/20 flex items-center justify-center">
@@ -718,7 +688,6 @@ export default function Employees() {
               </div>
             </div>
 
-            {/* Modal Body */}
             <div className="p-6">
               <p className="text-gray-700 dark:text-gray-300">
                 Are you sure you want to delete this employee? All associated
@@ -726,7 +695,6 @@ export default function Employees() {
               </p>
             </div>
 
-            {/* Modal Footer */}
             <div className="flex items-center justify-end gap-3 p-6 border-t border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/50">
               <Button
                 onClick={() => setIsDeleteModalOpen(false)}

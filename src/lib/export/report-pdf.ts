@@ -20,7 +20,6 @@ export const generateReportPDF = (data: ReportData): void => {
       .replace(/\//g, "-");
   };
 
-  // Header Section
   doc.setFillColor(...primaryColor);
   doc.rect(0, 0, 210, 30, "F");
 
@@ -33,7 +32,6 @@ export const generateReportPDF = (data: ReportData): void => {
   doc.setFont("helvetica", "normal");
   doc.text(`Report Number: ${data.reportNumber}`, 105, 20, { align: "center" });
 
-  // Reference Information Bar
   doc.setFillColor(243, 244, 246);
   doc.rect(10, 35, 190, 12, "F");
 
@@ -46,7 +44,6 @@ export const generateReportPDF = (data: ReportData): void => {
 
   let yPos = 55;
 
-  // Section 1: Introduction
   doc.setFontSize(12);
   doc.setFont("helvetica", "bold");
   doc.setTextColor(...primaryColor);
@@ -73,7 +70,6 @@ export const generateReportPDF = (data: ReportData): void => {
   doc.text("laboratory standards.", 15, yPos);
   yPos += 10;
 
-  // Section 2: External Container Details
   doc.setFontSize(12);
   doc.setFont("helvetica", "bold");
   doc.setTextColor(...primaryColor);
@@ -119,7 +115,6 @@ export const generateReportPDF = (data: ReportData): void => {
 
   yPos += 5;
 
-  // Section 4: Storage Information
   doc.setFontSize(12);
   doc.setFont("helvetica", "bold");
   doc.setTextColor(...primaryColor);
@@ -140,14 +135,12 @@ export const generateReportPDF = (data: ReportData): void => {
   );
   yPos += 10;
 
-  // Section 5: Sample Analysis
   doc.setFontSize(12);
   doc.setFont("helvetica", "bold");
   doc.setTextColor(...primaryColor);
   doc.text("5. SAMPLE ANALYSIS", 15, yPos);
   yPos += 7;
 
-  // Samples Table
   const tableData = data.samples.map((sample) => [
     sample.sampleNumber,
     sample.sampleName,
@@ -181,7 +174,6 @@ export const generateReportPDF = (data: ReportData): void => {
     margin: { left: 15, right: 15 },
   });
 
-  // Footer with signature
   const finalY = (doc as any).lastAutoTable.finalY + 15;
 
   doc.setFontSize(10);
@@ -189,22 +181,17 @@ export const generateReportPDF = (data: ReportData): void => {
   doc.setTextColor(0, 0, 0);
   doc.text("Authorized Signature:", 15, finalY);
 
-  // Add signature image if available
   if (data.employee?.signature) {
     try {
-      // Add signature image with larger size
       doc.addImage(data.employee.signature, "PNG", 15, finalY + 3, 50, 20);
     } catch (error) {
       console.error("Error adding signature:", error);
-      // Fallback: draw a signature line
       doc.line(15, finalY + 25, 75, finalY + 25);
     }
   } else {
-    // Draw signature line if no signature available
     doc.line(15, finalY + 25, 75, finalY + 25);
   }
 
-  // Employee details below signature
   doc.setFontSize(9);
   doc.setFont("helvetica", "bold");
   doc.text(data.employee?.name || "Employee Name", 15, finalY + 28);
@@ -214,7 +201,6 @@ export const generateReportPDF = (data: ReportData): void => {
   doc.text(data.employee?.role || "Position", 15, finalY + 33);
   doc.text(`Date: ${formatDate(data.date)}`, 15, finalY + 38);
 
-  // Page numbers
   const pageCount = doc.getNumberOfPages();
   for (let i = 1; i <= pageCount; i++) {
     doc.setPage(i);
@@ -232,7 +218,6 @@ export const generateReportPDF = (data: ReportData): void => {
     );
   }
 
-  // Save the PDF
   const fileName = `Report_${data.refNumber}_${formatDate(data.date).replace(
     /\//g,
     "-"

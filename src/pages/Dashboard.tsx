@@ -16,37 +16,8 @@ import { Button, Badge } from "rizzui";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
-
-const recentReports = [
-  {
-    id: "REF-001234",
-    date: "2024-01-15",
-    employee: "Ahmed Khan",
-    samples: 4,
-    status: "completed",
-  },
-  {
-    id: "REF-001235",
-    date: "2024-01-15",
-    employee: "Sara Ali",
-    samples: 3,
-    status: "completed",
-  },
-  {
-    id: "REF-001236",
-    date: "2024-01-14",
-    employee: "Mohammed Hassan",
-    samples: 5,
-    status: "pending",
-  },
-  {
-    id: "REF-001237",
-    date: "2024-01-14",
-    employee: "Fatima Noor",
-    samples: 2,
-    status: "completed",
-  },
-];
+import { useAppSelector } from "@/store/hooks";
+import { format } from "date-fns";
 
 const stats = [
   {
@@ -89,30 +60,76 @@ const stats = [
 
 export default function Dashboard() {
   const route = useRouter();
+  const reports = useAppSelector((state) => state.reports.reports);
+  const recentReports = reports.slice(0, 4);
+
+  const totalReports = reports.length;
+  const totalSamples = reports.reduce(
+    (acc, report) => acc + (report.samples?.length || 0),
+    0
+  );
+
+  const stats = [
+    {
+      title: "Total Reports",
+      value: totalReports.toString(),
+      change: "+12.5%",
+      trend: "up" as const,
+      icon: FileText,
+      description: "All time",
+      color: "from-blue-500 to-blue-600",
+    },
+    {
+      title: "Total Samples",
+      value: totalSamples.toString(),
+      change: "+8.2%",
+      trend: "up" as const,
+      icon: Package,
+      description: "Tracked total",
+      color: "from-emerald-500 to-emerald-600",
+    },
+    {
+      title: "Avg. Processing",
+      value: "1.4 min",
+      change: "-15%",
+      trend: "down" as const,
+      icon: Clock,
+      description: "Per report",
+      color: "from-amber-500 to-amber-600",
+    },
+    {
+      title: "Efficiency",
+      value: "95.2%",
+      change: "+3.1%",
+      trend: "up" as const,
+      icon: TrendingUp,
+      description: "Completion rate",
+      color: "from-purple-500 to-purple-600",
+    },
+  ];
 
   return (
     <DashboardLayout>
-      {/* Page Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
+      <div className="flex flex-col md:flex-row justify-between gap-4 mb-6">
         <div>
-          <h1 className="text-3xl font-bold bg-linear-to-r from-gray-900 to-gray-600 dark:from-white dark:to-gray-300 bg-clip-text text-transparent">
+          <h1 className="text-2xl sm:text-3xl font-bold bg-linear-to-r from-gray-900 to-gray-600 dark:from-white dark:to-gray-300 bg-clip-text text-transparent">
             Dashboard
           </h1>
-          <p className="text-gray-600 dark:text-gray-400 mt-2 text-base">
+          <p className="text-gray-600 dark:text-gray-400 mt-1 sm:mt-2 text-sm sm:text-base">
             Welcome back! Here's your sample tracking overview.
           </p>
         </div>
         <Button
           onClick={() => route.push("/new-report")}
           size="lg"
-          className="bg-linear-to-r px-4 py-2 rounded-lg from-blue-600 to-teal-500 text-white hover:opacity-90 transition-opacity shadow-lg"
+          className="bg-gray-800 px-4 py-2 rounded-lg  text-white hover:opacity-90 transition-opacity shadow-lg w-full sm:w-auto"
         >
           <Plus className="w-5 h-5 mr-2" />
           New Report
         </Button>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-6 sm:mb-8">
         {stats.map((stat, index) => {
           const Icon = stat.icon;
           const TrendIcon = stat.trend === "up" ? ArrowUpRight : ArrowDownRight;
@@ -128,8 +145,8 @@ export default function Dashboard() {
                 )}
                 style={{ borderRadius: "0 0 0 100%" }}
               />
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between mb-4">
+              <CardContent className="p-4 sm:p-6">
+                <div className="flex items-center justify-between mb-3 sm:mb-4">
                   <div
                     className={cn(
                       "p-3 rounded-xl bg-linear-to-br shadow-lg",
@@ -151,10 +168,10 @@ export default function Dashboard() {
                   </div>
                 </div>
                 <div>
-                  <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-1">
+                  <h3 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white mb-1">
                     {stat.value}
                   </h3>
-                  <p className="text-sm text-gray-600 dark:text-gray-400 font-medium">
+                  <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 font-medium">
                     {stat.title}
                   </p>
                   <p className="text-xs text-gray-500 dark:text-gray-500 mt-1">
@@ -167,16 +184,15 @@ export default function Dashboard() {
         })}
       </div>
 
-      {/* Recent Reports */}
       <Card className="border-0 shadow-lg">
         <CardHeader className="border-b border-gray-100 dark:border-gray-800 pb-4">
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div>
-              <CardTitle className="text-xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
-                <Calendar className="w-5 h-5 text-blue-600" />
+              <CardTitle className="text-lg sm:text-xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
+                <Calendar className="w-4 h-4 sm:w-5 sm:h-5 text-blue-600" />
                 Recent Reports
               </CardTitle>
-              <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+              <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 mt-1">
                 Your latest sample tracking activities
               </p>
             </div>
@@ -191,52 +207,69 @@ export default function Dashboard() {
             </Button>
           </div>
         </CardHeader>
-        <CardContent className="p-6">
+        <CardContent className="p-6 min-h-[400px]">
           <div className="space-y-4">
-            {recentReports.map((report) => (
-              <div
-                key={report.id}
-                className="flex items-center justify-between p-4 rounded-xl bg-gray-50 dark:bg-gray-800/50 hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-200 cursor-pointer group"
-                onClick={() => route.push(`/reports/${report.id}`)}
-              >
-                <div className="flex items-center gap-4 flex-1">
-                  <div className="w-12 h-12 rounded-xl bg-linear-to-br from-blue-600 to-teal-500 flex items-center justify-center shadow-lg group-hover:scale-105 transition-transform">
-                    <FileText className="w-6 h-6 text-white" />
-                  </div>
-                  <div>
-                    <p className="font-semibold text-gray-900 dark:text-white">
-                      {report.id}
-                    </p>
-                    <div className="flex items-center gap-2 mt-1">
-                      <Users className="w-3 h-3 text-gray-500" />
-                      <p className="text-sm text-gray-600 dark:text-gray-400">
-                        {report.employee}
+            {recentReports.length === 0 ? (
+              <div className="py-20 text-center">
+                <FileText className="w-16 h-16 text-gray-300 dark:text-gray-600 mx-auto mb-4" />
+                <p className="text-gray-500 dark:text-gray-400 mb-4">
+                  No reports found. Create a new report to get started.
+                </p>
+                <Button
+                  onClick={() => route.push("/new-report")}
+                  size="sm"
+                  className="bg-gray-800 px-4 rounded-lg  text-white"
+                >
+                  <Plus className="w-4 h-4 mr-2" />
+                  Create Report
+                </Button>
+              </div>
+            ) : (
+              recentReports.map((report) => (
+                <div
+                  key={report.id}
+                  className="flex items-center justify-between p-3 sm:p-4 rounded-xl bg-gray-50 dark:bg-gray-800/50 hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-200 cursor-pointer group"
+                  onClick={() => route.push(`/reports/${report.id}`)}
+                >
+                  <div className="flex items-center gap-3 sm:gap-4 flex-1 min-w-0">
+                    <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-gray-800 flex items-center justify-center shadow-lg group-hover:scale-105 transition-transform flex-shrink-0">
+                      <FileText className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="font-semibold text-gray-900 dark:text-white text-sm sm:text-base truncate">
+                        {report.refNumber}
                       </p>
-                      <span className="text-gray-400">•</span>
-                      <p className="text-sm text-gray-600 dark:text-gray-400">
-                        {report.date}
-                      </p>
+                      <div className="flex items-center gap-2 mt-1 flex-wrap">
+                        <Users className="w-3 h-3 text-gray-500 flex-shrink-0" />
+                        <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 truncate">
+                          {report.employee?.name || "N/A"}
+                        </p>
+                        <span className="text-gray-400 hidden sm:inline">
+                          •
+                        </span>
+                        <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 whitespace-nowrap">
+                          {format(new Date(report.createdAt), "MMM dd, yyyy")}
+                        </p>
+                      </div>
                     </div>
                   </div>
-                </div>
-                <div className="flex items-center gap-3">
-                  <div className="text-right">
-                    <p className="text-sm font-semibold text-gray-900 dark:text-white">
-                      {report.samples} samples
-                    </p>
-                    <Badge
-                      color={
-                        report.status === "completed" ? "success" : "warning"
-                      }
-                      className="mt-1"
-                    >
-                      {report.status}
-                    </Badge>
+                  <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
+                    <div className="text-right hidden sm:block">
+                      <p className="text-xs sm:text-sm font-semibold text-gray-900 dark:text-white">
+                        {report.samples.length} samples
+                      </p>
+                      <Badge
+                        color="success"
+                        className="mt-1 text-gray-600 dark:text-white text-xs"
+                      >
+                        completed
+                      </Badge>
+                    </div>
+                    <ChevronRight className="w-4 h-4 sm:w-5 sm:h-5 text-gray-400 group-hover:text-gray-600 dark:group-hover:text-gray-300 group-hover:translate-x-1 transition-all" />
                   </div>
-                  <ChevronRight className="w-5 h-5 text-gray-400 group-hover:text-gray-600 dark:group-hover:text-gray-300 group-hover:translate-x-1 transition-all" />
                 </div>
-              </div>
-            ))}
+              ))
+            )}
           </div>
         </CardContent>
       </Card>

@@ -1,5 +1,5 @@
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
-import ComingSoon from "@/pages/ComingSoon";
+import Documentation from "@/pages/Documentation";
 import { Metadata } from "next";
 
 export const metadata: Metadata = {
@@ -11,7 +11,7 @@ export const metadata: Metadata = {
 export default function DocumentationPage() {
   return (
     <DashboardLayout>
-      <ComingSoon />
+      <Documentation />
     </DashboardLayout>
   );
 }

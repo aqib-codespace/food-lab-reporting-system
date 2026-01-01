@@ -29,7 +29,7 @@ export function Header({ onMenuClick }: HeaderProps) {
 
       <div className="flex items-center gap-3">
         <div className="flex items-center gap-3 bg-gray-100 px-3 py-2 rounded-xl hover:shadow-lg transition-all duration-200 cursor-pointer group">
-          <div className="w-9 h-9 rounded-full bg-linear-to-br from-blue-600 to-teal-500 flex items-center justify-center shadow-lg group-hover:scale-105 transition-transform">
+          <div className="w-9 h-9 rounded-full bg-gray-800 flex items-center justify-center shadow-lg group-hover:scale-105 transition-transform">
             <User className="w-5 h-5 text-white" />
           </div>
           <div className="hidden md:flex flex-col">

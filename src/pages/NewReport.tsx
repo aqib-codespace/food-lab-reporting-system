@@ -7,7 +7,6 @@ import { Input } from "@/components/ui/input";
 import { Select, type SelectOption } from "@/components/ui/select";
 
 import { Label } from "@/components/ui/label";
-import { Separator } from "@/components/ui/separator";
 import {
   Plus,
   Trash2,
@@ -37,7 +36,8 @@ import { ReportPreview } from "@/components/report/ReportPreview";
 import { toast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { reportSchema } from "@/lib/validations/report.schema";
-import { z } from "zod";
+import { useAppDispatch } from "@/store/hooks";
+import { addReport } from "@/store/slices/reportsSlice";
 
 const generateId = () => Math.random().toString(36).substr(2, 9);
 
@@ -64,6 +64,7 @@ const getDefaultContainer = (): ContainerEntry => ({
 export default function NewReport() {
   const [showPreview, setShowPreview] = useState(false);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
+  const dispatch = useAppDispatch();
   const [reportData, setReportData] = useState<ReportData>({
     refNumber: "",
     employee: null,
@@ -174,7 +175,6 @@ export default function NewReport() {
       });
       setFieldErrors(errors);
 
-      // Scroll to first error
       const firstErrorElement = document.querySelector('[data-error="true"]');
       if (firstErrorElement) {
         firstErrorElement.scrollIntoView({
@@ -191,7 +191,6 @@ export default function NewReport() {
   };
 
   const handleGenerateReport = () => {
-    // Validate using Zod
     const result = reportSchema.safeParse(reportData);
 
     if (!result.success) {
@@ -202,7 +201,6 @@ export default function NewReport() {
       });
       setFieldErrors(errors);
 
-      // Scroll to first error
       const firstErrorElement = document.querySelector('[data-error="true"]');
       if (firstErrorElement) {
         firstErrorElement.scrollIntoView({
@@ -219,33 +217,21 @@ export default function NewReport() {
       return;
     }
 
-    // Clear validation errors
     setFieldErrors({});
 
-    // Save report data to localStorage
-    try {
-      const savedReports = JSON.parse(localStorage.getItem("reports") || "[]");
-      const reportToSave = {
-        ...reportData,
-        id: generateId(),
-        createdAt: new Date().toISOString(),
-      };
-      savedReports.push(reportToSave);
-      localStorage.setItem("reports", JSON.stringify(savedReports));
+    const reportToSave = {
+      ...reportData,
+      id: generateId(),
+      createdAt: new Date().toISOString(),
+    };
 
-      toast({
-        title: "Report Saved",
-        description:
-          "Report has been saved successfully and is ready for preview.",
-      });
-    } catch (error) {
-      console.error("Failed to save report:", error);
-      toast({
-        title: "Save Warning",
-        description: "Report preview will continue, but saving failed.",
-        variant: "destructive",
-      });
-    }
+    dispatch(addReport(reportToSave));
+
+    toast({
+      title: "Report Saved",
+      description:
+        "Report has been saved successfully and is ready for preview.",
+    });
 
     setShowPreview(true);
   };
@@ -257,7 +243,7 @@ export default function NewReport() {
           <Button
             variant="outline"
             onClick={() => setShowPreview(false)}
-            className="gap-2 border rounded-lg"
+            className="gap-2 border rounded-lg text-sm"
           >
             ← Back to Form
           </Button>
@@ -269,28 +255,26 @@ export default function NewReport() {
 
   return (
     <DashboardLayout>
-      {/* Page Header */}
-      <div className="flex flex-col gap-2 mb-6">
-        <h1 className="text-2xl font-bold text-foreground">
+      <div className="flex flex-col gap-2 mb-4 sm:mb-6">
+        <h1 className="text-xl sm:text-2xl font-bold text-foreground">
           Create New Report
         </h1>
-        <p className="text-muted-foreground">
+        <p className="text-sm sm:text-base text-muted-foreground">
           Fill in the details below to generate a sample tracking report.
         </p>
       </div>
 
-      <div className="grid grid-cols-1 gap-6 pb-24">
+      <div className="grid grid-cols-1 gap-4 sm:gap-6 pb-24">
         <div className="space-y-6">
-          {/* Basic Information */}
           <Card>
-            <CardHeader className="pb-4">
-              <CardTitle className="text-base font-semibold flex items-center gap-2">
+            <CardHeader className="pb-3 sm:pb-4 px-4 sm:px-6">
+              <CardTitle className="text-sm sm:text-base font-semibold flex items-center gap-2">
                 <Calendar className="w-4 h-4 text-accent" />
                 Basic Information
               </CardTitle>
             </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
+            <CardContent className="space-y-3 sm:space-y-4 px-4 sm:px-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                 <div className="space-y-2" data-error={!!fieldErrors.refNumber}>
                   <Label htmlFor="refNumber">Reference Number *</Label>
                   <Input
@@ -480,9 +464,9 @@ export default function NewReport() {
 
           {/* External Containers */}
           <Card>
-            <CardHeader className="pb-4">
-              <div className="flex items-center justify-between">
-                <CardTitle className="text-base font-semibold flex items-center gap-2">
+            <CardHeader className="pb-3 sm:pb-4 px-4 sm:px-6">
+              <div className="flex items-center justify-between gap-2">
+                <CardTitle className="text-sm sm:text-base font-semibold flex items-center gap-2">
                   <Package className="w-4 h-4 text-accent" />
                   External Containers
                 </CardTitle>
@@ -490,20 +474,20 @@ export default function NewReport() {
                   variant="outline"
                   size="sm"
                   onClick={addExternalContainer}
-                  className="gap-1 border rounded-lg px-4 py-2"
+                  className="gap-1 border rounded-lg px-2 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm"
                 >
                   <Plus className="w-3 h-3" />
-                  Add
+                  <span className="hidden sm:inline">Add</span>
                 </Button>
               </div>
             </CardHeader>
-            <CardContent className="space-y-3">
+            <CardContent className="space-y-3 px-4 sm:px-6">
               {reportData.externalContainers.map((container, index) => (
                 <div
                   key={container.id}
-                  className="flex gap-3 items-end animate-fade-in"
+                  className="flex gap-2 sm:gap-3 items-end animate-fade-in"
                 >
-                  <div className="w-20">
+                  <div className="w-16 sm:w-20">
                     <Label className="text-xs">Qty</Label>
                     <Input
                       type="number"
@@ -551,9 +535,9 @@ export default function NewReport() {
 
           {/* Internal Containers */}
           <Card>
-            <CardHeader className="pb-4">
-              <div className="flex items-center justify-between">
-                <CardTitle className="text-base font-semibold flex items-center gap-2">
+            <CardHeader className="pb-3 sm:pb-4 px-4 sm:px-6">
+              <div className="flex items-center justify-between gap-2">
+                <CardTitle className="text-sm sm:text-base font-semibold flex items-center gap-2">
                   <Package className="w-4 h-4 text-primary" />
                   Internal Containers
                 </CardTitle>
@@ -561,20 +545,20 @@ export default function NewReport() {
                   variant="outline"
                   size="sm"
                   onClick={addInternalContainer}
-                  className="gap-1 border rounded-lg px-4 py-2"
+                  className="gap-1 border rounded-lg px-2 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm"
                 >
                   <Plus className="w-3 h-3" />
-                  Add
+                  <span className="hidden sm:inline">Add</span>
                 </Button>
               </div>
             </CardHeader>
-            <CardContent className="space-y-3">
+            <CardContent className="space-y-3 px-4 sm:px-6">
               {reportData.internalContainers.map((container) => (
                 <div
                   key={container.id}
-                  className="flex gap-3 items-end animate-fade-in"
+                  className="flex gap-2 sm:gap-3 items-end animate-fade-in"
                 >
-                  <div className="w-20">
+                  <div className="w-16 sm:w-20">
                     <Label className="text-xs">Qty</Label>
                     <Input
                       type="number"
@@ -622,13 +606,13 @@ export default function NewReport() {
 
           {/* Additional Info */}
           <Card>
-            <CardHeader className="pb-4">
-              <CardTitle className="text-base font-semibold">
+            <CardHeader className="pb-3 sm:pb-4 px-4 sm:px-6">
+              <CardTitle className="text-sm sm:text-base font-semibold">
                 Additional Information
               </CardTitle>
             </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
+            <CardContent className="space-y-3 sm:space-y-4 px-4 sm:px-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="producedDate">Production Date</Label>
                   <Input
@@ -669,15 +653,15 @@ export default function NewReport() {
         {/* Right Column - Samples */}
         <div className="space-y-6">
           <Card>
-            <CardHeader className="pb-4">
-              <div className="flex items-center justify-between">
-                <CardTitle className="text-base  font-semibold flex items-center gap-2">
+            <CardHeader className="pb-3 sm:pb-4 px-4 sm:px-6">
+              <div className="flex items-center justify-between gap-2">
+                <CardTitle className="text-sm sm:text-base font-semibold flex items-center gap-2">
                   <User className="w-4 h-4 text-accent" />
                   Samples
                   <Badge
                     variant="flat"
                     color="secondary"
-                    className="ml-2 border border-gray-300 h-4 w-4 rounded-full"
+                    className="ml-2 border border-gray-300 h-4 w-4 rounded-full text-xs"
                   >
                     {reportData.samples.length}
                   </Badge>
@@ -686,18 +670,19 @@ export default function NewReport() {
                   variant="outline"
                   size="sm"
                   onClick={addSample}
-                  className="gap-1 border rounded-lg px-2"
+                  className="gap-1 border rounded-lg px-2 text-xs sm:text-sm whitespace-nowrap"
                 >
                   <Plus className="w-3 h-3" />
-                  Add Sample
+                  <span className="hidden sm:inline">Add Sample</span>
+                  <span className="sm:hidden">Add</span>
                 </Button>
               </div>
             </CardHeader>
-            <CardContent className="space-y-4">
+            <CardContent className="space-y-3 sm:space-y-4 px-4 sm:px-6">
               {reportData.samples.map((sample, index) => (
                 <div
                   key={sample.id}
-                  className="p-4 rounded-xl border-2 border-gray-200 dark:border-gray-700 bg-linear-to-br from-white to-gray-50 dark:from-gray-900 dark:to-gray-800 hover:border-blue-300 dark:hover:border-blue-700 hover:shadow-lg transition-all space-y-4 animate-fade-in"
+                  className="p-3 sm:p-4 rounded-xl border-2 border-gray-200 dark:border-gray-700 bg-linear-to-br from-white to-gray-50 dark:from-gray-900 dark:to-gray-800 hover:border-blue-300 dark:hover:border-blue-700 hover:shadow-lg transition-all space-y-3 sm:space-y-4 animate-fade-in"
                 >
                   <div className="flex items-center justify-between">
                     <Badge
@@ -726,7 +711,7 @@ export default function NewReport() {
 
                   <div className="space-y-3">
                     <div>
-                      <Label className="text-xs font-medium mb-1.5 block">
+                      <Label className="text-xs sm:text-sm font-medium mb-1.5 block">
                         Sample Name
                       </Label>
                       <Select
@@ -741,7 +726,7 @@ export default function NewReport() {
                           value: name,
                         }))}
                         placeholder="Select"
-                        className="input-focus h-9"
+                        className="input-focus h-10"
                       />
                     </div>
                     <div>
@@ -759,7 +744,7 @@ export default function NewReport() {
                                 parseInt(e.target.value) || 0,
                             })
                           }
-                          className="input-focus h-9 w-16"
+                          className="input-focus h-10 w-16"
                           placeholder="Qty"
                         />
                         <Select
@@ -774,18 +759,18 @@ export default function NewReport() {
                             value: type,
                           }))}
                           placeholder="Type"
-                          className="input-focus h-9 flex-1"
+                          className="input-focus h-10 flex-1"
                         />
                       </div>
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-3 gap-3">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <div>
-                      <Label className="text-xs font-medium mb-1.5 block">
+                      <Label className="text-xs sm:text-sm font-medium mb-1.5 block">
                         Net Weight
                       </Label>
-                      <div className="flex gap-1">
+                      <div className="flex gap-2">
                         <Input
                           type="number"
                           step="0.01"
@@ -795,7 +780,7 @@ export default function NewReport() {
                               netWeight: parseFloat(e.target.value) || 0,
                             })
                           }
-                          className="input-focus h-9"
+                          className="input-focus h-10 flex-1"
                           placeholder="0.00"
                         />
                         <Select
@@ -806,15 +791,15 @@ export default function NewReport() {
                             })
                           }
                           options={[
-                            { label: "Gram", value: "gram" },
-                            { label: "Kilogram", value: "kg" },
+                            { label: "G", value: "gram" },
+                            { label: "Kg", value: "kg" },
                           ]}
-                          className="input-focus h-9 "
+                          className="input-focus h-10 w-20"
                         />
                       </div>
                     </div>
                     <div>
-                      <Label className="text-xs font-medium mb-1.5 block">
+                      <Label className="text-xs sm:text-sm font-medium mb-1.5 block">
                         Pure/Total
                       </Label>
                       <Select
@@ -828,11 +813,11 @@ export default function NewReport() {
                           { label: "Pure", value: "pure" },
                           { label: "Total", value: "total" },
                         ]}
-                        className="input-focus h-9"
+                        className="input-focus h-10"
                       />
                     </div>
                     <div>
-                      <Label className="text-xs font-medium mb-1.5 block">
+                      <Label className="text-xs sm:text-sm font-medium mb-1.5 block">
                         Weight Used (g)
                       </Label>
                       <Input
@@ -844,15 +829,15 @@ export default function NewReport() {
                             weightUsed: parseFloat(e.target.value) || 0,
                           })
                         }
-                        className="input-focus h-9"
-                        placeholder="0.00 g"
+                        className="input-focus h-10"
+                        placeholder="0.00"
                       />
                     </div>
                   </div>
 
-                  <div className="space-y-3 gap-6  grid sm:grid-cols-2">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <div>
-                      <Label className="text-xs font-medium mb-2 block">
+                      <Label className="text-xs sm:text-sm font-medium mb-1.5 block">
                         Storage Location
                       </Label>
                       <Select
@@ -870,10 +855,10 @@ export default function NewReport() {
                           { label: "Fridge", value: "fridge" },
                           { label: "Both", value: "both" },
                         ]}
-                        className="input-focus h-9"
+                        className="input-focus h-10"
                       />
                     </div>
-                    <div className="mt-2">
+                    <div>
                       <Label className="text-xs font-medium mb-1.5 block">
                         Color Code
                       </Label>
@@ -924,10 +909,9 @@ export default function NewReport() {
         </div>
       </div>
 
-      {/* Fixed Bottom Action Bar */}
       <div className="fixed bottom-0 left-0 lg:left-64 right-0 bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-800 shadow-lg z-50">
-        <div className="max-w-7xl mx-auto px-6 py-4">
-          <div className="flex items-center justify-end gap-3">
+        <div className="max-w-7xl mx-auto px-3 sm:px-6 py-3 sm:py-4">
+          <div className="flex items-center justify-end gap-2 sm:gap-3">
             <Button
               onClick={() => {
                 if (validateForm()) {
@@ -943,18 +927,19 @@ export default function NewReport() {
               }}
               variant="outline"
               size="lg"
-              className="min-w-35 border rounded-lg"
+              className="min-w-28 sm:min-w-35 border rounded-lg text-sm sm:text-base px-3 sm:px-4"
             >
-              <Eye className="w-4 h-4 mr-2" />
+              <Eye className="w-4 h-4 mr-1 sm:mr-2" />
               Preview
             </Button>
             <Button
               onClick={handleGenerateReport}
               size="lg"
-              className="min-w-45 bg-linear-to-r from-blue-600 to-teal-500 text-white rounded-lg"
+              className="min-w-32 sm:min-w-45 bg-gray-800 text-white rounded-lg text-sm sm:text-base px-3 sm:px-4"
             >
-              <FileDown className="w-4 h-4 mr-2" />
-              Generate Report
+              <FileDown className="w-4 h-4 mr-1 sm:mr-2" />
+              <span className="hidden sm:inline">Generate Report</span>
+              <span className="sm:hidden">Generate</span>
             </Button>
           </div>
         </div>

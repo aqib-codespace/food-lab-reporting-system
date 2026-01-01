@@ -37,8 +37,8 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
       >
         <Header onMenuClick={() => setSidebarOpen(!sidebarOpen)} />
 
-        <main className="flex-1 p-6 pt-24 overflow-auto">
-          <div className="max-w-400 mx-auto">{children}</div>
+        <main className="flex-1 p-4 sm:p-6 pt-20 sm:pt-24 overflow-auto">
+          <div className="w-full mx-auto">{children}</div>
         </main>
       </div>
 

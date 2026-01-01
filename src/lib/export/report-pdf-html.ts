@@ -7,7 +7,6 @@ export const generateHTMLReportPDF = (data: ReportData): void => {
   const pageWidth = doc.internal.pageSize.getWidth();
   const pageHeight = doc.internal.pageSize.getHeight();
 
-  // Professional color palette
   const colors = {
     primary: [30, 64, 175] as [number, number, number],
     primaryLight: [59, 130, 246] as [number, number, number],
@@ -31,12 +30,10 @@ export const generateHTMLReportPDF = (data: ReportData): void => {
 
   let yPos = 15;
 
-  // ===== HEADER SECTION =====
-  // Gradient-style header
+
   doc.setFillColor(...colors.primaryLight);
   doc.rect(0, 0, pageWidth, 35, "F");
 
-  // Header text
   doc.setTextColor(255, 255, 255);
   doc.setFontSize(26);
   doc.setFont("helvetica", "bold");
@@ -50,7 +47,6 @@ export const generateHTMLReportPDF = (data: ReportData): void => {
 
   yPos = 45;
 
-  // ===== INFO BAR =====
   doc.setFillColor(...colors.lightBg);
   doc.roundedRect(10, yPos, pageWidth - 20, 12, 2, 2, "F");
 
@@ -67,7 +63,6 @@ export const generateHTMLReportPDF = (data: ReportData): void => {
 
   yPos += 20;
 
-  // ===== SECTION 1: INTRODUCTION =====
   drawSectionTitle(doc, "1. INTRODUCTION", yPos, colors);
   yPos += 10;
 
@@ -104,7 +99,6 @@ export const generateHTMLReportPDF = (data: ReportData): void => {
   doc.text(introText, 15, yPos);
   yPos += introText.length * 5 + 8;
 
-  // ===== SECTION 2: EXTERNAL CONTAINER DETAILS =====
   if (yPos > pageHeight - 60) {
     doc.addPage();
     yPos = 20;
@@ -145,7 +139,6 @@ export const generateHTMLReportPDF = (data: ReportData): void => {
 
   yPos = (doc as any).lastAutoTable.finalY + 10;
 
-  // ===== SECTION 3: INTERNAL CONTAINER DETAILS =====
   if (yPos > pageHeight - 60) {
     doc.addPage();
     yPos = 20;
@@ -166,7 +159,6 @@ export const generateHTMLReportPDF = (data: ReportData): void => {
 
   yPos += 5;
 
-  // ===== SECTION 4: STORAGE INFORMATION =====
   if (yPos > pageHeight - 60) {
     doc.addPage();
     yPos = 20;
@@ -187,7 +179,6 @@ export const generateHTMLReportPDF = (data: ReportData): void => {
 
   yPos += 12;
 
-  // ===== SECTION 5: SAMPLE ANALYSIS =====
   if (yPos > pageHeight - 80) {
     doc.addPage();
     yPos = 20;
@@ -196,7 +187,6 @@ export const generateHTMLReportPDF = (data: ReportData): void => {
   drawSectionTitle(doc, "5. SAMPLE ANALYSIS", yPos, colors);
   yPos += 10;
 
-  // Create table data with color indicators
   const tableData = data.samples.map((sample) => {
     return [
       sample.sampleNumber,
@@ -207,7 +197,7 @@ export const generateHTMLReportPDF = (data: ReportData): void => {
       `${sample.netWeight} ${sample.weightUnit}`,
       sample.pureOrTotal.toUpperCase(),
       `${sample.weightUsed}`,
-      sample.colorCode, // Store color code for custom rendering
+      sample.colorCode,
       sample.storageLocation.toUpperCase(),
     ];
   });
@@ -255,7 +245,6 @@ export const generateHTMLReportPDF = (data: ReportData): void => {
     },
     margin: { left: 10, right: 10 },
     didDrawCell: (data: any) => {
-      // Draw color box in the Color column
       if (data.column.index === 6 && data.section === "body") {
         const colorCode = data.cell.raw;
         const cellX = data.cell.x;
@@ -263,7 +252,6 @@ export const generateHTMLReportPDF = (data: ReportData): void => {
         const cellWidth = data.cell.width;
         const cellHeight = data.cell.height;
 
-        // Draw color box
         doc.setFillColor(colorCode);
         doc.setDrawColor(200, 200, 200);
         doc.setLineWidth(0.3);
@@ -271,8 +259,6 @@ export const generateHTMLReportPDF = (data: ReportData): void => {
         const boxX = cellX + (cellWidth - boxSize) / 2;
         const boxY = cellY + (cellHeight - boxSize) / 2;
         doc.roundedRect(boxX, boxY, boxSize, boxSize, 1, 1, "FD");
-
-        // Clear the text (we only want the color box)
         data.cell.text = "";
       }
     },
@@ -280,7 +266,6 @@ export const generateHTMLReportPDF = (data: ReportData): void => {
 
   yPos = (doc as any).lastAutoTable.finalY + 15;
 
-  // ===== SIGNATURE SECTION =====
   if (data.employee?.signature) {
     if (yPos > pageHeight - 80) {
       doc.addPage();
@@ -290,7 +275,6 @@ export const generateHTMLReportPDF = (data: ReportData): void => {
     drawSectionTitle(doc, "AUTHORIZED SIGNATURE", yPos, colors);
     yPos += 10;
 
-    // Signature box
     doc.setDrawColor(...colors.border);
     doc.setLineWidth(0.5);
     doc.roundedRect(15, yPos, pageWidth - 30, 45, 3, 3, "S");
@@ -304,7 +288,6 @@ export const generateHTMLReportPDF = (data: ReportData): void => {
 
     yPos += 8;
 
-    // Add signature image
     try {
       doc.addImage(
         data.employee.signature,
@@ -338,7 +321,6 @@ export const generateHTMLReportPDF = (data: ReportData): void => {
     doc.text(`${data.employee.email} • ${data.employee.phone}`, 20, yPos);
   }
 
-  // ===== FOOTER =====
   const footerY = pageHeight - 15;
   doc.setDrawColor(...colors.border);
   doc.setLineWidth(0.3);
@@ -361,11 +343,9 @@ export const generateHTMLReportPDF = (data: ReportData): void => {
     { align: "center" }
   );
 
-  // Save the PDF
   doc.save(`Food_Lab_Report_${data.reportNumber}_${new Date().getTime()}.pdf`);
 };
 
-// Helper function to draw section titles
 function drawSectionTitle(
   doc: jsPDF,
   title: string,
@@ -374,11 +354,9 @@ function drawSectionTitle(
 ) {
   const pageWidth = doc.internal.pageSize.getWidth();
 
-  // Background
   doc.setFillColor(239, 246, 255);
   doc.roundedRect(10, yPos - 6, pageWidth - 20, 10, 2, 2, "F");
 
-  // Left border accent
   doc.setFillColor(
     colors.primaryLight[0],
     colors.primaryLight[1],
@@ -386,7 +364,6 @@ function drawSectionTitle(
   );
   doc.rect(10, yPos - 6, 3, 10, "F");
 
-  // Title text
   doc.setFontSize(11);
   doc.setFont("helvetica", "bold");
   doc.setTextColor(colors.primary[0], colors.primary[1], colors.primary[2]);

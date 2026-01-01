@@ -77,7 +77,6 @@ export function ReportPreview({ data }: ReportPreviewProps) {
 
   return (
     <div className="max-w-4xl mx-auto space-y-6">
-      {/* Action Buttons */}
       <div className="flex gap-3 justify-end no-print">
         <Button variant="outline" onClick={handlePrint} className="gap-2">
           <Printer className="w-4 h-4" />
@@ -85,7 +84,7 @@ export function ReportPreview({ data }: ReportPreviewProps) {
         </Button>
         <Button
           onClick={handleDownloadPDF}
-          className="bg-linear-to-r from-blue-600 to-teal-500 text-white hover:opacity-90 gap-2"
+          className="bg-gray-800 text-white hover:opacity-90 gap-2"
         >
           <FileDown className="w-4 h-4" />
           Download PDF
@@ -93,17 +92,15 @@ export function ReportPreview({ data }: ReportPreviewProps) {
         <Button
           variant="outline"
           onClick={handleDownloadWord}
-          className="gap-2 bg-linear-to-r from-blue-600 to-teal-500 text-white"
+          className="gap-2 bg-gray-800 text-white"
         >
           <FileText className="w-4 h-4" />
           Download Word
         </Button>
       </div>
 
-      {/* Report Preview Card */}
       <Card className="shadow-lg print:shadow-none">
         <CardContent className="p-8">
-          {/* Header */}
           <div className="flex justify-between items-start mb-6">
             <div className="text-sm">
               <span className="font-semibold bg-primary text-primary-foreground px-2 py-0.5 rounded">
@@ -126,7 +123,6 @@ export function ReportPreview({ data }: ReportPreviewProps) {
             </div>
           </div>
 
-          {/* Report Number */}
           <div className="text-center mb-6">
             <h2 className="text-lg font-semibold underline">
               Report number: {data.reportNumber}
@@ -135,7 +131,6 @@ export function ReportPreview({ data }: ReportPreviewProps) {
 
           <Separator className="my-6" />
 
-          {/* Introduction */}
           <section className="mb-6">
             <h3 className="font-bold mb-2">Introduction:</h3>
             <p className="text-sm text-muted-foreground">
@@ -149,7 +144,6 @@ export function ReportPreview({ data }: ReportPreviewProps) {
             </p>
           </section>
 
-          {/* How it looks outside */}
           <section className="mb-6">
             <h3 className="font-bold mb-2">How it looks out side:</h3>
             <p className="text-sm">
@@ -180,7 +174,6 @@ export function ReportPreview({ data }: ReportPreviewProps) {
             </p>
           </section>
 
-          {/* Storage */}
           <section className="mb-6">
             <h3 className="font-bold mb-2">Insure its in good storage:</h3>
             <p className="text-sm">
@@ -196,14 +189,12 @@ export function ReportPreview({ data }: ReportPreviewProps) {
             </p>
           </section>
 
-          {/* What was inside */}
           <section className="mb-6">
             <h3 className="font-bold mb-3">What was inside:</h3>
             <p className="text-sm mb-4">
               We open samples it contain food and drinks.
             </p>
 
-            {/* Containers Summary */}
             {data.internalContainers.filter((c) => c.type).length > 0 && (
               <div className="mb-4">
                 {data.internalContainers
@@ -217,7 +208,6 @@ export function ReportPreview({ data }: ReportPreviewProps) {
               </div>
             )}
 
-            {/* Samples Table */}
             <div className="overflow-x-auto">
               <table className="w-full border-collapse text-sm">
                 <thead>
@@ -303,7 +293,6 @@ export function ReportPreview({ data }: ReportPreviewProps) {
             </div>
           </section>
 
-          {/* Signature */}
           <section className="mt-8">
             <h3 className="font-bold">Signature:</h3>
             <div className="mt-4 h-16 border-b-2 border-dashed border-border w-64"></div>
@@ -311,13 +300,11 @@ export function ReportPreview({ data }: ReportPreviewProps) {
         </CardContent>
       </Card>
 
-      {/* Alternative Compact View */}
       <Card className="shadow-lg print:shadow-none">
         <CardHeader className="pb-4">
           <CardTitle className="text-base">Compact Report View</CardTitle>
         </CardHeader>
         <CardContent className="p-8 pt-0">
-          {/* Compact Header */}
           <div className="flex justify-between items-center mb-4 text-sm">
             <span>
               <span className="font-semibold bg-primary text-primary-foreground px-2 py-0.5 rounded">
@@ -341,12 +328,10 @@ export function ReportPreview({ data }: ReportPreviewProps) {
             from {data.senderShop?.toLowerCase() || "fish shop"}
           </p>
 
-          {/* Compact Container List */}
           {data.internalContainers.filter((c) => c.type).length > 0 && (
             <p className="text-sm mb-2">- {getInternalContainersSummary()}:</p>
           )}
 
-          {/* Compact Samples */}
           {data.samples.map((sample) => (
             <p key={sample.id} className="text-sm mb-1">
               <span
@@ -391,7 +376,6 @@ export function ReportPreview({ data }: ReportPreviewProps) {
             </p>
           ))}
 
-          {/* Signature */}
           <div className="mt-6">
             <h3 className="font-bold text-sm">Signature:</h3>
             <div className="mt-2 h-12 border-b-2 border-dashed border-border w-48"></div>
