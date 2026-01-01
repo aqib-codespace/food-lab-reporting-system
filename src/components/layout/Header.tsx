@@ -1,15 +1,6 @@
-import { Menu, Bell, Search, User } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Menu, Bell, Search, User, LogOut } from "lucide-react";
 import { Input } from "@/components/ui/input";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { cn } from "@/lib/utils";
 
 interface HeaderProps {
   onMenuClick: () => void;
@@ -17,67 +8,39 @@ interface HeaderProps {
 
 export function Header({ onMenuClick }: HeaderProps) {
   return (
-    <header className="h-16 border-b border-border bg-card px-6 flex items-center justify-between gap-4 sticky top-0 z-20">
-      {/* Left side */}
-      <div className="flex items-center gap-4">
-        <Button
-          variant="ghost"
-          size="icon"
+    <header className="fixed top-0 left-0 lg:left-64 right-0 h-18 bg-white/80 dark:bg-gray-900/80 border-b border-gray-200 dark:border-gray-800 px-6 flex items-center justify-between gap-4 z-40 backdrop-blur-xl shadow-sm">
+      <div className="flex items-center gap-4 flex-1">
+        <button
           onClick={onMenuClick}
-          className="text-muted-foreground hover:text-foreground"
+          className="lg:hidden bg-gray-100 dark:bg-gray-800 p-2 rounded-lg text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-200 dark:hover:bg-gray-700 transition-all"
         >
           <Menu className="w-5 h-5" />
-        </Button>
+        </button>
 
-        {/* Search */}
-        <div className="hidden md:flex items-center relative">
-          <Search className="w-4 h-4 absolute left-3 text-muted-foreground" />
+        <div className="hidden md:flex flex-1 max-w-md relative">
+          <Search className="w-4 h-4 absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 dark:text-gray-400 pointer-events-none z-10" />
           <Input
             type="text"
-            placeholder="Search reports, samples..."
-            className="w-80 pl-9 bg-muted/50 border-transparent focus:bg-background focus:border-input"
+            placeholder="Search reports, samples, employees..."
+            className="w-full"
           />
         </div>
       </div>
 
-      {/* Right side */}
-      <div className="flex items-center gap-3">
-        {/* Notifications */}
-        <Button
-          variant="ghost"
-          size="icon"
-          className="relative text-muted-foreground hover:text-foreground"
-        >
-          <Bell className="w-5 h-5" />
-          <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-accent rounded-full" />
-        </Button>
-
-        {/* User menu */}
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" className="gap-2 px-2">
-              <Avatar className="w-8 h-8">
-                <AvatarFallback className="bg-primary text-primary-foreground text-sm">
-                  AD
-                </AvatarFallback>
-              </Avatar>
-              <span className="hidden md:block text-sm font-medium">Admin</span>
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-48">
-            <DropdownMenuLabel>My Account</DropdownMenuLabel>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem>
-              <User className="w-4 h-4 mr-2" />
-              Profile
-            </DropdownMenuItem>
-            <DropdownMenuItem>Settings</DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem className="text-destructive">
-              Sign out
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+      <div className="flex items-center gap-2">
+        <div className="flex items-center gap-3 bg-gray-100 dark:bg-gray-800 px-3 py-2 rounded-xl hover:shadow-lg transition-all duration-200 cursor-pointer group">
+          <div className="w-9 h-9 rounded-full bg-linear-to-br from-blue-600 to-teal-500 flex items-center justify-center shadow-lg group-hover:scale-105 transition-transform">
+            <User className="w-5 h-5 text-white" />
+          </div>
+          <div className="hidden md:flex flex-col">
+            <span className="text-sm font-semibold text-gray-900 dark:text-white leading-tight">
+              Admin User
+            </span>
+            <span className="text-xs text-gray-600 dark:text-gray-400">
+              Administrator
+            </span>
+          </div>
+        </div>
       </div>
     </header>
   );

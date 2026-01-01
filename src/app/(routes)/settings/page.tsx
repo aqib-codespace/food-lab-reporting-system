@@ -1,12 +1,10 @@
-import Settings from '@/pages/Settings'
-import React from 'react'
+import { DashboardLayout } from "@/components/layout/DashboardLayout";
+import ComingSoon from "@/pages/ComingSoon";
 
-const page = () => {
+export default function SettingsPage() {
   return (
-    <div>
-      <Settings/>
-    </div>
-  )
+    <DashboardLayout>
+      <ComingSoon />
+    </DashboardLayout>
+  );
 }
-
-export default page

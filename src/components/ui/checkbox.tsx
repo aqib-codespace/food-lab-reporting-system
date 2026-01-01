@@ -1,26 +1,32 @@
-import * as React from "react";
-import * as CheckboxPrimitive from "@radix-ui/react-checkbox";
-import { Check } from "lucide-react";
+"use client";
 
+import * as React from "react";
+import { Checkbox as RizzuiCheckbox } from "rizzui";
 import { cn } from "@/lib/utils";
 
-const Checkbox = React.forwardRef<
-  React.ElementRef<typeof CheckboxPrimitive.Root>,
-  React.ComponentPropsWithoutRef<typeof CheckboxPrimitive.Root>
->(({ className, ...props }, ref) => (
-  <CheckboxPrimitive.Root
-    ref={ref}
-    className={cn(
-      "peer h-4 w-4 shrink-0 rounded-sm border border-primary ring-offset-background data-[state=checked]:bg-primary data-[state=checked]:text-primary-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50",
-      className,
-    )}
-    {...props}
-  >
-    <CheckboxPrimitive.Indicator className={cn("flex items-center justify-center text-current")}>
-      <Check className="h-4 w-4" />
-    </CheckboxPrimitive.Indicator>
-  </CheckboxPrimitive.Root>
-));
-Checkbox.displayName = CheckboxPrimitive.Root.displayName;
+interface CheckboxProps {
+  checked?: boolean;
+  onCheckedChange?: (checked: boolean) => void;
+  disabled?: boolean;
+  className?: string;
+  label?: string;
+}
+
+const Checkbox = React.forwardRef<HTMLInputElement, CheckboxProps>(
+  ({ className, label, ...props }, ref) => (
+    <RizzuiCheckbox
+      ref={ref}
+      label={label}
+      className={cn(
+        "glass-card [&>div]:bg-white/50 [&>div]:dark:bg-card/50 [&>div]:backdrop-blur-sm",
+        "[&>div]:border-border/50 [&>div]:transition-all [&>div]:duration-200",
+        "[&>div:hover]:border-primary [&>div:hover]:shadow-md",
+        className
+      )}
+      {...props}
+    />
+  )
+);
+Checkbox.displayName = "Checkbox";
 
 export { Checkbox };

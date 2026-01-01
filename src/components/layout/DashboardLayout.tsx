@@ -1,8 +1,5 @@
-'use client';
-import { ReactNode, useState } from "react";
-
-import { Menu } from "lucide-react";
-import { Button } from "@/components/ui/button";
+"use client";
+import { ReactNode, useState, useEffect } from "react";
 import { Sidebar } from "./Sidebar";
 import { Header } from "./Header";
 
@@ -11,28 +8,43 @@ interface DashboardLayoutProps {
 }
 
 export function DashboardLayout({ children }: DashboardLayoutProps) {
-  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 1024);
+      if (window.innerWidth >= 1024) {
+        setSidebarOpen(true);
+      } else {
+        setSidebarOpen(false);
+      }
+    };
+
+    checkMobile();
+    window.addEventListener("resize", checkMobile);
+    return () => window.removeEventListener("resize", checkMobile);
+  }, []);
 
   return (
-    <div className="min-h-screen flex w-full bg-background">
-      {/* Sidebar */}
+    <div className="min-h-screen flex w-full bg-gray-50 dark:bg-gray-950 overflow-hidden">
       <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
 
-      {/* Main Content */}
-      <div className={`flex-1 flex flex-col transition-all duration-300 ${sidebarOpen ? 'lg:ml-64' : ''}`}>
-        {/* Header */}
+      <div
+        className={`flex-1 flex flex-col min-w-0 transition-all duration-300 ${
+          sidebarOpen && !isMobile ? "lg:ml-64" : "lg:ml-64"
+        }`}
+      >
         <Header onMenuClick={() => setSidebarOpen(!sidebarOpen)} />
 
-        {/* Page Content */}
-        <main className="flex-1 p-6 overflow-auto scrollbar-thin">
-          {children}
+        <main className="flex-1 p-6 pt-24 overflow-auto">
+          <div className="max-w-400 mx-auto">{children}</div>
         </main>
       </div>
 
-      {/* Mobile overlay */}
-      {sidebarOpen && (
-        <div 
-          className="fixed inset-0 bg-foreground/20 backdrop-blur-sm z-30 lg:hidden"
+      {sidebarOpen && isMobile && (
+        <div
+          className="fixed inset-0 bg-black/50 backdrop-blur-sm z-30 lg:hidden"
           onClick={() => setSidebarOpen(false)}
         />
       )}
