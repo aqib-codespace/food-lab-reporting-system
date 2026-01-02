@@ -14,10 +14,11 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button, Badge } from "rizzui";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
-import { useRouter } from "next/navigation";
+import { useRouter } from "@/i18n/routing";
 import { cn } from "@/lib/utils";
 import { useAppSelector } from "@/store/hooks";
 import { format } from "date-fns";
+import { useTranslations } from "next-intl";
 
 const stats = [
   {
@@ -59,6 +60,7 @@ const stats = [
 ];
 
 export default function Dashboard() {
+  const t = useTranslations("dashboard");
   const route = useRouter();
   const reports = useAppSelector((state) => state.reports.reports);
   const recentReports = reports.slice(0, 4);
@@ -71,39 +73,39 @@ export default function Dashboard() {
 
   const stats = [
     {
-      title: "Total Reports",
+      title: t("totalReports"),
       value: totalReports.toString(),
       change: "+12.5%",
       trend: "up" as const,
       icon: FileText,
-      description: "All time",
+      description: t("allTime"),
       color: "from-blue-500 to-blue-600",
     },
     {
-      title: "Total Samples",
+      title: t("totalSamples"),
       value: totalSamples.toString(),
       change: "+8.2%",
       trend: "up" as const,
       icon: Package,
-      description: "Tracked total",
+      description: t("trackedTotal"),
       color: "from-emerald-500 to-emerald-600",
     },
     {
-      title: "Avg. Processing",
+      title: t("avgProcessing"),
       value: "1.4 min",
       change: "-15%",
       trend: "down" as const,
       icon: Clock,
-      description: "Per report",
+      description: t("perReport"),
       color: "from-amber-500 to-amber-600",
     },
     {
-      title: "Efficiency",
+      title: t("efficiency"),
       value: "95.2%",
       change: "+3.1%",
       trend: "up" as const,
       icon: TrendingUp,
-      description: "Completion rate",
+      description: t("completionRate"),
       color: "from-purple-500 to-purple-600",
     },
   ];
@@ -113,10 +115,10 @@ export default function Dashboard() {
       <div className="flex flex-col md:flex-row justify-between gap-4 mb-6">
         <div>
           <h1 className="text-2xl sm:text-3xl font-bold bg-linear-to-r from-gray-900 to-gray-600 dark:from-white dark:to-gray-300 bg-clip-text text-transparent">
-            Dashboard
+            {t("title")}
           </h1>
           <p className="text-gray-600 dark:text-gray-400 mt-1 sm:mt-2 text-sm sm:text-base">
-            Welcome back! Here's your sample tracking overview.
+            {t("welcomeMessage")}
           </p>
         </div>
         <Button
@@ -125,7 +127,7 @@ export default function Dashboard() {
           className="bg-gray-800 px-4 py-2 rounded-lg  text-white hover:opacity-90 transition-opacity shadow-lg w-full sm:w-auto"
         >
           <Plus className="w-5 h-5 mr-2" />
-          New Report
+          {t("newReportButton")}
         </Button>
       </div>
 
@@ -190,10 +192,10 @@ export default function Dashboard() {
             <div>
               <CardTitle className="text-lg sm:text-xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
                 <Calendar className="w-4 h-4 sm:w-5 sm:h-5 text-blue-600" />
-                Recent Reports
+                {t("recentReports")}
               </CardTitle>
               <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 mt-1">
-                Your latest sample tracking activities
+                {t("yourLatestSampleTrackingActivities")}
               </p>
             </div>
             <Button
@@ -202,7 +204,7 @@ export default function Dashboard() {
               onClick={() => route.push("/reports")}
               className="gap-1"
             >
-              View All
+              {t("viewAll")}
               <ChevronRight className="w-4 h-4" />
             </Button>
           </div>
@@ -213,7 +215,7 @@ export default function Dashboard() {
               <div className="py-20 text-center">
                 <FileText className="w-16 h-16 text-gray-300 dark:text-gray-600 mx-auto mb-4" />
                 <p className="text-gray-500 dark:text-gray-400 mb-4">
-                  No reports found. Create a new report to get started.
+                  {t("noData")}
                 </p>
                 <Button
                   onClick={() => route.push("/new-report")}
@@ -221,7 +223,7 @@ export default function Dashboard() {
                   className="bg-gray-800 px-4 rounded-lg  text-white"
                 >
                   <Plus className="w-4 h-4 mr-2" />
-                  Create Report
+                  {t("createNewReport")}
                 </Button>
               </div>
             ) : (

@@ -19,11 +19,13 @@ import {
 import { cn } from "@/lib/utils";
 import { useAppSelector, useAppDispatch } from "@/store/hooks";
 import { deleteReport } from "@/store/slices/reportsSlice";
-import { useRouter } from "next/navigation";
+import { useRouter } from "@/i18n/routing";
+import { useTranslations } from "next-intl";
 import { format } from "date-fns";
 import { useState } from "react";
 
 export default function Reports() {
+  const t = useTranslations("reports");
   const router = useRouter();
   const dispatch = useAppDispatch();
   const allReports = useAppSelector((state) => state.reports.reports);
@@ -57,17 +59,17 @@ export default function Reports() {
       <div className="flex flex-col gap-4 mb-6">
         <div>
           <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-2 text-gray-900 dark:text-white">
-            All Reports
+            {t("allReports")}
           </h1>
           <p className="text-gray-600 dark:text-gray-400 text-sm sm:text-base">
-            View and manage all generated reports
+            {t("manageReportsDescription")}
           </p>
         </div>
         <div className="flex flex-col sm:flex-row gap-3">
           <div className="relative flex-1">
             <Search className="w-4 h-4 absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 z-10" />
             <Input
-              placeholder="Search by reference..."
+              placeholder={t("searchReports")}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="w-full h-11 border-gray-200 dark:border-gray-800 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
@@ -75,8 +77,8 @@ export default function Reports() {
           </div>
           <Button className="gap-2 whitespace-nowrap bg-gray-800 rounded-lg  text-white border-0 shadow-lg hover:shadow-xl transition-all">
             <Download className="w-4 h-4" />
-            <span className="hidden sm:inline">Export All</span>
-            <span className="sm:hidden">Export</span>
+            <span className="hidden sm:inline">{t("download")}</span>
+            <span className="sm:hidden">{t("download")}</span>
           </Button>
         </div>
       </div>
@@ -88,25 +90,25 @@ export default function Reports() {
               <thead className="bg-linear-to-r from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-950">
                 <tr className="border-b border-gray-200 dark:border-gray-800">
                   <th className="text-left py-3 px-4 sm:py-4 sm:px-6 font-semibold text-gray-900 dark:text-white text-xs sm:text-sm w-[100px] sm:w-auto">
-                    Reference
+                    {t("refNumber")}
                   </th>
                   <th className="text-left py-3 px-4 sm:py-4 sm:px-6 font-semibold text-gray-900 dark:text-white text-xs sm:text-sm w-[110px] sm:w-auto">
-                    Date
+                    {t("date")}
                   </th>
                   <th className="text-left py-3 px-4 sm:py-4 sm:px-6 font-semibold text-gray-900 dark:text-white text-xs sm:text-sm w-[120px] sm:w-auto">
-                    Employee
+                    {t("employee")}
                   </th>
                   <th className="text-left py-3 px-4 sm:py-4 sm:px-6 font-semibold text-gray-900 dark:text-white text-xs sm:text-sm w-[130px] sm:w-auto">
-                    Shop
+                    {t("shop")}
                   </th>
                   <th className="text-left py-3 px-4 sm:py-4 sm:px-6 font-semibold text-gray-900 dark:text-white text-xs sm:text-sm w-[80px] sm:w-auto">
-                    Samples
+                    {t("samples")}
                   </th>
                   <th className="text-left py-3 px-4 sm:py-4 sm:px-6 font-semibold text-gray-900 dark:text-white text-xs sm:text-sm w-[100px] sm:w-auto">
-                    Status
+                    {t("status")}
                   </th>
                   <th className="text-right py-3 px-4 sm:py-4 sm:px-6 font-semibold text-gray-900 dark:text-white text-xs sm:text-sm w-[100px] sm:w-auto">
-                    Actions
+                    {t("actions")}
                   </th>
                 </tr>
               </thead>
@@ -118,7 +120,7 @@ export default function Reports() {
                         <FileText className="w-16 h-16 text-gray-300 dark:text-gray-600 mx-auto mb-4" />
                         <p className="text-gray-500 dark:text-gray-400 mb-4">
                           {allReports.length === 0
-                            ? "No reports found. Create your first report to get started."
+                            ? t("noData")
                             : "No reports match your search."}
                         </p>
                         {allReports.length === 0 && (
@@ -126,7 +128,7 @@ export default function Reports() {
                             onClick={() => router.push("/new-report")}
                             className="bg-gray-800 rounded-lg  text-white"
                           >
-                            Create Report
+                            {t("createNewReport")}
                           </Button>
                         )}
                       </div>
@@ -172,7 +174,7 @@ export default function Reports() {
                           variant="flat"
                           className="font-medium text-xs px-2 sm:px-3 bg-green-100 dark:bg-green-950 text-green-700 dark:text-green-400 border-green-200 dark:border-green-800"
                         >
-                          completed
+                          {t("completed")}
                         </Badge>
                       </td>
                       <td className="py-3 px-4 sm:py-4 sm:px-6">
@@ -204,7 +206,8 @@ export default function Reports() {
 
           <div className="flex items-center justify-between px-3 sm:px-6 py-3 sm:py-4 border-t border-gray-200 dark:border-gray-800 bg-gradient-to-r from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-950 mt-auto">
             <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 font-medium">
-             Showing {filteredReports.length} of {allReports.length}
+              {t("showing")} {filteredReports.length} {t("of")}{" "}
+              {allReports.length}
             </p>
             {filteredReports.length > 0 && (
               <div className="flex items-center gap-2">

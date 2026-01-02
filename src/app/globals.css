@@ -341,3 +341,12 @@
     transition: background-color 0.3s ease, color 0.3s ease;
   }
 }
+
+/* RTL Text Direction Support - Layout positions remain the same */
+/* Remove all layout flipping, keep only text-related RTL styles */
+
+[dir="rtl"] input,
+[dir="rtl"] textarea,
+[dir="rtl"] select {
+  text-align: right;
+}

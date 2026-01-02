@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter, useSearchParams } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { Logo } from "@/components/Logo";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -25,6 +26,7 @@ import {
 } from "lucide-react";
 
 export default function LoginPage() {
+  const t = useTranslations("login");
   const router = useRouter();
   const searchParams = useSearchParams();
   const [showPassword, setShowPassword] = useState(false);
@@ -64,7 +66,7 @@ export default function LoginPage() {
       router.refresh();
     } catch (error) {
       console.error("Login error:", error);
-      setLoginError("An unexpected error occurred. Please try again.");
+      setLoginError(t("errorMessage"));
     }
   };
 
@@ -78,11 +80,9 @@ export default function LoginPage() {
 
           <div className="text-center space-y-2">
             <h1 className="text-3xl font-bold tracking-tight text-gray-900 dark:text-white">
-              Welcome Back
+              {t("title")}
             </h1>
-            <p className="text-gray-600 dark:text-gray-400">
-              Sign in to access your laboratory reporting system
-            </p>
+            <p className="text-gray-600 dark:text-gray-400">{t("subtitle")}</p>
           </div>
 
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
@@ -98,12 +98,12 @@ export default function LoginPage() {
 
             <div className="space-y-2">
               <Label htmlFor="email" className="text-sm font-medium">
-                Email Address
+                {t("email")}
               </Label>
               <Input
                 id="email"
                 type="email"
-                placeholder="name@company.com"
+                placeholder={t("emailPlaceholder")}
                 {...register("email")}
                 className={errors.email ? "border-red-500" : ""}
               />
@@ -115,14 +115,14 @@ export default function LoginPage() {
             <div className="space-y-2">
               <div className="flex items-center justify-between">
                 <Label htmlFor="password" className="text-sm font-medium">
-                  Password
+                  {t("password")}
                 </Label>
               </div>
               <div className="relative">
                 <Input
                   id="password"
                   type={showPassword ? "text" : "password"}
-                  placeholder="••••••••"
+                  placeholder={t("passwordPlaceholder")}
                   {...register("password")}
                   className={errors.password ? "border-red-500" : ""}
                 />
@@ -150,7 +150,7 @@ export default function LoginPage() {
               className="w-full flex items-center bg-gray-800 text-white  hover:bg-gray-900 dark:bg-gray-700 dark:hover:bg-gray-600"
               disabled={isSubmitting}
             >
-              {isSubmitting ? "Signing in..." : "Sign In"}
+              {isSubmitting ? t("loggingIn") : t("signIn")}
               <ArrowRight className="w-4 h-4 ml-2" />
             </Button>
           </form>

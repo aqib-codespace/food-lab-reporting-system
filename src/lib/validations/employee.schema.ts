@@ -7,6 +7,9 @@ export const employeeFormSchema = z.object({
     .string()
     .min(1, "Phone number is required")
     .regex(/^\+?[\d\s\-()]+$/, "Invalid phone number format"),
+  role: z.enum(["admin", "analyst", "technician", "manager"], {
+    message: "Please select a role",
+  }),
   photo: z.string().min(1, "Employee photo is required"),
   signature: z.string().min(1, "Signature is required"),
 });

@@ -2,10 +2,11 @@
 
 import { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
-import { useRouter } from "next/navigation";
+import { useRouter } from "@/i18n/routing";
 import { Button } from "@/components/ui/button";
 import { LogOut, AlertTriangle, X } from "lucide-react";
 import { clientAuth } from "@/lib/auth";
+import { useTranslations } from "next-intl";
 
 interface LogoutButtonProps {
   className?: string;
@@ -16,6 +17,7 @@ export function LogoutButton({
   className,
   variant = "text",
 }: LogoutButtonProps) {
+  const t = useTranslations("common");
   const router = useRouter();
   const [isOpen, setIsOpen] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
@@ -48,7 +50,7 @@ export function LogoutButton({
         className={`w-full justify-start shadow-none  ${className}`}
       >
         <LogOut className="w-4 h-4" />
-        Logout
+        {t("logout")}
       </Button>
 
       {mounted &&

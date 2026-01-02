@@ -1,7 +1,7 @@
 "use client";
 
 import { Logo } from "@/components/Logo";
-import { usePathname } from "next/navigation";
+import { usePathname } from "@/i18n/routing";
 import {
   LayoutDashboard,
   FileText,
@@ -12,27 +12,59 @@ import {
   X,
   BookOpen,
   LogOut,
+  ChevronDown,
+  ChevronRight,
+  Database,
+  TestTube2,
+  MapPin,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import Link from "next/link";
+import { Link } from "@/i18n/routing";
 import { LogoutButton } from "@/components/LogoutButton";
+import { useState } from "react";
+import { useTranslations } from "next-intl";
 
 interface SidebarProps {
   isOpen: boolean;
   onClose: () => void;
 }
 
-const navigation = [
-  { name: "Dashboard", href: "/", icon: LayoutDashboard },
-  { name: "New Report", href: "/new-report", icon: FileText },
-  { name: "All Reports", href: "/reports", icon: FolderOpen },
-  { name: "Employees", href: "/employees", icon: Users },
-
-  { name: "Documentation", href: "/documentation", icon: BookOpen },
-];
-
 export function Sidebar({ isOpen, onClose }: SidebarProps) {
+  const t = useTranslations("nav");
   const pathname = usePathname();
+  const [isMasterDataOpen, setIsMasterDataOpen] = useState(true);
+
+  const navigation = [
+    { name: t("dashboard"), href: "/", icon: LayoutDashboard },
+    { name: t("newReport"), href: "/new-report", icon: FileText },
+    { name: t("reports"), href: "/reports", icon: FolderOpen },
+  ];
+
+  const masterDataItems = [
+    { name: t("employees"), href: "/master-data/employees", icon: Users },
+    {
+      name: t("containerTypes"),
+      href: "/master-data/container-types",
+      icon: Package,
+    },
+    {
+      name: t("sampleNames"),
+      href: "/master-data/sample-names",
+      icon: TestTube2,
+    },
+    {
+      name: t("storageLocations"),
+      href: "/master-data/storage-locations",
+      icon: MapPin,
+    },
+  ];
+
+  const bottomNavigation = [
+    { name: t("documentation"), href: "/documentation", icon: BookOpen },
+  ];
+
+  const isMasterDataActive =
+    pathname?.startsWith("/master-data") || pathname === "/employees";
 
   return (
     <>
@@ -54,7 +86,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
         <div className="h-18 flex items-center  justify-between px-6 border-b border-gray-200 dark:border-gray-800">
           <Link href="/">
             <img src="/logo.png" alt="FoodLab Logo" className=" w-auto" />
-          {/* </Link> */}
+          </Link>
           <button
             className="lg:hidden bg-gray-100 dark:bg-gray-800 p-2 rounded-lg text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-200 dark:hover:bg-gray-700 transition-all"
             onClick={onClose}
@@ -69,6 +101,99 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
               Main Menu
             </p>
             {navigation.map((item) => {
+              const isActive =
+                pathname === item.href ||
+                (item.href !== "/" && pathname?.startsWith(item.href));
+              return (
+                <Link
+                  key={item.name}
+                  href={item.href}
+                  className={cn(
+                    "group flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200",
+                    "hover:translate-x-1",
+                    isActive
+                      ? "bg-gray-800 text-white shadow-lg"
+                      : "text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800"
+                  )}
+                  onClick={onClose}
+                >
+                  <item.icon
+                    className={cn(
+                      "w-5 h-5 transition-transform duration-200",
+                      isActive
+                        ? "text-white"
+                        : "text-gray-600 dark:text-gray-400 group-hover:text-gray-600 dark:group-hover:text-gray-400 group-hover:scale-110"
+                    )}
+                  />
+                  {item.name}
+                  {isActive && (
+                    <div className="ml-auto w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
+                  )}
+                </Link>
+              );
+            })}
+
+            {/* Master Data Dropdown */}
+            <div>
+              <button
+                onClick={() => setIsMasterDataOpen(!isMasterDataOpen)}
+                className={cn(
+                  "group flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200 w-full",
+                  "hover:translate-x-1",
+                  isMasterDataActive
+                    ? "bg-gray-800 text-white shadow-lg"
+                    : "text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800"
+                )}
+              >
+                <Database
+                  className={cn(
+                    "w-5 h-5 transition-transform duration-200",
+                    isMasterDataActive
+                      ? "text-white"
+                      : "text-gray-600 dark:text-gray-400 group-hover:text-gray-600 dark:group-hover:text-gray-400 group-hover:scale-110"
+                  )}
+                />
+                {t("masterData")}
+                {isMasterDataOpen ? (
+                  <ChevronDown className="w-4 h-4 ml-auto" />
+                ) : (
+                  <ChevronRight className="w-4 h-4 ml-auto" />
+                )}
+              </button>
+
+              {/* Master Data Sub-items */}
+              {isMasterDataOpen && (
+                <div className="ml-4 mt-1 space-y-1">
+                  {masterDataItems.map((item) => {
+                    const isActive =
+                      pathname === item.href ||
+                      pathname === item.href.replace("/master-data", "");
+                    return (
+                      <Link
+                        key={item.name}
+                        href={item.href}
+                        className={cn(
+                          "group flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-medium transition-all duration-200",
+                          "hover:translate-x-1",
+                          isActive
+                            ? "bg-gray-700 text-white"
+                            : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800"
+                        )}
+                        onClick={onClose}
+                      >
+                        <item.icon className="w-4 h-4" />
+                        {item.name}
+                        {isActive && (
+                          <div className="ml-auto w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
+                        )}
+                      </Link>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+
+            {bottomNavigation.map((item) => {
               const isActive =
                 pathname === item.href ||
                 (item.href !== "/" && pathname?.startsWith(item.href));

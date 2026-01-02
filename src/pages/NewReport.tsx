@@ -1,11 +1,11 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useTranslations } from "next-intl";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button, Badge } from "rizzui";
 import { Input } from "@/components/ui/input";
 import { Select, type SelectOption } from "@/components/ui/select";
-
 import { Label } from "@/components/ui/label";
 import {
   Plus,
@@ -20,18 +20,21 @@ import {
   CheckCircle,
   X,
   AlertTriangle,
+  Loader2,
 } from "lucide-react";
 import {
   ReportData,
   Sample,
   ContainerEntry,
-  EMPLOYEES,
-  EXTERNAL_CONTAINER_TYPES,
-  INTERNAL_CONTAINER_TYPES,
   SENDER_SHOPS,
-  SAMPLE_NAMES,
   COLOR_OPTIONS,
 } from "@/types/report";
+import {
+  useEmployees,
+  useContainerTypes,
+  useSampleNames,
+  useStorageLocations,
+} from "@/hooks/useSupabaseData";
 import { ReportPreview } from "@/components/report/ReportPreview";
 import { toast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
@@ -52,7 +55,7 @@ const getDefaultSample = (index: number): Sample => ({
   pureOrTotal: "pure",
   weightUsed: 0,
   colorCode: COLOR_OPTIONS[0].value,
-  storageLocation: "store",
+  storageLocation: "",
 });
 
 const getDefaultContainer = (): ContainerEntry => ({
@@ -62,9 +65,25 @@ const getDefaultContainer = (): ContainerEntry => ({
 });
 
 export default function NewReport() {
+  const t = useTranslations("newReport");
+  const tCommon = useTranslations("common");
   const [showPreview, setShowPreview] = useState(false);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const dispatch = useAppDispatch();
+
+  const { data: employees, loading: employeesLoading } = useEmployees();
+  const { data: containerTypes, loading: containerTypesLoading } =
+    useContainerTypes();
+  const { data: sampleNames, loading: sampleNamesLoading } = useSampleNames();
+  const { data: storageLocations, loading: storageLocationsLoading } =
+    useStorageLocations();
+
+  const externalContainerTypes = containerTypes.filter(
+    (ct) => ct.category === "external"
+  );
+  const internalContainerTypes = containerTypes.filter(
+    (ct) => ct.category === "internal"
+  );
   const [reportData, setReportData] = useState<ReportData>({
     refNumber: "",
     employee: null,
@@ -210,8 +229,8 @@ export default function NewReport() {
       }
 
       toast({
-        title: "Validation Error",
-        description: "Please fill in all required fields correctly.",
+        title: t("validationError"),
+        description: t("pleaseFillAllFields"),
         variant: "destructive",
       });
       return;
@@ -228,9 +247,8 @@ export default function NewReport() {
     dispatch(addReport(reportToSave));
 
     toast({
-      title: "Report Saved",
-      description:
-        "Report has been saved successfully and is ready for preview.",
+      title: t("reportSaved"),
+      description: t("reportSavedSuccessfully"),
     });
 
     setShowPreview(true);
@@ -257,10 +275,10 @@ export default function NewReport() {
     <DashboardLayout>
       <div className="flex flex-col gap-2 mb-4 sm:mb-6">
         <h1 className="text-xl sm:text-2xl font-bold text-foreground">
-          Create New Report
+          {t("createNewReport")}
         </h1>
         <p className="text-sm sm:text-base text-muted-foreground">
-          Fill in the details below to generate a sample tracking report.
+          {t("fillInDetails")}
         </p>
       </div>
 
@@ -270,16 +288,16 @@ export default function NewReport() {
             <CardHeader className="pb-3 sm:pb-4 px-4 sm:px-6">
               <CardTitle className="text-sm sm:text-base font-semibold flex items-center gap-2">
                 <Calendar className="w-4 h-4 text-accent" />
-                Basic Information
+                {t("reportDetails")}
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-3 sm:space-y-4 px-4 sm:px-6">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                 <div className="space-y-2" data-error={!!fieldErrors.refNumber}>
-                  <Label htmlFor="refNumber">Reference Number *</Label>
+                  <Label htmlFor="refNumber">{t("referenceNumber")} *</Label>
                   <Input
                     id="refNumber"
-                    placeholder="Enter 6 digits"
+                    placeholder={t("refNumberPlaceholder")}
                     maxLength={6}
                     value={reportData.refNumber}
                     onChange={(e) =>
@@ -302,7 +320,7 @@ export default function NewReport() {
                   )}
                 </div>
                 <div className="space-y-2" data-error={!!fieldErrors.date}>
-                  <Label htmlFor="date">Date</Label>
+                  <Label htmlFor="date">{t("date")}</Label>
                   <Input
                     id="date"
                     type="date"
@@ -323,33 +341,48 @@ export default function NewReport() {
               </div>
 
               <div className="space-y-2" data-error={!!fieldErrors.employee}>
-                <Label>Select Employee *</Label>
-                <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
-                  {EMPLOYEES.map((emp) => (
-                    <button
-                      key={emp.id}
-                      type="button"
-                      onClick={() => updateField("employee", emp)}
-                      className={`flex flex-col items-center gap-1 p-3 rounded-lg border-2 transition-all ${
-                        reportData.employee?.id === emp.id
-                          ? "border-accent bg-accent/5"
-                          : fieldErrors.employee
-                          ? "border-red-500 hover:border-red-600"
-                          : "border-border hover:border-accent/50"
-                      }`}
-                    >
-                      <div
-                        className="w-10 h-10 rounded-full flex items-center justify-center text-sm font-semibold text-primary-foreground"
-                        style={{ backgroundColor: emp.color }}
+                <Label>{t("selectEmployee")} *</Label>
+                {employeesLoading ? (
+                  <div className="flex items-center justify-center p-8 text-muted-foreground">
+                    <Loader2 className="w-5 h-5 animate-spin" />
+                  </div>
+                ) : employees.length === 0 ? (
+                  <div className="text-center p-8 text-muted-foreground">
+                    {t("noEmployeesFound")}
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
+                    {employees.map((emp) => (
+                      <button
+                        key={emp.id}
+                        type="button"
+                        onClick={() => updateField("employee", emp)}
+                        className={`flex flex-col items-center gap-1 p-3 rounded-lg border-2 transition-all ${
+                          reportData.employee?.id === emp.id
+                            ? "border-accent bg-accent/5"
+                            : fieldErrors.employee
+                            ? "border-red-500 hover:border-red-600"
+                            : "border-border hover:border-accent/50"
+                        }`}
                       >
-                        {emp.initials}
-                      </div>
-                      <span className="text-xs text-muted-foreground truncate w-full text-center">
-                        {emp.name.split(" ")[0]}
-                      </span>
-                    </button>
-                  ))}
-                </div>
+                        {emp.photo ? (
+                          <img
+                            src={emp.photo}
+                            alt={emp.name}
+                            className="w-10 h-10 rounded-full object-cover"
+                          />
+                        ) : (
+                          <div className="w-10 h-10 rounded-full flex items-center justify-center text-sm font-semibold bg-accent/10 text-accent">
+                            {emp.initials}
+                          </div>
+                        )}
+                        <span className="text-xs text-muted-foreground truncate w-full text-center">
+                          {emp.name.split(" ")[0]}
+                        </span>
+                      </button>
+                    ))}
+                  </div>
+                )}
                 {fieldErrors.employee && (
                   <p className="text-sm text-red-600 dark:text-red-400 flex items-center gap-1">
                     <AlertTriangle className="w-4 h-4" />
@@ -368,7 +401,7 @@ export default function NewReport() {
                       </CardTitle>
 
                       <div className="flex items-center gap-2">
-                        {reportData.employee.active ? (
+                        {reportData.employee.status === "active" ? (
                           <Badge className="text-xs px-2 py-1 rounded-full bg-accent/10 text-accent">
                             Active
                           </Badge>
@@ -392,12 +425,17 @@ export default function NewReport() {
 
                   <CardContent className="flex items-center gap-4 py-3">
                     <div className="flex items-start gap-3 min-w-0">
-                      <div
-                        className="w-12 h-12 rounded-full flex items-center justify-center text-sm font-semibold"
-                        style={{ backgroundColor: reportData.employee.color }}
-                      >
-                        {reportData.employee.initials}
-                      </div>
+                      {reportData.employee.photo ? (
+                        <img
+                          src={reportData.employee.photo}
+                          alt={reportData.employee.name}
+                          className="w-12 h-12 rounded-full object-cover"
+                        />
+                      ) : (
+                        <div className="w-12 h-12 rounded-full flex items-center justify-center text-sm font-semibold bg-accent/10 text-accent">
+                          {reportData.employee.initials}
+                        </div>
+                      )}
 
                       <div className="min-w-0">
                         <div className="font-medium text-sm truncate">
@@ -413,13 +451,13 @@ export default function NewReport() {
                           <div className="flex items-center gap-2 truncate">
                             <Mail className="w-4 h-4" />
                             <span className="truncate">
-                              {reportData.employee.email ?? "Not provided"}
+                              {reportData.employee.email ?? t("notProvided")}
                             </span>
                           </div>
                           <div className="flex items-center gap-2 truncate mt-1 sm:mt-0">
                             <Phone className="w-4 h-4" />
                             <span className="truncate">
-                              {reportData.employee.phone ?? "Not provided"}
+                              {reportData.employee.phone ?? t("notProvided")}
                             </span>
                           </div>
                         </div>
@@ -427,7 +465,7 @@ export default function NewReport() {
                     </div>
 
                     <div className="ml-auto">
-                      <p>Signature</p>
+                      <p>{t("signature")}</p>
                       {reportData.employee.signature ? (
                         <img
                           src={reportData.employee.signature}
@@ -436,7 +474,7 @@ export default function NewReport() {
                         />
                       ) : (
                         <div className="text-xs text-muted-foreground italic">
-                          No signature
+                          {t("noSignature")}
                         </div>
                       )}
                     </div>
@@ -445,7 +483,7 @@ export default function NewReport() {
               )}
 
               <div className="space-y-2">
-                <Label htmlFor="senderShop">Sender Shop</Label>
+                <Label htmlFor="senderShop">{t("senderShop")}</Label>
                 <Select
                   value={reportData.senderShop}
                   onChange={(value) =>
@@ -455,7 +493,7 @@ export default function NewReport() {
                     label: shop,
                     value: shop,
                   }))}
-                  placeholder="Select sender shop"
+                  placeholder={t("selectShop")}
                   className="input-focus"
                 />
               </div>
@@ -468,7 +506,7 @@ export default function NewReport() {
               <div className="flex items-center justify-between gap-2">
                 <CardTitle className="text-sm sm:text-base font-semibold flex items-center gap-2">
                   <Package className="w-4 h-4 text-accent" />
-                  External Containers
+                  {t("externalContainers")}
                 </CardTitle>
                 <Button
                   variant="outline"
@@ -477,7 +515,7 @@ export default function NewReport() {
                   className="gap-1 border rounded-lg px-2 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm"
                 >
                   <Plus className="w-3 h-3" />
-                  <span className="hidden sm:inline">Add</span>
+                  <span className="hidden sm:inline">{t("add")}</span>
                 </Button>
               </div>
             </CardHeader>
@@ -488,7 +526,7 @@ export default function NewReport() {
                   className="flex gap-2 sm:gap-3 items-end animate-fade-in"
                 >
                   <div className="w-16 sm:w-20">
-                    <Label className="text-xs">Qty</Label>
+                    <Label className="text-xs">{t("qty")}</Label>
                     <Input
                       type="number"
                       min="1"
@@ -502,7 +540,7 @@ export default function NewReport() {
                     />
                   </div>
                   <div className="flex-1">
-                    <Label className="text-xs">Container Type</Label>
+                    <Label className="text-xs">{t("containerType")}</Label>
                     <Select
                       value={container.type}
                       onChange={(value) =>
@@ -510,11 +548,11 @@ export default function NewReport() {
                           type: value as string,
                         })
                       }
-                      options={EXTERNAL_CONTAINER_TYPES.map((type) => ({
-                        label: type,
-                        value: type,
+                      options={externalContainerTypes.map((type) => ({
+                        label: type.name,
+                        value: type.id,
                       }))}
-                      placeholder="Select type"
+                      placeholder={t("selectType")}
                       className="input-focus"
                     />
                   </div>
@@ -532,122 +570,6 @@ export default function NewReport() {
               ))}
             </CardContent>
           </Card>
-
-          {/* Internal Containers */}
-          <Card>
-            <CardHeader className="pb-3 sm:pb-4 px-4 sm:px-6">
-              <div className="flex items-center justify-between gap-2">
-                <CardTitle className="text-sm sm:text-base font-semibold flex items-center gap-2">
-                  <Package className="w-4 h-4 text-primary" />
-                  Internal Containers
-                </CardTitle>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={addInternalContainer}
-                  className="gap-1 border rounded-lg px-2 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm"
-                >
-                  <Plus className="w-3 h-3" />
-                  <span className="hidden sm:inline">Add</span>
-                </Button>
-              </div>
-            </CardHeader>
-            <CardContent className="space-y-3 px-4 sm:px-6">
-              {reportData.internalContainers.map((container) => (
-                <div
-                  key={container.id}
-                  className="flex gap-2 sm:gap-3 items-end animate-fade-in"
-                >
-                  <div className="w-16 sm:w-20">
-                    <Label className="text-xs">Qty</Label>
-                    <Input
-                      type="number"
-                      min="1"
-                      value={container.quantity || ""}
-                      onChange={(e) =>
-                        updateInternalContainer(container.id, {
-                          quantity: parseInt(e.target.value) || 0,
-                        })
-                      }
-                      className="input-focus"
-                    />
-                  </div>
-                  <div className="flex-1">
-                    <Label className="text-xs">Container Type</Label>
-                    <Select
-                      value={container.type}
-                      onChange={(value) =>
-                        updateInternalContainer(container.id, {
-                          type: value as string,
-                        })
-                      }
-                      options={INTERNAL_CONTAINER_TYPES.map((type) => ({
-                        label: type,
-                        value: type,
-                      }))}
-                      placeholder="Select type"
-                      className="input-focus"
-                    />
-                  </div>
-                  {reportData.internalContainers.length > 1 && (
-                    <Button
-                      variant="text"
-                      size="sm"
-                      onClick={() => removeInternalContainer(container.id)}
-                      className="text-destructive border text-red-500 border-red-500 py-5 px-2 rounded-lg hover:text-destructive/80 hover:bg-red-50"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </Button>
-                  )}
-                </div>
-              ))}
-            </CardContent>
-          </Card>
-
-          {/* Additional Info */}
-          <Card>
-            <CardHeader className="pb-3 sm:pb-4 px-4 sm:px-6">
-              <CardTitle className="text-sm sm:text-base font-semibold">
-                Additional Information
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3 sm:space-y-4 px-4 sm:px-6">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="producedDate">Production Date</Label>
-                  <Input
-                    id="producedDate"
-                    type="date"
-                    value={reportData.producedDate}
-                    onChange={(e) =>
-                      updateField("producedDate", e.target.value)
-                    }
-                    className="input-focus"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="expiredDate">Expiry Date</Label>
-                  <Input
-                    id="expiredDate"
-                    type="date"
-                    value={reportData.expiredDate}
-                    onChange={(e) => updateField("expiredDate", e.target.value)}
-                    className="input-focus"
-                  />
-                </div>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="barcodeNumber">Barcode Number</Label>
-                <Input
-                  id="barcodeNumber"
-                  placeholder="Enter barcode number"
-                  value={reportData.barcodeNumber}
-                  onChange={(e) => updateField("barcodeNumber", e.target.value)}
-                  className="input-focus"
-                />
-              </div>
-            </CardContent>
-          </Card>
         </div>
 
         {/* Right Column - Samples */}
@@ -657,7 +579,7 @@ export default function NewReport() {
               <div className="flex items-center justify-between gap-2">
                 <CardTitle className="text-sm sm:text-base font-semibold flex items-center gap-2">
                   <User className="w-4 h-4 text-accent" />
-                  Samples
+                  {t("sampleInformation")}
                   <Badge
                     variant="flat"
                     color="secondary"
@@ -673,8 +595,8 @@ export default function NewReport() {
                   className="gap-1 border rounded-lg px-2 text-xs sm:text-sm whitespace-nowrap"
                 >
                   <Plus className="w-3 h-3" />
-                  <span className="hidden sm:inline">Add Sample</span>
-                  <span className="sm:hidden">Add</span>
+                  <span className="hidden sm:inline">{t("addSample")}</span>
+                  <span className="sm:hidden">{t("add")}</span>
                 </Button>
               </div>
             </CardHeader>
@@ -704,7 +626,7 @@ export default function NewReport() {
                         className="text-destructive hover:text-destructive/80 hover:bg-destructive/10 h-8"
                       >
                         <Trash2 className="w-4 h-4 mr-1" />
-                        Remove
+                        {t("delete")}
                       </Button>
                     )}
                   </div>
@@ -712,7 +634,7 @@ export default function NewReport() {
                   <div className="space-y-3">
                     <div>
                       <Label className="text-xs sm:text-sm font-medium mb-1.5 block">
-                        Sample Name
+                        {t("sampleName")}
                       </Label>
                       <Select
                         value={sample.sampleName}
@@ -721,17 +643,17 @@ export default function NewReport() {
                             sampleName: value as string,
                           })
                         }
-                        options={SAMPLE_NAMES.map((name) => ({
-                          label: name,
-                          value: name,
+                        options={sampleNames.map((sample) => ({
+                          label: sample.name,
+                          value: sample.id,
                         }))}
-                        placeholder="Select"
+                        placeholder={t("selectSampleName")}
                         className="input-focus h-10"
                       />
                     </div>
                     <div>
                       <Label className="text-xs font-medium mb-1.5 block">
-                        Internal Container
+                        {t("internalContainerType")}
                       </Label>
                       <div className="flex gap-2">
                         <Input
@@ -754,11 +676,11 @@ export default function NewReport() {
                               internalContainerType: value as string,
                             })
                           }
-                          options={INTERNAL_CONTAINER_TYPES.map((type) => ({
-                            label: type,
-                            value: type,
+                          options={internalContainerTypes.map((type) => ({
+                            label: type.name,
+                            value: type.id,
                           }))}
-                          placeholder="Type"
+                          placeholder={t("selectType")}
                           className="input-focus h-10 flex-1"
                         />
                       </div>
@@ -768,7 +690,7 @@ export default function NewReport() {
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <div>
                       <Label className="text-xs sm:text-sm font-medium mb-1.5 block">
-                        Net Weight
+                        {t("netWeight")}
                       </Label>
                       <div className="flex gap-2">
                         <Input
@@ -800,7 +722,27 @@ export default function NewReport() {
                     </div>
                     <div>
                       <Label className="text-xs sm:text-sm font-medium mb-1.5 block">
-                        Pure/Total
+                        {t("storageLocation")}
+                      </Label>
+                      <Select
+                        value={sample.storageLocation}
+                        onChange={(value) =>
+                          updateSample(sample.id, {
+                            storageLocation: String(value),
+                          })
+                        }
+                        options={storageLocations
+                          .filter((loc) => loc.status === "active")
+                          .map((loc) => ({
+                            label: loc.name,
+                            value: loc.id,
+                          }))}
+                        className="input-focus h-10"
+                      />
+                    </div>
+                    <div>
+                      <Label className="text-xs sm:text-sm font-medium mb-1.5 block">
+                        {t("pureOrTotal")}
                       </Label>
                       <Select
                         value={sample.pureOrTotal}
@@ -810,15 +752,15 @@ export default function NewReport() {
                           })
                         }
                         options={[
-                          { label: "Pure", value: "pure" },
-                          { label: "Total", value: "total" },
+                          { label: t("pure"), value: "pure" },
+                          { label: t("total"), value: "total" },
                         ]}
                         className="input-focus h-10"
                       />
                     </div>
                     <div>
                       <Label className="text-xs sm:text-sm font-medium mb-1.5 block">
-                        Weight Used (g)
+                        {t("weightUsed")} (g)
                       </Label>
                       <Input
                         type="number"
@@ -837,30 +779,8 @@ export default function NewReport() {
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <div>
-                      <Label className="text-xs sm:text-sm font-medium mb-1.5 block">
-                        Storage Location
-                      </Label>
-                      <Select
-                        value={sample.storageLocation}
-                        onChange={(value) =>
-                          updateSample(sample.id, {
-                            storageLocation: value as
-                              | "store"
-                              | "fridge"
-                              | "both",
-                          })
-                        }
-                        options={[
-                          { label: "Store", value: "store" },
-                          { label: "Fridge", value: "fridge" },
-                          { label: "Both", value: "both" },
-                        ]}
-                        className="input-focus h-10"
-                      />
-                    </div>
-                    <div>
                       <Label className="text-xs font-medium mb-1.5 block">
-                        Color Code
+                        {t("colorCode")}
                       </Label>
                       <div className="flex items-center gap-2 flex-wrap">
                         {COLOR_OPTIONS.map((color) => (
@@ -907,6 +827,48 @@ export default function NewReport() {
             </CardContent>
           </Card>
         </div>
+        {/* Additional Info */}
+        <Card>
+          <CardHeader className="pb-3 sm:pb-4 px-4 sm:px-6">
+            <CardTitle className="text-sm sm:text-base font-semibold">
+              {t("additionalInfo")}
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3 sm:space-y-4 px-4 sm:px-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="producedDate">{t("producedDate")}</Label>
+                <Input
+                  id="producedDate"
+                  type="date"
+                  value={reportData.producedDate}
+                  onChange={(e) => updateField("producedDate", e.target.value)}
+                  className="input-focus"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="expiredDate">{t("expiredDate")}</Label>
+                <Input
+                  id="expiredDate"
+                  type="date"
+                  value={reportData.expiredDate}
+                  onChange={(e) => updateField("expiredDate", e.target.value)}
+                  className="input-focus"
+                />
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="barcodeNumber">{t("barcodeNumber")}</Label>
+              <Input
+                id="barcodeNumber"
+                placeholder={t("barcodePlaceholder")}
+                value={reportData.barcodeNumber}
+                onChange={(e) => updateField("barcodeNumber", e.target.value)}
+                className="input-focus"
+              />
+            </div>
+          </CardContent>
+        </Card>
       </div>
 
       <div className="fixed bottom-0 left-0 lg:left-64 right-0 bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-800 shadow-lg z-50">
@@ -918,9 +880,8 @@ export default function NewReport() {
                   setShowPreview(true);
                 } else {
                   toast({
-                    title: "Validation Failed",
-                    description:
-                      "Please fill in all required fields correctly.",
+                    title: t("validationError"),
+                    description: t("pleaseFillAllFields"),
                     variant: "destructive",
                   });
                 }
@@ -930,7 +891,7 @@ export default function NewReport() {
               className="min-w-28 sm:min-w-35 border rounded-lg text-sm sm:text-base px-3 sm:px-4"
             >
               <Eye className="w-4 h-4 mr-1 sm:mr-2" />
-              Preview
+              {t("preview")}
             </Button>
             <Button
               onClick={handleGenerateReport}
@@ -938,8 +899,8 @@ export default function NewReport() {
               className="min-w-32 sm:min-w-45 bg-gray-800 text-white rounded-lg text-sm sm:text-base px-3 sm:px-4"
             >
               <FileDown className="w-4 h-4 mr-1 sm:mr-2" />
-              <span className="hidden sm:inline">Generate Report</span>
-              <span className="sm:hidden">Generate</span>
+              <span className="hidden sm:inline">{t("generateReport")}</span>
+              <span className="sm:hidden">{t("createReport")}</span>
             </Button>
           </div>
         </div>
