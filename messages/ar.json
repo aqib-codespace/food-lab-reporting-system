@@ -61,7 +61,7 @@
     "yourLatestSampleTrackingActivities": "أحدث أنشطة تتبع العينات الخاصة بك",
     "createNewReport": "إنشاء تقرير جديد",
     "noData": "لم يتم العثور على تقارير. أنشئ تقريرًا جديدًا للبدء."
-    },
+  },
   "newReport": {
     "title": "تقرير جديد",
     "createNewReport": "إنشاء تقرير جديد",
@@ -128,27 +128,7 @@
       "dateRequired": "التاريخ مطلوب",
       "containerTypeRequired": "نوع الحاوية مطلوب",
       "sampleNameRequired": "اسم العينة مطلوب",
-      "invalidData": "يرجى ملء جميع الحقول المطلوبة"
-    },
-    "success": {
-      "reportCreated": "تم إنشاء التقرير بنجاح!"
-    }
-  },
-    "addSample": "إضافة عينة",
-    "additionalInfo": "معلومات إضافية",
-    "barcodeNumber": "رقم الباركود",
-    "barcodePlaceholder": "أدخل رقم الباركود",
-    "producedDate": "تاريخ الإنتاج",
-    "expiredDate": "تاريخ الانتهاء",
-    "preview": "معاينة",
-    "createReport": "إنشاء التقرير",
-    "errors": {
-      "refNumberRequired": "رقم المرجع مطلوب",
-      "employeeRequired": "الموظف مطلوب",
-      "dateRequired": "التاريخ مطلوب",
-      "containerTypeRequired": "نوع الحاوية مطلوب",
-      "sampleNameRequired": "اسم العينة مطلوب",
-      "invalidData": "يرجى ملء جميع الحقول المطلوبة"
+      "invalidData": "يرجى ملء جميع الحواميل المطلوبة"
     },
     "success": {
       "reportCreated": "تم إنشاء التقرير بنجاح!"

@@ -33,7 +33,6 @@ import {
   useEmployees,
   useContainerTypes,
   useSampleNames,
-  useStorageLocations,
 } from "@/hooks/useSupabaseData";
 import { ReportPreview } from "@/components/report/ReportPreview";
 import { toast } from "@/hooks/use-toast";
@@ -75,8 +74,13 @@ export default function NewReport() {
   const { data: containerTypes, loading: containerTypesLoading } =
     useContainerTypes();
   const { data: sampleNames, loading: sampleNamesLoading } = useSampleNames();
-  const { data: storageLocations, loading: storageLocationsLoading } =
-    useStorageLocations();
+
+  // Hardcoded storage location options (temporary): shop, fridge, both
+  const STORAGE_LOCATION_OPTIONS = [
+    { label: t("shop"), value: "shop" },
+    { label: t("fridge"), value: "fridge" },
+    { label: t("both"), value: "both" },
+  ];
 
   const externalContainerTypes = containerTypes.filter(
     (ct) => ct.category === "external"
@@ -401,15 +405,7 @@ export default function NewReport() {
                       </CardTitle>
 
                       <div className="flex items-center gap-2">
-                        {reportData.employee.status === "active" ? (
-                          <Badge className="text-xs px-2 py-1 rounded-full bg-accent/10 text-accent">
-                            Active
-                          </Badge>
-                        ) : (
-                          <Badge className="text-xs px-2 py-1 rounded-full bg-muted/10 text-muted-foreground">
-                            Inactive
-                          </Badge>
-                        )}
+                        
                         <Button
                           variant="text"
                           size="sm"
@@ -470,7 +466,7 @@ export default function NewReport() {
                         <img
                           src={reportData.employee.signature}
                           alt={`${reportData.employee.name} signature`}
-                          className="h-10 object-cover rounded-md"
+                          className="h-16 w-40 rounded-md"
                         />
                       ) : (
                         <div className="text-xs text-muted-foreground italic">
@@ -731,12 +727,7 @@ export default function NewReport() {
                             storageLocation: String(value),
                           })
                         }
-                        options={storageLocations
-                          .filter((loc) => loc.status === "active")
-                          .map((loc) => ({
-                            label: loc.name,
-                            value: loc.id,
-                          }))}
+                        options={STORAGE_LOCATION_OPTIONS}
                         className="input-focus h-10"
                       />
                     </div>
@@ -908,3 +899,4 @@ export default function NewReport() {
     </DashboardLayout>
   );
 }
+

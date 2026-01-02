@@ -13,10 +13,12 @@ import {
   Package,
   AlertTriangle,
   Loader2,
+  MoreVertical,
 } from "lucide-react";
 import { z } from "zod";
 import { useContainerTypes } from "@/hooks/useSupabaseData";
 import { useToast } from "@/hooks/use-toast";
+import DropdownMenu from "@/components/ui/dropdown-menu";
 
 const containerTypeFormSchema = z.object({
   name: z.string().min(1, "Name is required").max(100, "Name is too long"),
@@ -90,7 +92,7 @@ export default function ContainerTypes() {
     if (!result.success) {
       const errors: { name?: string; description?: string; category?: string } =
         {};
-      result.error.issues.forEach((issue: any) => {
+      result.error.issues.forEach((issue: z.ZodIssue) => {
         const field = issue.path[0] as "name" | "description" | "category";
         errors[field] = issue.message;
       });
@@ -228,20 +230,6 @@ export default function ContainerTypes() {
             </Button>
           </div>
 
-          <Card className="mb-6">
-            <CardContent className="p-4">
-              <div className="relative max-w-md">
-                <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 dark:text-gray-400 z-10" />
-                <Input
-                  placeholder="Search container types..."
-                  className="w-full pl-9"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                />
-              </div>
-            </CardContent>
-          </Card>
-
           <div className="space-y-6">
             {/* External Containers */}
             <div>
@@ -273,47 +261,53 @@ export default function ContainerTypes() {
                             </Badge>
                           </div>
                         </div>
+                        <div className="flex items-center">
+                          <DropdownMenu.Root>
+                            <DropdownMenu.Trigger>
+                              <button className="p-2 rounded-md hover:bg-gray-100 bg-gray-50 dark:hover:bg-gray-800 transition-colors">
+                                <MoreVertical className="w-4 h-4 text-gray-600" />
+                              </button>
+                            </DropdownMenu.Trigger>
+                            <DropdownMenu.Content>
+                              <DropdownMenu.Item
+                                onSelect={() => handleEditClick(container)}
+                              >
+                                <Edit2 className="w-3 h-3" />
+                                <span>Edit</span>
+                              </DropdownMenu.Item>
+                              <DropdownMenu.Item
+                                onSelect={() => handleDeleteClick(container.id)}
+                                className="text-red-600 dark:text-red-400"
+                              >
+                                <Trash2 className="w-3 h-3" />
+                                <span>Delete</span>
+                              </DropdownMenu.Item>
+                            </DropdownMenu.Content>
+                          </DropdownMenu.Root>
+                        </div>
                       </div>
                       {container.description && (
                         <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">
                           {container.description}
                         </p>
                       )}
-                      <div className="flex items-center justify-between pt-3 border-t border-gray-200 dark:border-gray-800">
-                        <Badge
-                          variant="flat"
-                          color="success"
-                          className="font-normal bg-green-100 px-2 py-1"
-                        >
-                          {container.status}
-                        </Badge>
-                        <div className="flex gap-2">
-                          <Button
-                            onClick={() => handleEditClick(container)}
-                            variant="outline"
-                            size="sm"
-                            className="gap-1 rounded-lg bg-blue-50 p-2 border-gray-300 dark:border-gray-700 hover:bg-blue-100"
-                          >
-                            <Edit2 className="w-3 h-3" />
-                            Edit
-                          </Button>
-                          <Button
-                            onClick={() => handleDeleteClick(container.id)}
-                            variant="outline"
-                            size="sm"
-                            className="border-red-300 bg-red-50 p-2 rounded-lg text-red-600 hover:bg-red-100"
-                          >
-                            <Trash2 className="w-3 h-3" />
-                          </Button>
-                        </div>
-                      </div>
+                     
                     </CardContent>
                   </Card>
                 ))}
               </div>
             </div>
+            {filteredContainers.length === 0 && (
+              <Card>
+                <CardContent className="p-12 text-center">
+                  <Package className="w-12 h-12 text-gray-400 mx-auto mb-3" />
+                  <p className="text-gray-600 dark:text-gray-400">
+                    No container types found.
+                  </p>
+                </CardContent>
+              </Card>
+            )}
 
-            {/* Internal Containers */}
             <div>
               <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-3 flex items-center gap-2">
                 <Package className="w-5 h-5 text-purple-600" />
@@ -343,40 +337,37 @@ export default function ContainerTypes() {
                             </Badge>
                           </div>
                         </div>
+                         <div className="flex items-center">
+                          <DropdownMenu.Root>
+                            <DropdownMenu.Trigger>
+                              <button className="p-2 rounded-md hover:bg-gray-100 bg-gray-50 dark:hover:bg-gray-800 transition-colors">
+                                <MoreVertical className="w-4 h-4 text-gray-600" />
+                              </button>
+                            </DropdownMenu.Trigger>
+                            <DropdownMenu.Content>
+                              <DropdownMenu.Item
+                                onSelect={() => handleEditClick(container)}
+                              >
+                                <Edit2 className="w-3 h-3" />
+                                <span>Edit</span>
+                              </DropdownMenu.Item>
+                              <DropdownMenu.Item
+                                onSelect={() => handleDeleteClick(container.id)}
+                                className="text-red-600 dark:text-red-400"
+                              >
+                                <Trash2 className="w-3 h-3" />
+                                <span>Delete</span>
+                              </DropdownMenu.Item>
+                            </DropdownMenu.Content>
+                          </DropdownMenu.Root>
+                        </div>
                       </div>
                       {container.description && (
                         <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">
                           {container.description}
                         </p>
                       )}
-                      <div className="flex items-center justify-between pt-3 border-t border-gray-200 dark:border-gray-800">
-                        <Badge
-                          variant="flat"
-                          color="success"
-                          className="font-normal bg-green-100 px-2 py-1"
-                        >
-                          {container.status}
-                        </Badge>
-                        <div className="flex gap-2">
-                          <Button
-                            onClick={() => handleEditClick(container)}
-                            variant="outline"
-                            size="sm"
-                            className="gap-1 rounded-lg bg-blue-50 p-2 border-gray-300 dark:border-gray-700 hover:bg-blue-100"
-                          >
-                            <Edit2 className="w-3 h-3" />
-                            Edit
-                          </Button>
-                          <Button
-                            onClick={() => handleDeleteClick(container.id)}
-                            variant="outline"
-                            size="sm"
-                            className="border-red-300 bg-red-50 p-2 rounded-lg text-red-600 hover:bg-red-100"
-                          >
-                            <Trash2 className="w-3 h-3" />
-                          </Button>
-                        </div>
-                      </div>
+                   
                     </CardContent>
                   </Card>
                 ))}
@@ -389,7 +380,7 @@ export default function ContainerTypes() {
               <CardContent className="p-12 text-center">
                 <Package className="w-12 h-12 text-gray-400 mx-auto mb-3" />
                 <p className="text-gray-600 dark:text-gray-400">
-                  No container types found. Try adjusting your search.
+                  No container types found.
                 </p>
               </CardContent>
             </Card>
@@ -491,7 +482,7 @@ export default function ContainerTypes() {
                   </div>
                 </div>
 
-                <div className="flex items-center justify-end gap-3 p-6 border-t border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/50">
+                <div className="flex items-center rounded-b-xl justify-end gap-3 p-6 border-t border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/50">
                   <Button
                     onClick={() => setIsModalOpen(false)}
                     variant="outline"
@@ -537,7 +528,7 @@ export default function ContainerTypes() {
                   </p>
                 </div>
 
-                <div className="flex items-center justify-end gap-3 p-6 border-t border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/50">
+                <div className="flex rounded-b-xl items-center justify-end gap-3 p-6 border-t border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/50">
                   <Button
                     onClick={() => setIsDeleteModalOpen(false)}
                     variant="outline"
@@ -561,3 +552,4 @@ export default function ContainerTypes() {
     </DashboardLayout>
   );
 }
+

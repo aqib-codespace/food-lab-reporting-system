@@ -138,8 +138,8 @@ export default function StorageLocations() {
     const result = storageLocationFormSchema.safeParse(formData);
 
     if (!result.success) {
-      const errors: any = {};
-      result.error.issues.forEach((issue: any) => {
+      const errors: Record<string, string> = {};
+      result.error.issues.forEach((issue: z.ZodIssue) => {
         const field = issue.path[0] as string;
         errors[field] = issue.message;
       });
@@ -437,7 +437,7 @@ export default function StorageLocations() {
                       onChange={(e) =>
                         setFormData((prev) => ({
                           ...prev,
-                          type: e.target.value as any,
+                          type: e.target.value as "store" | "fridge" | "freezer" | "room",
                         }))
                       }
                       className={`w-full px-4 py-2.5 bg-white dark:bg-gray-800 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 ${
@@ -604,3 +604,4 @@ export default function StorageLocations() {
     </DashboardLayout>
   );
 }
+

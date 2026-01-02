@@ -13,10 +13,12 @@ import {
   TestTube2,
   AlertTriangle,
   Loader2,
+  MoreVertical,
 } from "lucide-react";
 import { z } from "zod";
 import { useSampleNames } from "@/hooks/useSupabaseData";
 import { useToast } from "@/hooks/use-toast";
+import DropdownMenu from "@/components/ui/dropdown-menu";
 
 const sampleNameFormSchema = z.object({
   name: z.string().min(1, "Name is required").max(100, "Name is too long"),
@@ -96,7 +98,7 @@ export default function SampleNames() {
         category?: string;
         description?: string;
       } = {};
-      result.error.issues.forEach((issue: any) => {
+      result.error.issues.forEach((issue: z.ZodIssue) => {
         const field = issue.path[0] as
           | "name"
           | "code"
@@ -226,20 +228,6 @@ export default function SampleNames() {
             </Button>
           </div>
 
-          <Card className="mb-6">
-            <CardContent className="p-4">
-              <div className="relative max-w-md">
-                <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 dark:text-gray-400 z-10" />
-                <Input
-                  placeholder="Search sample names..."
-                  className="w-full pl-9"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                />
-              </div>
-            </CardContent>
-          </Card>
-
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {filteredSamples.map((sample) => (
               <Card
@@ -247,27 +235,53 @@ export default function SampleNames() {
                 className="hover:shadow-lg transition-shadow"
               >
                 <CardContent className="p-5">
-                  <div className="flex items-start gap-3 mb-3">
-                    <div className="w-12 h-12 rounded-lg bg-blue-100 dark:bg-blue-900/20 flex items-center justify-center shrink-0">
-                      <TestTube2 className="w-6 h-6 text-blue-600" />
+                  <div className="flex justify-between items-start">
+                    <div className="flex items-start gap-3 mb-3">
+                      <div className="w-12 h-12 rounded-lg bg-blue-100 dark:bg-blue-900/20 flex items-center justify-center shrink-0">
+                        <TestTube2 className="w-6 h-6 text-blue-600" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <h3 className="font-semibold text-gray-900 dark:text-white truncate">
+                          {sample.name}
+                        </h3>
+                        {sample.code && (
+                          <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                            Code: {sample.code}
+                          </p>
+                        )}
+                        {sample.category && (
+                          <Badge
+                            variant="flat"
+                            className="bg-gray-100 px-4 text-blue-700 dark:bg-teal-900/20 dark:text-teal-300 text-xs mt-2"
+                          >
+                            {sample.category}
+                          </Badge>
+                        )}
+                      </div>
                     </div>
-                    <div className="flex-1 min-w-0">
-                      <h3 className="font-semibold text-gray-900 dark:text-white truncate">
-                        {sample.name}
-                      </h3>
-                      {sample.code && (
-                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                          Code: {sample.code}
-                        </p>
-                      )}
-                      {sample.category && (
-                        <Badge
-                          variant="flat"
-                          className="bg-gray-100 px-4 text-blue-700 dark:bg-teal-900/20 dark:text-teal-300 text-xs mt-2"
-                        >
-                          {sample.category}
-                        </Badge>
-                      )}
+                    <div className="flex items-center">
+                      <DropdownMenu.Root>
+                        <DropdownMenu.Trigger>
+                          <button className="p-2 rounded-md hover:bg-gray-100 bg-gray-50 dark:hover:bg-gray-800 transition-colors">
+                            <MoreVertical className="w-4 h-4 text-gray-600" />
+                          </button>
+                        </DropdownMenu.Trigger>
+                        <DropdownMenu.Content>
+                          <DropdownMenu.Item
+                            onSelect={() => handleEditClick(sample)}
+                          >
+                            <Edit2 className="w-3 h-3" />
+                            <span>Edit</span>
+                          </DropdownMenu.Item>
+                          <DropdownMenu.Item
+                            onSelect={() => handleDeleteClick(sample.id)}
+                            className="text-red-600 dark:text-red-400"
+                          >
+                            <Trash2 className="w-3 h-3" />
+                            <span>Delete</span>
+                          </DropdownMenu.Item>
+                        </DropdownMenu.Content>
+                      </DropdownMenu.Root>
                     </div>
                   </div>
                   {sample.description && (
@@ -275,34 +289,6 @@ export default function SampleNames() {
                       {sample.description}
                     </p>
                   )}
-                  <div className="flex items-center justify-between pt-3 border-t border-gray-200 dark:border-gray-800">
-                    <Badge
-                      variant="flat"
-                      color="success"
-                      className="font-normal bg-green-100 px-2 py-1"
-                    >
-                      {sample.status}
-                    </Badge>
-                    <div className="flex gap-2">
-                      <Button
-                        onClick={() => handleEditClick(sample)}
-                        variant="outline"
-                        size="sm"
-                        className="gap-1 rounded-lg bg-blue-50 p-2 border-gray-300 dark:border-gray-700 hover:bg-blue-100"
-                      >
-                        <Edit2 className="w-3 h-3" />
-                        Edit
-                      </Button>
-                      <Button
-                        onClick={() => handleDeleteClick(sample.id)}
-                        variant="outline"
-                        size="sm"
-                        className="border-red-300 bg-red-50 p-2 rounded-lg text-red-600 hover:bg-red-100"
-                      >
-                        <Trash2 className="w-3 h-3" />
-                      </Button>
-                    </div>
-                  </div>
                 </CardContent>
               </Card>
             ))}
@@ -313,7 +299,7 @@ export default function SampleNames() {
               <CardContent className="p-12 text-center">
                 <TestTube2 className="w-12 h-12 text-gray-400 mx-auto mb-3" />
                 <p className="text-gray-600 dark:text-gray-400">
-                  No sample names found. Try adjusting your search.
+                  No sample names found.
                 </p>
               </CardContent>
             </Card>
@@ -365,42 +351,22 @@ export default function SampleNames() {
                     )}
                   </div>
 
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
-                        Code
-                      </label>
-                      <input
-                        type="text"
-                        placeholder="e.g., MLK001"
-                        value={formData.code}
-                        onChange={(e) =>
-                          setFormData((prev) => ({
-                            ...prev,
-                            code: e.target.value,
-                          }))
-                        }
-                        className="w-full px-4 py-2.5 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500/20"
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
-                        Category
-                      </label>
-                      <input
-                        type="text"
-                        placeholder="e.g., Dairy"
-                        value={formData.category}
-                        onChange={(e) =>
-                          setFormData((prev) => ({
-                            ...prev,
-                            category: e.target.value,
-                          }))
-                        }
-                        className="w-full px-4 py-2.5 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500/20"
-                      />
-                    </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
+                      Category
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="e.g., Dairy"
+                      value={formData.category}
+                      onChange={(e) =>
+                        setFormData((prev) => ({
+                          ...prev,
+                          category: e.target.value,
+                        }))
+                      }
+                      className="w-full px-4 py-2.5 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500/20"
+                    />
                   </div>
 
                   <div>
@@ -422,7 +388,7 @@ export default function SampleNames() {
                   </div>
                 </div>
 
-                <div className="flex items-center justify-end gap-3 p-6 border-t border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/50">
+                <div className="flex rounded-b-xl items-center justify-end gap-3 p-6 border-t border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/50">
                   <Button
                     onClick={() => setIsModalOpen(false)}
                     variant="outline"
@@ -468,7 +434,7 @@ export default function SampleNames() {
                   </p>
                 </div>
 
-                <div className="flex items-center justify-end gap-3 p-6 border-t border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/50">
+                <div className="flex  rounded-b-xl items-center justify-end gap-3 p-6 border-t border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/50">
                   <Button
                     onClick={() => setIsDeleteModalOpen(false)}
                     variant="outline"

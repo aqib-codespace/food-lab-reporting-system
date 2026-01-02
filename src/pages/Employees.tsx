@@ -1,3 +1,4 @@
+
 "use client";
 import { useState, useMemo, useCallback } from "react";
 import { useTranslations } from "next-intl";
@@ -18,12 +19,14 @@ import {
   FileSignature,
   AlertTriangle,
   Loader2,
+  MoreVertical,
 } from "lucide-react";
 import { useDropzone } from "react-dropzone";
 import { employeeFormSchema } from "@/lib/validations/employee.schema";
 import { z } from "zod";
 import { useEmployees } from "@/hooks/useSupabaseData";
 import { useToast } from "@/hooks/use-toast";
+import DropdownMenu from "@/components/ui/dropdown-menu";
 import {
   uploadEmployeePhoto,
   uploadEmployeeSignature,
@@ -415,7 +418,7 @@ export default function Employees() {
 
         <Button
           onClick={handleAddClick}
-          className="bg-blue-600 hover:bg-blue-700 text-white"
+          className="bg-gray-800 hover:bg-gray-900 rounded-lg text-white"
         >
           <Plus className="w-4 h-4 mr-2" />
           {t("addEmployee")}
@@ -429,7 +432,6 @@ export default function Employees() {
         </div>
       )}
 
-      {/* Error State */}
       {error && (
         <div className="flex items-center justify-center h-64">
           <div className="text-center">
@@ -444,19 +446,7 @@ export default function Employees() {
       {/* Data State */}
       {!loading && !error && (
         <>
-          <Card className="mb-6">
-            <CardContent className="p-4">
-              <div className="relative max-w-md">
-                <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 dark:text-gray-400 z-10" />
-                <Input
-                  placeholder={t("searchEmployees")}
-                  className="w-full pl-9"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                />
-              </div>
-            </CardContent>
-          </Card>
+        
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {filteredEmployees.map((employee) => (
@@ -465,38 +455,73 @@ export default function Employees() {
                 className="hover:shadow-lg transition-shadow"
               >
                 <CardContent className="p-5">
-                  <div className="flex items-start gap-4">
-                    {employee.photo ? (
-                      <img
-                        src={employee.photo}
-                        alt={employee.name}
-                        className="w-14 h-14 rounded-full object-cover border-2 border-gray-200 dark:border-gray-700"
-                      />
-                    ) : (
-                      <div className="w-14 h-14 rounded-full flex items-center justify-center text-lg font-bold bg-accent/10 text-accent shrink-0">
-                        {employee.initials}
+                  <div className="flex justify-between items-center">
+                    <div className="flex items-start gap-4">
+                      {employee.photo ? (
+                        <img
+                          src={employee.photo}
+                          alt={employee.name}
+                          className="w-14 h-14 rounded-full object-cover border-2 border-gray-200 dark:border-gray-700"
+                        />
+                      ) : (
+                        <div className="w-14 h-14 rounded-full flex items-center justify-center text-lg font-bold bg-accent/10 text-accent shrink-0">
+                          {employee.initials}
+                        </div>
+                      )}
+                      <div className="flex-1 min-w-0">
+                        <h3 className="font-semibold text-gray-900 dark:text-white truncate">
+                          {employee.name}
+                        </h3>
+                        <div className="flex items-center gap-2 mt-1">
+                          <Badge
+                            variant="flat"
+                            className={`text-xs font-medium px-2 py-0.5 ${
+                              employee.role === "admin"
+                                ? "bg-purple-100 text-purple-700 dark:bg-purple-900/20 dark:text-purple-300"
+                                : employee.role === "manager"
+                                ? "bg-blue-100 text-blue-700 dark:bg-blue-900/20 dark:text-blue-300"
+                                : employee.role === "analyst"
+                                ? "bg-green-100 text-green-700 dark:bg-green-900/20 dark:text-green-300"
+                                : "bg-orange-100 text-orange-700 dark:bg-orange-900/20 dark:text-orange-300"
+                            }`}
+                          >
+                            {employee.role}
+                          </Badge>
+                        </div>
                       </div>
-                    )}
-                    <div className="flex-1 min-w-0">
-                      <h3 className="font-semibold text-gray-900 dark:text-white truncate">
-                        {employee.name}
-                      </h3>
-                      <div className="flex items-center gap-2 mt-1">
-                        <Badge
-                          variant="flat"
-                          className={`text-xs font-medium px-2 py-0.5 ${
-                            employee.role === "admin"
-                              ? "bg-purple-100 text-purple-700 dark:bg-purple-900/20 dark:text-purple-300"
-                              : employee.role === "manager"
-                              ? "bg-blue-100 text-blue-700 dark:bg-blue-900/20 dark:text-blue-300"
-                              : employee.role === "analyst"
-                              ? "bg-green-100 text-green-700 dark:bg-green-900/20 dark:text-green-300"
-                              : "bg-orange-100 text-orange-700 dark:bg-orange-900/20 dark:text-orange-300"
-                          }`}
-                        >
-                          {employee.role}
-                        </Badge>
-                      </div>
+                    </div>
+
+                    <div className="flex items-center">
+                      <DropdownMenu.Root>
+                        <DropdownMenu.Trigger>
+                          <button className="p-2 rounded-md hover:bg-gray-100 bg-gray-50 dark:hover:bg-gray-800 transition-colors">
+                            <MoreVertical className="w-4 h-4 text-gray-600" />
+                          </button>
+                        </DropdownMenu.Trigger>
+                        <DropdownMenu.Content>
+                          <DropdownMenu.Item
+                            onSelect={() => handleEditClick(employee)}
+                          >
+                            <Edit2 className="w-3 h-3" />
+                            <span>Edit</span>
+                          </DropdownMenu.Item>
+                          <DropdownMenu.Item
+                            onSelect={() => handleDeleteClick(employee.id)}
+                            className="text-red-600 dark:text-red-400"
+                          >
+                            <Trash2 className="w-3 h-3" />
+                            <span>Delete</span>
+                          </DropdownMenu.Item>
+                        </DropdownMenu.Content>
+                      </DropdownMenu.Root>
+                    </div>
+                  </div>
+
+                  <div className="flex mt-3 border-t border-gray-200 dark:border-gray-800 items-center justify-between">
+                    <div className=" space-y-2">
+                      <p className="text-xs mb-2 text-gray-900 dark:text-gray-400">
+                        Contact Info:
+                      </p>
                       <p className="text-xs text-gray-600 dark:text-gray-400 truncate flex items-center gap-1 mt-1">
                         <Mail className="w-3 h-3" />
                         {employee.email}
@@ -506,49 +531,19 @@ export default function Employees() {
                         {employee.phone}
                       </p>
                     </div>
-                  </div>
-
-                  {employee.signature && (
-                    <div className="mt-3 pt-3 border-t border-gray-200 dark:border-gray-800">
-                      <p className="text-xs text-gray-600 dark:text-gray-400 mb-2 flex items-center gap-1">
-                        <FileSignature className="w-3 h-3" />
-                        Signature:
-                      </p>
-                      <img
-                        src={employee.signature}
-                        alt="Signature"
-                        className="h-8 object-contain bg-gray-50 dark:bg-gray-800 rounded px-2 py-1"
-                      />
-                    </div>
-                  )}
-
-                  <div className="flex items-center justify-between mt-3 pt-3 border-t border-gray-200 dark:border-gray-800">
-                    <Badge
-                      variant="flat"
-                      color="success"
-                      className="font-normal bg-green-100 px-2 py-1"
-                    >
-                      {employee.status}
-                    </Badge>
-                    <div className="flex gap-2">
-                      <Button
-                        onClick={() => handleEditClick(employee)}
-                        variant="outline"
-                        size="sm"
-                        className="gap-1 rounded-lg bg-blue-50 p-2 border-gray-300 dark:border-gray-700 hover:bg-blue-100 dark:hover:bg-blue-900/20 hover:text-blue-600"
-                      >
-                        <Edit2 className="w-3 h-3" />
-                        Edit
-                      </Button>
-                      <Button
-                        onClick={() => handleDeleteClick(employee.id)}
-                        variant="outline"
-                        size="sm"
-                        className="border-red-300 bg-red-50 p-2 rounded-lg dark:border-red-900 text-red-600 hover:text-red-700 hover:bg-red-100 dark:hover:bg-red-900/20"
-                      >
-                        <Trash2 className="w-3 h-3" />
-                      </Button>
-                    </div>
+                    {employee.signature && (
+                      <div className="pt-4">
+                        <p className="text-xs text-gray-600 dark:text-gray-400 mb-2 flex items-center gap-1">
+                          <FileSignature className="w-3 h-3" />
+                          Signature:
+                        </p>
+                        <img
+                          src={employee.signature}
+                          alt="Signature"
+                          className="w-44 h-16 object-cover bg-gray-50 dark:bg-gray-800 rounded px-2 py-1"
+                        />
+                      </div>
+                    )}
                   </div>
                 </CardContent>
               </Card>
@@ -816,7 +811,7 @@ export default function Employees() {
                   </div>
                 </div>
 
-                <div className="flex items-center justify-end gap-3 p-6 border-t border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/50">
+                <div className="flex items-center rounded-b-xl justify-end gap-3 p-6 border-t border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/50">
                   <Button
                     onClick={() => setIsModalOpen(false)}
                     variant="outline"
@@ -873,7 +868,7 @@ export default function Employees() {
                   </p>
                 </div>
 
-                <div className="flex items-center justify-end gap-3 p-6 border-t border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/50">
+                <div className="flex rounded-b-xl  items-center justify-end gap-3 p-6 border-t border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/50">
                   <Button
                     onClick={() => setIsDeleteModalOpen(false)}
                     variant="outline"
