@@ -33,6 +33,7 @@ export interface Sample {
 }
 
 export interface ReportData {
+  id?: string;
   refNumber: string;
   employee: Employee | null;
   date: string;
@@ -44,6 +45,7 @@ export interface ReportData {
   producedDate: string;
   expiredDate: string;
   reportNumber: string;
+  status?: "pending" | "completed";
   pdfUrl?: string | null;
   wordUrl?: string | null;
 }

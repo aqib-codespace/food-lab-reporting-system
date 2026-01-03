@@ -7,8 +7,8 @@
 [![Next.js](https://img.shields.io/badge/Next.js-16.1.1-black?style=for-the-badge&logo=next.js)](https://nextjs.org/)
 [![React](https://img.shields.io/badge/React-19.2.3-61DAFB?style=for-the-badge&logo=react)](https://reactjs.org/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.0-3178C6?style=for-the-badge&logo=typescript)](https://www.typescriptlang.org/)
-[![Redux](https://img.shields.io/badge/Redux_Toolkit-2.11.2-764ABC?style=for-the-badge&logo=redux)](https://redux-toolkit.js.org/)
 [![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-4.0-38B2AC?style=for-the-badge&logo=tailwind-css)](https://tailwindcss.com/)
+[![Supabase](https://img.shields.io/badge/Supabase-Ready-3ECF8E?style=for-the-badge&logo=supabase)](https://supabase.com/)
 
 </div>
 
@@ -89,13 +89,13 @@ This system empowers lab technicians, quality analysts, and supervisors to:
 </td>
 <td>
 
-#### Data Persistence
+#### Data Management
 
-- ✅ Redux Toolkit state management
-- ✅ Redux Persist for data retention
+- ✅ LocalStorage for temporary data
+- ✅ Supabase ready for backend
 - ✅ Real-time updates across components
 - ✅ Optimistic UI updates
-- ✅ Local storage integration
+- ✅ Export to multiple formats
 
 </td>
 </tr>
@@ -134,10 +134,10 @@ Next.js 16.1.1 (React 19.2.3)
 ### State Management
 
 ```
-Redux Toolkit 2.11.2
-├── Redux Persist
-├── Typed Hooks
-└── Slice Pattern
+React Hooks & LocalStorage
+├── useState & useEffect
+├── Custom Hooks
+└── LocalStorage API
 ```
 
 ### UI & Styling
@@ -227,7 +227,7 @@ Ensure you have the following installed:
 
 ### Environment Setup
 
-The application works out of the box with no environment variables required. All data is persisted locally using Redux Persist.
+The application works out of the box with no environment variables required. All data is temporarily stored in the browser's LocalStorage. For production use, configure Supabase for persistent backend storage.
 
 ---
 
@@ -262,7 +262,7 @@ food-lab-reporting-system/
 │   │   ├── ui/                 # shadcn/ui components
 │   │   ├── Logo.tsx
 │   │   ├── NavLink.tsx
-│   │   ├── redux-provider.tsx
+
 │   │   └── theme-provider.tsx
 │   │
 │   ├── hooks/                  # Custom React hooks
@@ -286,12 +286,6 @@ food-lab-reporting-system/
 │   │   ├── Reports.tsx
 │   │   ├── Samples.tsx
 │   │   └── ComingSoon.tsx
-│   │
-│   ├── store/                  # Redux store
-│   │   ├── store.ts
-│   │   ├── hooks.ts
-│   │   └── slices/
-│   │       └── reportsSlice.ts
 │   │
 │   └── types/                  # TypeScript definitions
 │       └── report.ts

@@ -14,11 +14,10 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button, Badge } from "rizzui";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
-import { useRouter } from "@/i18n/routing";
+import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
-import { useAppSelector } from "@/store/hooks";
 import { format } from "date-fns";
-import { useTranslations } from "next-intl";
+import { useReports } from "@/hooks/useReports";
 
 const stats = [
   {
@@ -60,9 +59,9 @@ const stats = [
 ];
 
 export default function Dashboard() {
-  const t = useTranslations("dashboard");
   const route = useRouter();
-  const reports = useAppSelector((state) => state.reports.reports);
+  const { reports, loading } = useReports();
+
   const recentReports = reports.slice(0, 4);
 
   const totalReports = reports.length;
@@ -73,39 +72,39 @@ export default function Dashboard() {
 
   const stats = [
     {
-      title: t("totalReports"),
+      title: "Total Reports",
       value: totalReports.toString(),
       change: "+12.5%",
       trend: "up" as const,
       icon: FileText,
-      description: t("allTime"),
+      description: "All Time",
       color: "from-blue-500 to-blue-600",
     },
     {
-      title: t("totalSamples"),
+      title: "Total Samples",
       value: totalSamples.toString(),
       change: "+8.2%",
       trend: "up" as const,
       icon: Package,
-      description: t("trackedTotal"),
+      description: "Tracked Total",
       color: "from-emerald-500 to-emerald-600",
     },
     {
-      title: t("avgProcessing"),
+      title: "Avg. Processing",
       value: "1.4 min",
       change: "-15%",
       trend: "down" as const,
       icon: Clock,
-      description: t("perReport"),
+      description: "Per Report",
       color: "from-amber-500 to-amber-600",
     },
     {
-      title: t("efficiency"),
+      title: "Efficiency",
       value: "95.2%",
       change: "+3.1%",
       trend: "up" as const,
       icon: TrendingUp,
-      description: t("completionRate"),
+      description: "Completion Rate",
       color: "from-purple-500 to-purple-600",
     },
   ];
@@ -115,19 +114,19 @@ export default function Dashboard() {
       <div className="flex flex-col md:flex-row justify-between gap-4 mb-6">
         <div>
           <h1 className="text-2xl sm:text-3xl font-bold bg-linear-to-r from-gray-900 to-gray-600 dark:from-white dark:to-gray-300 bg-clip-text text-transparent">
-            {t("title")}
+            Dashboard
           </h1>
           <p className="text-gray-600 dark:text-gray-400 mt-1 sm:mt-2 text-sm sm:text-base">
-            {t("welcomeMessage")}
+            Welcome back! Here's an overview of your lab activities.
           </p>
         </div>
         <Button
-          onClick={() => route.push("/new-report")}
+          onClick={() => route.push("/routes/new-report")}
           size="lg"
           className="bg-gray-800 px-4 py-2 rounded-lg  text-white hover:opacity-90 transition-opacity shadow-lg w-full sm:w-auto"
         >
           <Plus className="w-5 h-5 mr-2" />
-          {t("newReportButton")}
+          New Report
         </Button>
       </div>
 
@@ -192,19 +191,19 @@ export default function Dashboard() {
             <div>
               <CardTitle className="text-lg sm:text-xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
                 <Calendar className="w-4 h-4 sm:w-5 sm:h-5 text-blue-600" />
-                {t("recentReports")}
+                Recent Reports
               </CardTitle>
               <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 mt-1">
-                {t("yourLatestSampleTrackingActivities")}
+                Your latest sample tracking activities
               </p>
             </div>
             <Button
               variant="outline"
               size="sm"
-              onClick={() => route.push("/reports")}
+              onClick={() => route.push("/routes/reports")}
               className="gap-1"
             >
-              {t("viewAll")}
+              View All
               <ChevronRight className="w-4 h-4" />
             </Button>
           </div>
@@ -215,15 +214,15 @@ export default function Dashboard() {
               <div className="py-20 text-center">
                 <FileText className="w-16 h-16 text-gray-300 dark:text-gray-600 mx-auto mb-4" />
                 <p className="text-gray-500 dark:text-gray-400 mb-4">
-                  {t("noData")}
+                  No reports yet. Create your first report to get started.
                 </p>
                 <Button
-                  onClick={() => route.push("/new-report")}
+                  onClick={() => route.push("/routes/new-report")}
                   size="sm"
                   className="bg-gray-800 px-4 rounded-lg  text-white"
                 >
                   <Plus className="w-4 h-4 mr-2" />
-                  {t("createNewReport")}
+                  Create New Report
                 </Button>
               </div>
             ) : (
@@ -231,18 +230,18 @@ export default function Dashboard() {
                 <div
                   key={report.id}
                   className="flex items-center justify-between p-3 sm:p-4 rounded-xl bg-gray-50 dark:bg-gray-800/50 hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-200 cursor-pointer group"
-                  onClick={() => route.push(`/reports/${report.id}`)}
+                  onClick={() => route.push(`/routes/reports/${report.id}`)}
                 >
                   <div className="flex items-center gap-3 sm:gap-4 flex-1 min-w-0">
-                    <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-gray-800 flex items-center justify-center shadow-lg group-hover:scale-105 transition-transform flex-shrink-0">
+                    <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-gray-800 flex items-center justify-center shadow-lg group-hover:scale-105 transition-transform shrink-0">
                       <FileText className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
                     </div>
                     <div className="min-w-0 flex-1">
                       <p className="font-semibold text-gray-900 dark:text-white text-sm sm:text-base truncate">
-                        {report.refNumber}
+                        {report.ref_number}
                       </p>
                       <div className="flex items-center gap-2 mt-1 flex-wrap">
-                        <Users className="w-3 h-3 text-gray-500 flex-shrink-0" />
+                        <Users className="w-3 h-3 text-gray-500 shrink-0" />
                         <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 truncate">
                           {report.employee?.name || "N/A"}
                         </p>
@@ -250,21 +249,28 @@ export default function Dashboard() {
                           •
                         </span>
                         <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 whitespace-nowrap">
-                          {format(new Date(report.createdAt), "MMM dd, yyyy")}
+                          {format(new Date(report.created_at), "MMM dd, yyyy")}
                         </p>
                       </div>
                     </div>
                   </div>
-                  <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
+                  <div className="flex items-center gap-2 sm:gap-3 shrink-0">
                     <div className="text-right hidden sm:block">
                       <p className="text-xs sm:text-sm font-semibold text-gray-900 dark:text-white">
-                        {report.samples.length} samples
+                        {report.samples?.length || 0} samples
                       </p>
                       <Badge
-                        color="success"
-                        className="mt-1 text-gray-600 dark:text-white text-xs"
+                        color={
+                          report.status === "pending" ? "warning" : "success"
+                        }
+                        className={cn(
+                          "mt-1 text-xs",
+                          report.status === "pending"
+                            ? "bg-yellow-100 dark:bg-yellow-950 text-yellow-700 dark:text-yellow-400"
+                            : "bg-green-100 dark:bg-green-950 text-green-700 dark:text-green-400"
+                        )}
                       >
-                        completed
+                        {report.status === "pending" ? "Pending" : "Completed"}
                       </Badge>
                     </div>
                     <ChevronRight className="w-4 h-4 sm:w-5 sm:h-5 text-gray-400 group-hover:text-gray-600 dark:group-hover:text-gray-300 group-hover:translate-x-1 transition-all" />

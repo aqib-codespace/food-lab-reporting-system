@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
 import { verifyCredentials } from "@/lib/auth";
-import { cookies } from "next/headers";
 
 export async function POST(request: NextRequest) {
   try {
@@ -14,31 +13,15 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Verify credentials using environment variables
     const result = await verifyCredentials(email, password);
 
-    if (!result.success) {
+    if (!result.success || !result.user) {
       return NextResponse.json(
         { error: result.error || "Invalid credentials" },
         { status: 401 }
       );
     }
-
-    const cookieStore = await cookies();
-    cookieStore.set("foodlab_auth_token", result.user!.token, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "lax",
-      maxAge: 60 * 60 * 24,
-      path: "/",
-    });
-
-    cookieStore.set("foodlab_user", JSON.stringify(result.user), {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "lax",
-      maxAge: 60 * 60 * 24,
-      path: "/",
-    });
 
     return NextResponse.json({
       success: true,

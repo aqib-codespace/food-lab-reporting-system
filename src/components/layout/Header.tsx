@@ -1,29 +1,29 @@
 "use client";
 
-import { Menu, Bell, Search, User, LogOut, Languages } from "lucide-react";
+import { Menu, Search, User } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
-import { useLocale, useTranslations } from "next-intl";
-import { usePathname, useRouter } from "@/i18n/routing";
-import { useTransition } from "react";
+import { useState, useEffect } from "react";
+import { supabase } from "@/lib/supabase/client";
 
 interface HeaderProps {
   onMenuClick: () => void;
 }
 
 export function Header({ onMenuClick }: HeaderProps) {
-  const t = useTranslations("header");
-  const locale = useLocale();
-  const router = useRouter();
-  const pathname = usePathname();
-  const [isPending, startTransition] = useTransition();
+  const [userEmail, setUserEmail] = useState<string>("User");
 
-  const toggleLanguage = () => {
-    const newLocale = locale === "en" ? "ar" : "en";
-    startTransition(() => {
-      router.replace(pathname, { locale: newLocale });
-    });
-  };
+  useEffect(() => {
+    const getUser = async () => {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (user?.email) {
+        setUserEmail(user.email);
+      }
+    };
+    getUser();
+  }, []);
 
   return (
     <header className="fixed top-0 left-0 lg:left-64 right-0 h-18 bg-white/80 border-b border-gray-200 px-6 flex items-center justify-between gap-4 z-40 backdrop-blur-xl shadow-sm">
@@ -39,35 +39,22 @@ export function Header({ onMenuClick }: HeaderProps) {
           <Search className="w-4 h-4 absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none z-10" />
           <Input
             type="text"
-            placeholder={t("searchPlaceholder")}
+            placeholder="Search reports, samples, employees..."
             className="w-full bg-white border-gray-200"
           />
         </div>
       </div>
 
       <div className="flex items-center gap-3">
-        {/* Language Toggle Button */}
-        <button
-          onClick={toggleLanguage}
-          disabled={isPending}
-          className="flex items-center gap-2 px-3 py-2 rounded-lg bg-gray-100 hover:bg-gray-200 transition-all duration-200 disabled:opacity-50"
-          title={locale === "en" ? t("switchToArabic") : t("switchToEnglish")}
-        >
-          <Languages className="w-4 h-4 text-gray-700" />
-          <span className="text-sm font-medium text-gray-700">
-            {locale === "en" ? "العربية" : "English"}
-          </span>
-        </button>
-
         <div className="flex items-center gap-3 bg-gray-100 px-3 py-2 rounded-xl hover:shadow-lg transition-all duration-200 cursor-pointer group">
           <div className="w-9 h-9 rounded-full bg-gray-800 flex items-center justify-center shadow-lg group-hover:scale-105 transition-transform">
             <User className="w-5 h-5 text-white" />
           </div>
           <div className="hidden md:flex flex-col">
             <span className="text-sm font-semibold text-gray-900 leading-tight">
-              {t("adminUser")}
+              {userEmail}
             </span>
-            <span className="text-xs text-gray-600">{t("administrator")}</span>
+            <span className="text-xs text-gray-600">User</span>
           </div>
         </div>
       </div>

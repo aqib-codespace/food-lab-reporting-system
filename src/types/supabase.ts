@@ -148,6 +148,31 @@ export interface Database {
           updated_at?: string;
         };
       };
+      sample_colors: {
+        Row: {
+          id: string;
+          name: string;
+          hex_code: string;
+          status: "active" | "inactive";
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          name: string;
+          hex_code: string;
+          status?: "active" | "inactive";
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          name?: string;
+          hex_code?: string;
+          status?: "active" | "inactive";
+          updated_at?: string;
+        };
+      };
       reports: {
         Row: {
           id: string;
@@ -161,7 +186,7 @@ export interface Database {
           report_number: string;
           pdf_url: string | null;
           word_url: string | null;
-          status: "draft" | "completed" | "archived";
+          status: "pending" | "completed" | "archived";
           created_at: string;
           updated_at: string;
         };
@@ -177,7 +202,7 @@ export interface Database {
           report_number?: string;
           pdf_url?: string | null;
           word_url?: string | null;
-          status?: "draft" | "completed" | "archived";
+          status?: "pending" | "completed" | "archived";
           created_at?: string;
           updated_at?: string;
         };
@@ -193,7 +218,7 @@ export interface Database {
           report_number?: string;
           pdf_url?: string | null;
           word_url?: string | null;
-          status?: "draft" | "completed" | "archived";
+          status?: "pending" | "completed" | "archived";
           updated_at?: string;
         };
       };

@@ -1,10 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useRouter, useSearchParams } from "next/navigation";
-import { useTranslations } from "next-intl";
+import { useRouter } from "next/navigation";
 import { Logo } from "@/components/Logo";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -14,23 +13,22 @@ import {
   type LoginFormData,
 } from "@/lib/validations/login.schema";
 import { clientAuth } from "@/lib/auth";
+import { useToast } from "@/hooks/use-toast";
 import {
   Eye,
   EyeOff,
   FlaskConical,
-  Shield,
   Microscope,
-  ArrowBigRight,
   ArrowRight,
   AlertCircle,
 } from "lucide-react";
 
 export default function LoginPage() {
-  const t = useTranslations("login");
   const router = useRouter();
-  const searchParams = useSearchParams();
+  const { toast } = useToast();
   const [showPassword, setShowPassword] = useState(false);
   const [loginError, setLoginError] = useState<string>("");
+  const [isCheckingAuth, setIsCheckingAuth] = useState(true);
 
   const {
     register,
@@ -40,35 +38,74 @@ export default function LoginPage() {
     resolver: zodResolver(loginSchema),
   });
 
+  // Check if user is already logged in
+  useEffect(() => {
+    const isAuthenticated = clientAuth.isAuthenticated();
+    if (isAuthenticated) {
+      router.replace("/");
+    } else {
+      setIsCheckingAuth(false);
+    }
+  }, [router]);
+
   const onSubmit = async (data: LoginFormData) => {
     try {
       setLoginError("");
 
+      // Call login API
       const response = await fetch("/api/auth/login", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
       });
 
       const result = await response.json();
 
-      if (!response.ok) {
-        setLoginError(result.error || "Login failed");
+      if (!response.ok || !result.success) {
+        const errorMsg = result.error || "Invalid email or password";
+        setLoginError(errorMsg);
+        toast({
+          variant: "destructive",
+          title: "Login Failed",
+          description: errorMsg,
+        });
         return;
       }
 
-      clientAuth.setAuth(result.user);
+      // Store auth data in localStorage and cookie
+      await clientAuth.setAuth(result.user);
 
-      const redirect = searchParams?.get("redirect") || "/";
-      router.push(redirect);
-      router.refresh();
+      // Show success toast
+      toast({
+        title: "Welcome Back!",
+        description: "You have successfully signed in.",
+      });
+
+      // Redirect to home page
+      window.location.href = "/";
     } catch (error) {
       console.error("Login error:", error);
-      setLoginError(t("errorMessage"));
+      const errorMsg = "An error occurred during login. Please try again.";
+      setLoginError(errorMsg);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: errorMsg,
+      });
     }
   };
+
+  // Show loading state while checking authentication
+  if (isCheckingAuth) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-white dark:bg-gray-950">
+        <div className="text-center space-y-4">
+          <div className="w-16 h-16 border-4 border-gray-200 dark:border-gray-700 border-t-gray-900 dark:border-t-white rounded-full animate-spin mx-auto" />
+          <p className="text-gray-600 dark:text-gray-400">Loading...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex">
@@ -80,9 +117,11 @@ export default function LoginPage() {
 
           <div className="text-center space-y-2">
             <h1 className="text-3xl font-bold tracking-tight text-gray-900 dark:text-white">
-              {t("title")}
+              Welcome Back
             </h1>
-            <p className="text-gray-600 dark:text-gray-400">{t("subtitle")}</p>
+            <p className="text-gray-600 dark:text-gray-400">
+              Sign in to your Food Lab Reporting account
+            </p>
           </div>
 
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
@@ -98,12 +137,12 @@ export default function LoginPage() {
 
             <div className="space-y-2">
               <Label htmlFor="email" className="text-sm font-medium">
-                {t("email")}
+                Email
               </Label>
               <Input
                 id="email"
                 type="email"
-                placeholder={t("emailPlaceholder")}
+                placeholder="Enter your email"
                 {...register("email")}
                 className={errors.email ? "border-red-500" : ""}
               />
@@ -115,14 +154,14 @@ export default function LoginPage() {
             <div className="space-y-2">
               <div className="flex items-center justify-between">
                 <Label htmlFor="password" className="text-sm font-medium">
-                  {t("password")}
+                  Password
                 </Label>
               </div>
               <div className="relative">
                 <Input
                   id="password"
                   type={showPassword ? "text" : "password"}
-                  placeholder={t("passwordPlaceholder")}
+                  placeholder="Enter your password"
                   {...register("password")}
                   className={errors.password ? "border-red-500" : ""}
                 />
@@ -150,14 +189,14 @@ export default function LoginPage() {
               className="w-full flex items-center bg-gray-800 text-white  hover:bg-gray-900 dark:bg-gray-700 dark:hover:bg-gray-600"
               disabled={isSubmitting}
             >
-              {isSubmitting ? t("loggingIn") : t("signIn")}
+              {isSubmitting ? "Signing In..." : "Sign In"}
               <ArrowRight className="w-4 h-4 ml-2" />
             </Button>
           </form>
         </div>
       </div>
 
-      <div className="hidden lg:flex flex-1 bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 dark:from-gray-950 dark:via-gray-900 dark:to-gray-950 p-12 items-center justify-center relative overflow-hidden">
+      <div className="hidden lg:flex flex-1 bg-linear-to-br from-gray-900 via-gray-800 to-gray-900 dark:from-gray-950 dark:via-gray-900 dark:to-gray-950 p-12 items-center justify-center relative overflow-hidden">
         <div className="absolute inset-0 opacity-10">
           <div
             className="absolute inset-0"

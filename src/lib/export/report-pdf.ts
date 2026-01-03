@@ -2,11 +2,18 @@ import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import { ReportData } from "@/types/report";
 
-export const generateReportPDF = (data: ReportData): void => {
+/**
+ * Generate PDF report as black and white only (no colors)
+ * Returns a Blob for uploading to Supabase
+ * PDF should NOT include: barcode number, system case number (Word only)
+ */
+export const generateReportPDFBlob = async (
+  data: ReportData
+): Promise<Blob> => {
   const doc = new jsPDF();
 
-  const primaryColor: [number, number, number] = [59, 130, 246]; // Blue
-  const secondaryColor: [number, number, number] = [107, 114, 128]; // Gray
+  const blackColor: [number, number, number] = [0, 0, 0];
+  const grayColor: [number, number, number] = [128, 128, 128]; // Gray for contrast
 
   const formatDate = (dateStr: string): string => {
     if (!dateStr) return "N/A";
@@ -20,207 +27,222 @@ export const generateReportPDF = (data: ReportData): void => {
       .replace(/\//g, "-");
   };
 
-  doc.setFillColor(...primaryColor);
-  doc.rect(0, 0, 210, 30, "F");
+  // Header - Black and white only
+  doc.setFillColor(0, 0, 0);
+  doc.rect(0, 0, 210, 25, "F");
 
   doc.setTextColor(255, 255, 255);
-  doc.setFontSize(20);
+  doc.setFontSize(18);
   doc.setFont("helvetica", "bold");
-  doc.text("FOOD LAB REPORT", 105, 12, { align: "center" });
+  doc.text("LABORATORY REPORT", 105, 12, { align: "center" });
 
-  doc.setFontSize(10);
+  doc.setFontSize(9);
   doc.setFont("helvetica", "normal");
-  doc.text(`Report Number: ${data.reportNumber}`, 105, 20, { align: "center" });
+  doc.text(`Report Number: ${data.reportNumber || "In System"}`, 105, 18, {
+    align: "center",
+  });
 
-  doc.setFillColor(243, 244, 246);
-  doc.rect(10, 35, 190, 12, "F");
+  // Reference header info
+  doc.setFillColor(240, 240, 240);
+  doc.rect(10, 30, 190, 10, "F");
 
   doc.setTextColor(0, 0, 0);
   doc.setFontSize(9);
   doc.setFont("helvetica", "bold");
-  doc.text(`Ref: ${data.refNumber || "------"}`, 15, 42);
-  doc.text(`Employee: ${data.employee?.name || "N/A"}`, 75, 42);
-  doc.text(`Date: ${formatDate(data.date)}`, 155, 42);
+  doc.text(`Ref. n: ${data.refNumber || "------"}`, 15, 36);
+  doc.text(`Employee: ${data.employee?.name || "N/A"}`, 75, 36);
+  doc.text(`Date: ${formatDate(data.date)}`, 155, 36);
 
-  let yPos = 55;
+  let yPos = 50;
 
-  doc.setFontSize(12);
+  // Introduction Section
+  doc.setFontSize(11);
   doc.setFont("helvetica", "bold");
-  doc.setTextColor(...primaryColor);
-  doc.text("1. INTRODUCTION", 15, yPos);
+  doc.text("Introduction:", 15, yPos);
   yPos += 7;
 
   doc.setFontSize(9);
   doc.setFont("helvetica", "normal");
-  doc.setTextColor(...secondaryColor);
-  doc.text(`Production Date: ${formatDate(data.producedDate)}`, 15, yPos);
+  doc.text(`Produced on date: ${formatDate(data.producedDate)}`, 15, yPos);
   yPos += 5;
-  doc.text(`Expiry Date: ${formatDate(data.expiredDate)}`, 15, yPos);
+  doc.text(`Expired on: ${formatDate(data.expiredDate)}`, 15, yPos);
   yPos += 5;
-  doc.text(`Barcode: ${data.barcodeNumber || "N/A"}`, 15, yPos);
-  yPos += 8;
-
-  doc.setTextColor(0, 0, 0);
-  doc.text(
-    "All samples were received in good condition and properly stored according to",
-    15,
-    yPos
-  );
-  yPos += 5;
-  doc.text("laboratory standards.", 15, yPos);
+  doc.text("We received everything it was in a good conditions.", 15, yPos);
   yPos += 10;
 
-  doc.setFontSize(12);
+  // External containers section
+  doc.setFontSize(11);
   doc.setFont("helvetica", "bold");
-  doc.setTextColor(...primaryColor);
-  doc.text("2. EXTERNAL CONTAINER DETAILS", 15, yPos);
+  doc.text("How it looks out side:", 15, yPos);
   yPos += 7;
 
   doc.setFontSize(9);
   doc.setFont("helvetica", "normal");
-  doc.setTextColor(0, 0, 0);
 
-  const externalSummary = data.externalContainers
+  const externalSummary = (data.externalContainers || [])
     .filter((c) => c.type && c.quantity)
     .map((c) => `(${c.quantity}) ${c.type}`)
-    .join(", ");
+    .join(" + ");
 
-  doc.text(`Received: ${externalSummary || "N/A"}`, 15, yPos);
+  doc.text(`We received ${externalSummary || "containers"}`, 15, yPos);
   yPos += 5;
-  doc.text(`From: ${data.senderShop || "N/A"}`, 15, yPos);
-  yPos += 5;
+
+  if (data.senderShop) {
+    doc.text(
+      `like the one used for ${(data.senderShop || "").toLowerCase()}.`,
+      15,
+      yPos
+    );
+    yPos += 5;
+  }
+
   doc.text(
-    `Received by: ${data.employee?.name || "N/A"} on ${formatDate(data.date)}`,
+    `Received by ${
+      data.employee?.name || "employee name"
+    }, on date ${formatDate(data.date)}.`,
     15,
     yPos
   );
   yPos += 10;
 
-  doc.setFontSize(12);
+  // Storage section
+  doc.setFontSize(11);
   doc.setFont("helvetica", "bold");
-  doc.setTextColor(...primaryColor);
-  doc.text("3. INTERNAL CONTAINER DETAILS", 15, yPos);
+  doc.text("Insure its in good storage:", 15, yPos);
   yPos += 7;
 
   doc.setFontSize(9);
   doc.setFont("helvetica", "normal");
-  doc.setTextColor(0, 0, 0);
-
-  data.internalContainers
-    .filter((c) => c.type)
-    .forEach((container) => {
-      doc.text(`• ${container.quantity} × ${container.type}`, 15, yPos);
-      yPos += 5;
-    });
-
-  yPos += 5;
-
-  doc.setFontSize(12);
-  doc.setFont("helvetica", "bold");
-  doc.setTextColor(...primaryColor);
-  doc.text("4. STORAGE INFORMATION", 15, yPos);
-  yPos += 7;
-
-  doc.setFontSize(9);
-  doc.setFont("helvetica", "normal");
-  doc.setTextColor(0, 0, 0);
-
-  const storageLocations = [
-    ...new Set(data.samples.map((s) => s.storageLocation)),
-  ];
-  doc.text(
-    `Storage Location: ${storageLocations.join(" and ").toUpperCase()}`,
-    15,
-    yPos
-  );
+  const storageText = [
+    ...new Set((data.samples || []).map((s) => s.storageLocation || "storage")),
+  ].join(" or ");
+  doc.text(`We put the samples in store or ${storageText}.`, 15, yPos);
   yPos += 10;
 
-  doc.setFontSize(12);
+  // Internal containers section
+  doc.setFontSize(11);
   doc.setFont("helvetica", "bold");
-  doc.setTextColor(...primaryColor);
-  doc.text("5. SAMPLE ANALYSIS", 15, yPos);
+  doc.text("What was inside:", 15, yPos);
   yPos += 7;
 
-  const tableData = data.samples.map((sample) => [
-    sample.sampleNumber,
-    sample.sampleName,
-    `${sample.internalContainerCount} × ${sample.internalContainerType}`,
-    `${sample.netWeight} ${sample.weightUnit === "kg" ? "kg" : "g"}`,
-    sample.pureOrTotal.toUpperCase(),
-    `${sample.weightUsed} g`,
-    sample.storageLocation.toUpperCase(),
+  doc.setFontSize(9);
+  doc.setFont("helvetica", "normal");
+  doc.text("We open samples it contain food and drinks.", 15, yPos);
+  yPos += 10;
+
+  // Samples table - Black and white theme
+  const tableData = (data.samples || []).map((sample) => [
+    sample.sampleNumber || "",
+    sample.sampleNumber || "",
+    `${sample.sampleName || "Food"} in ${
+      sample.internalContainerType || "container"
+    }`,
+    `${sample.netWeight || 0} ${
+      sample.weightUnit === "kg" ? "gram" : "gram"
+    } (${
+      (sample.pureOrTotal || "pure") === "pure" ? "Net weight" : "total weight"
+    })`,
+    `${sample.weightUsed || 0} gram`,
+    "",
   ]);
 
   autoTable(doc, {
     startY: yPos,
     head: [
-      ["Sample #", "Type", "Container", "Net Weight", "P/T", "Used", "Storage"],
+      [
+        "Outer container",
+        "Sample number",
+        "How sample looks like",
+        "How it weight",
+        "used",
+        "",
+      ],
     ],
     body: tableData,
-    theme: "grid",
+    theme: "plain",
     headStyles: {
-      fillColor: primaryColor,
-      textColor: [255, 255, 255],
+      fillColor: [230, 230, 230],
+      textColor: [0, 0, 0],
       fontStyle: "bold",
       fontSize: 8,
+      halign: "center",
+      lineColor: [0, 0, 0],
+      lineWidth: 0.3,
     },
     bodyStyles: {
       fontSize: 8,
       textColor: [0, 0, 0],
+      halign: "center",
+      lineColor: [0, 0, 0],
+      lineWidth: 0.1,
     },
     alternateRowStyles: {
-      fillColor: [249, 250, 251],
+      fillColor: [250, 250, 250],
     },
     margin: { left: 15, right: 15 },
+    styles: {
+      cellPadding: 3,
+    },
   });
 
   const finalY = (doc as any).lastAutoTable.finalY + 15;
 
+  // Signature section
   doc.setFontSize(10);
   doc.setFont("helvetica", "bold");
-  doc.setTextColor(0, 0, 0);
-  doc.text("Authorized Signature:", 15, finalY);
+  doc.text("Signature:", 15, finalY);
 
   if (data.employee?.signature) {
     try {
-      doc.addImage(data.employee.signature, "PNG", 15, finalY + 3, 50, 20);
+      doc.addImage(
+        data.employee.signature,
+        "PNG",
+        15,
+        finalY + 3,
+        40,
+        15,
+        undefined,
+        "NONE"
+      );
     } catch (error) {
       console.error("Error adding signature:", error);
-      doc.line(15, finalY + 25, 75, finalY + 25);
+      doc.line(15, finalY + 20, 65, finalY + 20);
     }
   } else {
-    doc.line(15, finalY + 25, 75, finalY + 25);
+    doc.line(15, finalY + 20, 65, finalY + 20);
   }
 
-  doc.setFontSize(9);
-  doc.setFont("helvetica", "bold");
-  doc.text(data.employee?.name || "Employee Name", 15, finalY + 28);
+  // Return blob for upload
+  return doc.output("blob");
+};
 
-  doc.setFont("helvetica", "normal");
-  doc.setTextColor(...secondaryColor);
-  doc.text(data.employee?.role || "Position", 15, finalY + 33);
-  doc.text(`Date: ${formatDate(data.date)}`, 15, finalY + 38);
-
-  const pageCount = doc.getNumberOfPages();
-  for (let i = 1; i <= pageCount; i++) {
-    doc.setPage(i);
-    doc.setFontSize(8);
-    doc.setTextColor(...secondaryColor);
-    doc.text(
-      `Page ${i} of ${pageCount}`,
-      doc.internal.pageSize.getWidth() - 30,
-      doc.internal.pageSize.getHeight() - 10
-    );
-    doc.text(
-      `Generated: ${new Date().toLocaleString()}`,
-      15,
-      doc.internal.pageSize.getHeight() - 10
-    );
-  }
-
+/**
+ * Download PDF report directly (for preview/download button)
+ */
+export const generateReportPDF = async (data: ReportData): Promise<void> => {
+  const blob = await generateReportPDFBlob(data);
   const fileName = `Report_${data.refNumber}_${formatDate(data.date).replace(
     /\//g,
     "-"
   )}.pdf`;
-  doc.save(fileName);
+
+  // Create download link
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = fileName;
+  link.click();
+  URL.revokeObjectURL(url);
 };
+
+function formatDate(dateStr: string): string {
+  if (!dateStr) return "N/A";
+  const date = new Date(dateStr);
+  return date
+    .toLocaleDateString("en-GB", {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+    })
+    .replace(/\//g, "-");
+}

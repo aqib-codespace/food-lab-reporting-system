@@ -1,6 +1,5 @@
 "use client";
 import { useState, useEffect } from "react";
-import { useTranslations } from "next-intl";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button, Badge } from "rizzui";
@@ -10,17 +9,17 @@ import { Label } from "@/components/ui/label";
 import {
   Plus,
   Trash2,
-  FileDown,
   Eye,
-  User,
-  Package,
-  Calendar,
-  Mail,
-  Phone,
   CheckCircle,
   X,
   AlertTriangle,
   Loader2,
+  Calendar,
+  User,
+  Package,
+  Mail,
+  Phone,
+  FileDown,
 } from "lucide-react";
 import {
   ReportData,
@@ -34,16 +33,23 @@ import {
   useContainerTypes,
   useSampleNames,
 } from "@/hooks/useSupabaseData";
+import { useColors } from "@/hooks/useColors";
+import { supabase } from "@/lib/supabase/client";
 import { ReportPreview } from "@/components/report/ReportPreview";
 import { toast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { reportSchema } from "@/lib/validations/report.schema";
-import { useAppDispatch } from "@/store/hooks";
-import { addReport } from "@/store/slices/reportsSlice";
+import { generateReportPDFBlob } from "@/lib/export/report-pdf";
+import { generateReportWordBlob } from "@/lib/export/report-word";
+import {
+  uploadGeneratedPDF,
+  uploadGeneratedWord,
+} from "@/lib/supabase/storage";
+import { useRouter } from "next/navigation";
 
 const generateId = () => Math.random().toString(36).substr(2, 9);
 
-const getDefaultSample = (index: number): Sample => ({
+const getDefaultSample = (index: number, defaultColor?: string): Sample => ({
   id: generateId(),
   sampleNumber: `S${index + 1}`,
   sampleName: "",
@@ -53,7 +59,7 @@ const getDefaultSample = (index: number): Sample => ({
   weightUnit: "gram",
   pureOrTotal: "pure",
   weightUsed: 0,
-  colorCode: COLOR_OPTIONS[0].value,
+  colorCode: defaultColor || "#ef4444",
   storageLocation: "",
 });
 
@@ -64,22 +70,27 @@ const getDefaultContainer = (): ContainerEntry => ({
 });
 
 export default function NewReport() {
-  const t = useTranslations("newReport");
-  const tCommon = useTranslations("common");
+  const router = useRouter();
   const [showPreview, setShowPreview] = useState(false);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
-  const dispatch = useAppDispatch();
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [editingReportId, setEditingReportId] = useState<string | null>(null);
+  const [isLoadingReport, setIsLoadingReport] = useState(false);
 
   const { data: employees, loading: employeesLoading } = useEmployees();
   const { data: containerTypes, loading: containerTypesLoading } =
     useContainerTypes();
   const { data: sampleNames, loading: sampleNamesLoading } = useSampleNames();
+  const { data: allColors, loading: colorsLoading } = useColors();
 
-  // Hardcoded storage location options (temporary): shop, fridge, both
+  const activeColors = allColors.filter(
+    (color: any) => color.status === "active"
+  );
+
   const STORAGE_LOCATION_OPTIONS = [
-    { label: t("shop"), value: "shop" },
-    { label: t("fridge"), value: "fridge" },
-    { label: t("both"), value: "both" },
+    { label: "Shop", value: "shop" },
+    { label: "Fridge", value: "fridge" },
+    { label: "Both", value: "both" },
   ];
 
   const externalContainerTypes = containerTypes.filter(
@@ -88,6 +99,10 @@ export default function NewReport() {
   const internalContainerTypes = containerTypes.filter(
     (ct) => ct.category === "internal"
   );
+
+  const defaultColorCode =
+    activeColors.length > 0 ? activeColors[0].hex_code : "#ef4444";
+
   const [reportData, setReportData] = useState<ReportData>({
     refNumber: "",
     employee: null,
@@ -95,12 +110,132 @@ export default function NewReport() {
     externalContainers: [getDefaultContainer()],
     senderShop: "",
     internalContainers: [getDefaultContainer()],
-    samples: [getDefaultSample(0)],
+    samples: [getDefaultSample(0, defaultColorCode)],
     barcodeNumber: "",
     producedDate: "",
     expiredDate: "",
     reportNumber: "In System",
   });
+
+  useEffect(() => {
+    const searchParams = new URLSearchParams(window.location.search);
+    const editId = searchParams.get("edit");
+
+    if (editId && !isLoadingReport && !editingReportId) {
+      setIsLoadingReport(true);
+      setEditingReportId(editId);
+
+      const loadReport = async () => {
+        try {
+          // Fetch report
+          const { data: reportData, error: reportError } = (await supabase
+            .from("reports")
+            .select(
+              `
+              *,
+              employees:employee_id (
+                id,
+                name,
+                email,
+                role,
+                photo,
+                signature,
+                initials
+              )
+            `
+            )
+            .eq("id", editId)
+            .single()) as any;
+
+          if (reportError) throw reportError;
+
+          // Fetch samples
+          const { data: samples, error: samplesError } = await supabase
+            .from("report_samples")
+            .select("*")
+            .eq("report_id", editId);
+
+          if (samplesError) throw samplesError;
+
+          // Fetch external containers
+          const { data: externalContainers, error: externalError } =
+            await supabase
+              .from("report_external_containers")
+              .select("*")
+              .eq("report_id", editId);
+
+          if (externalError) throw externalError;
+
+          // Fetch internal containers
+          const { data: internalContainers, error: internalError } =
+            await supabase
+              .from("report_internal_containers")
+              .select("*")
+              .eq("report_id", editId);
+
+          if (internalError) throw internalError;
+
+          const report = {
+            ...reportData,
+            employee: reportData.employees,
+            samples: samples || [],
+            external_containers: externalContainers || [],
+            internal_containers: internalContainers || [],
+          };
+
+          if (report) {
+            setReportData({
+              id: report.id,
+              refNumber: report.ref_number,
+              employee: report.employee,
+              date: report.report_date,
+              externalContainers: report.external_containers?.map((c: any) => ({
+                id: c.id || generateId(),
+                quantity: c.quantity,
+                type: c.container_type_id,
+              })) || [getDefaultContainer()],
+              senderShop: report.sender_shop || "",
+              internalContainers: report.internal_containers?.map((c: any) => ({
+                id: c.id || generateId(),
+                quantity: c.quantity,
+                type: c.container_type_id,
+              })) || [getDefaultContainer()],
+              samples: report.samples?.map((s: any, idx: number) => ({
+                id: s.id || generateId(),
+                sampleNumber: s.sample_number || `S${idx + 1}`,
+                sampleName: s.sample_name || "",
+                internalContainerCount: s.internal_container_count || 1,
+                internalContainerType: s.internal_container_type || "",
+                netWeight: s.net_weight || 0,
+                weightUnit: s.weight_unit || "gram",
+                pureOrTotal: s.pure_or_total || "pure",
+                weightUsed: s.weight_used || 0,
+                colorCode: s.color_code || defaultColorCode,
+                storageLocation: s.storage_location || "",
+              })) || [getDefaultSample(0, defaultColorCode)],
+              barcodeNumber: report.barcode_number || "",
+              producedDate: report.produced_date || "",
+              expiredDate: report.expired_date || "",
+              reportNumber: report.report_number || "In System",
+              status: report.status,
+            });
+          }
+        } catch (error) {
+          console.error("Error loading report:", error);
+          toast({
+            title: "Error",
+            description: "Failed to load report for editing.",
+            variant: "destructive",
+          });
+        } finally {
+          setIsLoadingReport(false);
+        }
+      };
+
+      loadReport();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [defaultColorCode]);
 
   const updateField = <K extends keyof ReportData>(
     field: K,
@@ -162,9 +297,14 @@ export default function NewReport() {
   };
 
   const addSample = () => {
+    const defaultColor =
+      activeColors.length > 0 ? activeColors[0].hex_code : "#ef4444";
     setReportData((prev) => ({
       ...prev,
-      samples: [...prev.samples, getDefaultSample(prev.samples.length)],
+      samples: [
+        ...prev.samples,
+        getDefaultSample(prev.samples.length, defaultColor),
+      ],
     }));
   };
 
@@ -188,80 +328,188 @@ export default function NewReport() {
   };
 
   const validateForm = (): boolean => {
-    const result = reportSchema.safeParse(reportData);
-
-    if (!result.success) {
-      const errors: Record<string, string> = {};
-      result.error.issues.forEach((issue) => {
-        const path = issue.path.join(".");
-        errors[path] = issue.message;
-      });
-      setFieldErrors(errors);
-
-      const firstErrorElement = document.querySelector('[data-error="true"]');
-      if (firstErrorElement) {
-        firstErrorElement.scrollIntoView({
-          behavior: "smooth",
-          block: "center",
-        });
-      }
-
-      return false;
-    }
-
+    // No validation required for first stage - all fields are optional
     setFieldErrors({});
     return true;
   };
 
-  const handleGenerateReport = () => {
-    const result = reportSchema.safeParse(reportData);
+  const handleGenerateReport = async () => {
+    // No validation required for first stage - all fields are optional
+    setFieldErrors({});
+    setIsGenerating(true);
 
-    if (!result.success) {
-      const errors: Record<string, string> = {};
-      result.error.issues.forEach((issue) => {
-        const path = issue.path.join(".");
-        errors[path] = issue.message;
-      });
-      setFieldErrors(errors);
+    try {
+      // Check if editing existing report
+      if (editingReportId && reportData.id) {
+        // Update existing report directly
+        const { error: updateError } = await (supabase as any)
+          .from("reports")
+          .update({
+            ref_number: reportData.refNumber || null,
+            employee_id: reportData.employee?.id || null,
+            report_date: reportData.date,
+            sender_shop: reportData.senderShop || null,
+            barcode_number: reportData.barcodeNumber || null,
+            produced_date: reportData.producedDate || null,
+            expired_date: reportData.expiredDate || null,
+            report_number: reportData.reportNumber || "In System",
+          })
+          .eq("id", reportData.id);
 
-      const firstErrorElement = document.querySelector('[data-error="true"]');
-      if (firstErrorElement) {
-        firstErrorElement.scrollIntoView({
-          behavior: "smooth",
-          block: "center",
+        if (updateError) throw updateError;
+
+        toast({
+          title: "Report Updated",
+          description: "Your changes have been saved successfully.",
         });
+
+        router.push(`/routes/reports/${reportData.id}`);
+        return;
+      }
+
+      // Create new report - only send fields with values
+      // Insert main report
+      const { data: newReport, error: reportError } = await (supabase as any)
+        .from("reports")
+        .insert([
+          {
+            ref_number: reportData.refNumber || null,
+            employee_id: reportData.employee?.id || null,
+            report_date:
+              reportData.date || new Date().toISOString().split("T")[0],
+            sender_shop: reportData.senderShop || null,
+            barcode_number: reportData.barcodeNumber || null,
+            produced_date: reportData.producedDate || null,
+            expired_date: reportData.expiredDate || null,
+            report_number: reportData.reportNumber || "In System",
+            status: "pending" as const,
+          },
+        ])
+        .select()
+        .single();
+
+      if (reportError) throw reportError;
+
+      const reportId = newReport.id;
+
+      // Insert samples
+      if (reportData.samples && reportData.samples.length > 0) {
+        const samplesWithReportId = reportData.samples.map((sample) => ({
+          report_id: reportId,
+          sample_number: sample.sampleNumber || null,
+          sample_name: sample.sampleName || null,
+          internal_container_count: sample.internalContainerCount || null,
+          internal_container_type: sample.internalContainerType || null,
+          net_weight: sample.netWeight || null,
+          weight_unit: sample.weightUnit || "gram",
+          pure_or_total: sample.pureOrTotal || "pure",
+          weight_used: sample.weightUsed || null,
+          color_code: sample.colorCode || null,
+          storage_location: sample.storageLocation || null,
+        }));
+
+        const { error: samplesError } = await (supabase as any)
+          .from("report_samples")
+          .insert(samplesWithReportId);
+
+        if (samplesError) throw samplesError;
+      }
+
+      // Insert external containers
+      if (
+        reportData.externalContainers &&
+        reportData.externalContainers.length > 0
+      ) {
+        const containersWithReportId = reportData.externalContainers.map(
+          (container) => ({
+            report_id: reportId,
+            quantity: container.quantity || null,
+            container_type_id: container.type || null,
+          })
+        );
+
+        const { error: externalError } = await (supabase as any)
+          .from("report_external_containers")
+          .insert(containersWithReportId);
+
+        if (externalError) throw externalError;
+      }
+
+      // Insert internal containers
+      if (
+        reportData.internalContainers &&
+        reportData.internalContainers.length > 0
+      ) {
+        const containersWithReportId = reportData.internalContainers.map(
+          (container) => ({
+            report_id: reportId,
+            quantity: container.quantity || null,
+            container_type_id: container.type || null,
+          })
+        );
+
+        const { error: internalError } = await (supabase as any)
+          .from("report_internal_containers")
+          .insert(containersWithReportId);
+
+        if (internalError) throw internalError;
+      }
+
+      // Generate PDF and Word files
+      toast({
+        title: "Generating Files",
+        description: "Creating PDF and Word documents...",
+      });
+
+      const pdfBlob = await generateReportPDFBlob(reportData);
+      const wordBlob = await generateReportWordBlob(reportData);
+
+      // Upload files to Supabase
+      const pdfUploadResult = await uploadGeneratedPDF(
+        reportId,
+        reportData.refNumber,
+        pdfBlob
+      );
+
+      if (!pdfUploadResult.success) {
+        console.error("PDF upload failed:", pdfUploadResult.error);
+      }
+
+      const wordUploadResult = await uploadGeneratedWord(
+        reportId,
+        reportData.refNumber,
+        wordBlob
+      );
+
+      if (!wordUploadResult.success) {
+        console.error("Word upload failed:", wordUploadResult.error);
       }
 
       toast({
-        title: t("validationError"),
-        description: t("pleaseFillAllFields"),
+        title: "Report Created",
+        description:
+          "Your report has been saved with 'Pending' status. You can now preview it.",
+      });
+
+      // Show preview instead of redirecting
+      setShowPreview(true);
+    } catch (error) {
+      console.error("Error creating report:", error);
+      toast({
+        title: "Save Failed",
+        description:
+          error instanceof Error ? error.message : "Failed to save report",
         variant: "destructive",
       });
-      return;
+    } finally {
+      setIsGenerating(false);
     }
-
-    setFieldErrors({});
-
-    const reportToSave = {
-      ...reportData,
-      id: generateId(),
-      createdAt: new Date().toISOString(),
-    };
-
-    dispatch(addReport(reportToSave));
-
-    toast({
-      title: t("reportSaved"),
-      description: t("reportSavedSuccessfully"),
-    });
-
-    setShowPreview(true);
   };
 
   if (showPreview) {
     return (
       <DashboardLayout>
-        <div className="mb-4">
+        <div className="mb-4 flex gap-3">
           <Button
             variant="outline"
             onClick={() => setShowPreview(false)}
@@ -269,8 +517,27 @@ export default function NewReport() {
           >
             ← Back to Form
           </Button>
+          <Button
+            onClick={() => router.push("/routes/reports")}
+            className="gap-2 bg-gray-800 text-white rounded-lg"
+          >
+            View All Reports
+          </Button>
         </div>
         <ReportPreview data={reportData} />
+      </DashboardLayout>
+    );
+  }
+
+  if (isLoadingReport) {
+    return (
+      <DashboardLayout>
+        <div className="flex items-center justify-center min-h-[400px]">
+          <Loader2 className="w-8 h-8 animate-spin text-gray-400" />
+          <span className="ml-3 text-gray-600 dark:text-gray-400">
+            Loading report...
+          </span>
+        </div>
       </DashboardLayout>
     );
   }
@@ -279,10 +546,12 @@ export default function NewReport() {
     <DashboardLayout>
       <div className="flex flex-col gap-2 mb-4 sm:mb-6">
         <h1 className="text-xl sm:text-2xl font-bold text-foreground">
-          {t("createNewReport")}
+          {editingReportId ? "Edit Report" : "Create New Report"}
         </h1>
         <p className="text-sm sm:text-base text-muted-foreground">
-          {t("fillInDetails")}
+          {editingReportId
+            ? "Update the report details below"
+            : "Fill in the details below to create a new laboratory report"}
         </p>
       </div>
 
@@ -292,16 +561,16 @@ export default function NewReport() {
             <CardHeader className="pb-3 sm:pb-4 px-4 sm:px-6">
               <CardTitle className="text-sm sm:text-base font-semibold flex items-center gap-2">
                 <Calendar className="w-4 h-4 text-accent" />
-                {t("reportDetails")}
+                Report Details
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-3 sm:space-y-4 px-4 sm:px-6">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                 <div className="space-y-2" data-error={!!fieldErrors.refNumber}>
-                  <Label htmlFor="refNumber">{t("referenceNumber")} *</Label>
+                  <Label htmlFor="refNumber">Reference Number</Label>
                   <Input
                     id="refNumber"
-                    placeholder={t("refNumberPlaceholder")}
+                    placeholder="Enter 6-digit reference number"
                     maxLength={6}
                     value={reportData.refNumber}
                     onChange={(e) =>
@@ -324,7 +593,7 @@ export default function NewReport() {
                   )}
                 </div>
                 <div className="space-y-2" data-error={!!fieldErrors.date}>
-                  <Label htmlFor="date">{t("date")}</Label>
+                  <Label htmlFor="date">Date</Label>
                   <Input
                     id="date"
                     type="date"
@@ -345,14 +614,14 @@ export default function NewReport() {
               </div>
 
               <div className="space-y-2" data-error={!!fieldErrors.employee}>
-                <Label>{t("selectEmployee")} *</Label>
+                <Label>Select Employee</Label>
                 {employeesLoading ? (
                   <div className="flex items-center justify-center p-8 text-muted-foreground">
                     <Loader2 className="w-5 h-5 animate-spin" />
                   </div>
                 ) : employees.length === 0 ? (
                   <div className="text-center p-8 text-muted-foreground">
-                    {t("noEmployeesFound")}
+                    No employees found. Please add employees first.
                   </div>
                 ) : (
                   <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
@@ -405,7 +674,6 @@ export default function NewReport() {
                       </CardTitle>
 
                       <div className="flex items-center gap-2">
-                        
                         <Button
                           variant="text"
                           size="sm"
@@ -447,13 +715,13 @@ export default function NewReport() {
                           <div className="flex items-center gap-2 truncate">
                             <Mail className="w-4 h-4" />
                             <span className="truncate">
-                              {reportData.employee.email ?? t("notProvided")}
+                              {reportData.employee.email ?? "Not Provided"}
                             </span>
                           </div>
                           <div className="flex items-center gap-2 truncate mt-1 sm:mt-0">
                             <Phone className="w-4 h-4" />
                             <span className="truncate">
-                              {reportData.employee.phone ?? t("notProvided")}
+                              {reportData.employee.phone ?? "Not Provided"}
                             </span>
                           </div>
                         </div>
@@ -461,7 +729,7 @@ export default function NewReport() {
                     </div>
 
                     <div className="ml-auto">
-                      <p>{t("signature")}</p>
+                      <p>Signature</p>
                       {reportData.employee.signature ? (
                         <img
                           src={reportData.employee.signature}
@@ -470,7 +738,7 @@ export default function NewReport() {
                         />
                       ) : (
                         <div className="text-xs text-muted-foreground italic">
-                          {t("noSignature")}
+                          No signature available
                         </div>
                       )}
                     </div>
@@ -479,7 +747,7 @@ export default function NewReport() {
               )}
 
               <div className="space-y-2">
-                <Label htmlFor="senderShop">{t("senderShop")}</Label>
+                <Label htmlFor="senderShop">Sender Shop</Label>
                 <Select
                   value={reportData.senderShop}
                   onChange={(value) =>
@@ -489,7 +757,7 @@ export default function NewReport() {
                     label: shop,
                     value: shop,
                   }))}
-                  placeholder={t("selectShop")}
+                  placeholder="Select a shop"
                   className="input-focus"
                 />
               </div>
@@ -502,7 +770,7 @@ export default function NewReport() {
               <div className="flex items-center justify-between gap-2">
                 <CardTitle className="text-sm sm:text-base font-semibold flex items-center gap-2">
                   <Package className="w-4 h-4 text-accent" />
-                  {t("externalContainers")}
+                  External Containers
                 </CardTitle>
                 <Button
                   variant="outline"
@@ -511,7 +779,7 @@ export default function NewReport() {
                   className="gap-1 border rounded-lg px-2 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm"
                 >
                   <Plus className="w-3 h-3" />
-                  <span className="hidden sm:inline">{t("add")}</span>
+                  <span className="hidden sm:inline">Add</span>
                 </Button>
               </div>
             </CardHeader>
@@ -522,7 +790,7 @@ export default function NewReport() {
                   className="flex gap-2 sm:gap-3 items-end animate-fade-in"
                 >
                   <div className="w-16 sm:w-20">
-                    <Label className="text-xs">{t("qty")}</Label>
+                    <Label className="text-xs">Qty</Label>
                     <Input
                       type="number"
                       min="1"
@@ -536,7 +804,7 @@ export default function NewReport() {
                     />
                   </div>
                   <div className="flex-1">
-                    <Label className="text-xs">{t("containerType")}</Label>
+                    <Label className="text-xs">Container Type</Label>
                     <Select
                       value={container.type}
                       onChange={(value) =>
@@ -548,7 +816,7 @@ export default function NewReport() {
                         label: type.name,
                         value: type.id,
                       }))}
-                      placeholder={t("selectType")}
+                      placeholder="Select type"
                       className="input-focus"
                     />
                   </div>
@@ -575,7 +843,7 @@ export default function NewReport() {
               <div className="flex items-center justify-between gap-2">
                 <CardTitle className="text-sm sm:text-base font-semibold flex items-center gap-2">
                   <User className="w-4 h-4 text-accent" />
-                  {t("sampleInformation")}
+                  Sample Information
                   <Badge
                     variant="flat"
                     color="secondary"
@@ -591,8 +859,8 @@ export default function NewReport() {
                   className="gap-1 border rounded-lg px-2 text-xs sm:text-sm whitespace-nowrap"
                 >
                   <Plus className="w-3 h-3" />
-                  <span className="hidden sm:inline">{t("addSample")}</span>
-                  <span className="sm:hidden">{t("add")}</span>
+                  <span className="hidden sm:inline">Add Sample</span>
+                  <span className="sm:hidden">Add</span>
                 </Button>
               </div>
             </CardHeader>
@@ -622,7 +890,7 @@ export default function NewReport() {
                         className="text-destructive hover:text-destructive/80 hover:bg-destructive/10 h-8"
                       >
                         <Trash2 className="w-4 h-4 mr-1" />
-                        {t("delete")}
+                        Delete
                       </Button>
                     )}
                   </div>
@@ -630,7 +898,7 @@ export default function NewReport() {
                   <div className="space-y-3">
                     <div>
                       <Label className="text-xs sm:text-sm font-medium mb-1.5 block">
-                        {t("sampleName")}
+                        Sample Name
                       </Label>
                       <Select
                         value={sample.sampleName}
@@ -643,13 +911,13 @@ export default function NewReport() {
                           label: sample.name,
                           value: sample.id,
                         }))}
-                        placeholder={t("selectSampleName")}
+                        placeholder="Select sample name"
                         className="input-focus h-10"
                       />
                     </div>
                     <div>
                       <Label className="text-xs font-medium mb-1.5 block">
-                        {t("internalContainerType")}
+                        Internal Container Type
                       </Label>
                       <div className="flex gap-2">
                         <Input
@@ -676,17 +944,17 @@ export default function NewReport() {
                             label: type.name,
                             value: type.id,
                           }))}
-                          placeholder={t("selectType")}
+                          placeholder="Select type"
                           className="input-focus h-10 flex-1"
                         />
                       </div>
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                     <div>
                       <Label className="text-xs sm:text-sm font-medium mb-1.5 block">
-                        {t("netWeight")}
+                        Net Weight
                       </Label>
                       <div className="flex gap-2">
                         <Input
@@ -718,7 +986,7 @@ export default function NewReport() {
                     </div>
                     <div>
                       <Label className="text-xs sm:text-sm font-medium mb-1.5 block">
-                        {t("storageLocation")}
+                        Storage Location
                       </Label>
                       <Select
                         value={sample.storageLocation}
@@ -731,9 +999,11 @@ export default function NewReport() {
                         className="input-focus h-10"
                       />
                     </div>
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                     <div>
                       <Label className="text-xs sm:text-sm font-medium mb-1.5 block">
-                        {t("pureOrTotal")}
+                        Pure or Total
                       </Label>
                       <Select
                         value={sample.pureOrTotal}
@@ -743,15 +1013,15 @@ export default function NewReport() {
                           })
                         }
                         options={[
-                          { label: t("pure"), value: "pure" },
-                          { label: t("total"), value: "total" },
+                          { label: "Pure", value: "pure" },
+                          { label: "Total", value: "total" },
                         ]}
                         className="input-focus h-10"
                       />
                     </div>
                     <div>
                       <Label className="text-xs sm:text-sm font-medium mb-1.5 block">
-                        {t("weightUsed")} (g)
+                        Weight Used (g)
                       </Label>
                       <Input
                         type="number"
@@ -766,53 +1036,49 @@ export default function NewReport() {
                         placeholder="0.00"
                       />
                     </div>
-                  </div>
-
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <div>
                       <Label className="text-xs font-medium mb-1.5 block">
-                        {t("colorCode")}
+                        Color Code
                       </Label>
-                      <div className="flex items-center gap-2 flex-wrap">
-                        {COLOR_OPTIONS.map((color) => (
-                          <button
-                            key={color.value}
-                            type="button"
-                            onClick={() =>
+                      {colorsLoading ? (
+                        <p className="text-xs text-gray-500">
+                          Loading colors...
+                        </p>
+                      ) : activeColors.length > 0 ? (
+                        <div className="relative">
+                          <select
+                            value={sample.colorCode}
+                            onChange={(e) =>
                               updateSample(sample.id, {
-                                colorCode: color.value,
+                                colorCode: e.target.value,
                               })
                             }
-                            className={cn(
-                              "w-7 h-7 rounded-md border-2 transition-all hover:scale-105",
-                              sample.colorCode === color.value
-                                ? "ring-2 ring-blue-500 ring-offset-1"
-                                : "border-gray-300 dark:border-gray-600 hover:border-gray-400"
-                            )}
-                            style={{ backgroundColor: color.value }}
-                            title={color.name}
-                          />
-                        ))}
-                        <div className="w-px h-5 bg-gray-300 dark:bg-gray-600 mx-1" />
-                        <input
-                          type="color"
-                          value={sample.colorCode}
-                          onChange={(e) =>
-                            updateSample(sample.id, {
-                              colorCode: e.target.value,
-                            })
-                          }
-                          className="w-12 h-7 rounded border-2 border-gray-300 dark:border-gray-600 cursor-pointer hover:border-blue-400 transition-colors"
-                          title="Custom Color"
-                        />
-                        <div
-                          className="w-7 h-7 rounded border-2 border-gray-400 dark:border-gray-500"
-                          style={{ backgroundColor: sample.colorCode }}
-                          title="Current Selection"
-                        />
-                      </div>
+                            className="w-full px-3 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                          >
+                            <option value="">Select a color</option>
+                            {activeColors.map((color: any) => (
+                              <option key={color.id} value={color.hex_code}>
+                                {color.name}
+                              </option>
+                            ))}
+                          </select>
+                          {sample.colorCode && (
+                            <div
+                              className="absolute right-9 top-1/2 -translate-y-1/2 w-6 h-6 rounded border-2 border-gray-300 dark:border-gray-600 pointer-events-none"
+                              style={{ backgroundColor: sample.colorCode }}
+                              title="Selected Color"
+                            />
+                          )}
+                        </div>
+                      ) : (
+                        <p className="text-xs text-gray-500">
+                          No colors available. Please add colors in Master Data.
+                        </p>
+                      )}
                     </div>
                   </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3"></div>
                 </div>
               ))}
             </CardContent>
@@ -822,13 +1088,13 @@ export default function NewReport() {
         <Card>
           <CardHeader className="pb-3 sm:pb-4 px-4 sm:px-6">
             <CardTitle className="text-sm sm:text-base font-semibold">
-              {t("additionalInfo")}
+              Additional Information
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-3 sm:space-y-4 px-4 sm:px-6">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
               <div className="space-y-2">
-                <Label htmlFor="producedDate">{t("producedDate")}</Label>
+                <Label htmlFor="producedDate">Produced Date</Label>
                 <Input
                   id="producedDate"
                   type="date"
@@ -838,7 +1104,7 @@ export default function NewReport() {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="expiredDate">{t("expiredDate")}</Label>
+                <Label htmlFor="expiredDate">Expired Date</Label>
                 <Input
                   id="expiredDate"
                   type="date"
@@ -849,10 +1115,10 @@ export default function NewReport() {
               </div>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="barcodeNumber">{t("barcodeNumber")}</Label>
+              <Label htmlFor="barcodeNumber">Barcode Number</Label>
               <Input
                 id="barcodeNumber"
-                placeholder={t("barcodePlaceholder")}
+                placeholder="Enter barcode number"
                 value={reportData.barcodeNumber}
                 onChange={(e) => updateField("barcodeNumber", e.target.value)}
                 className="input-focus"
@@ -866,32 +1132,36 @@ export default function NewReport() {
         <div className="max-w-7xl mx-auto px-3 sm:px-6 py-3 sm:py-4">
           <div className="flex items-center justify-end gap-2 sm:gap-3">
             <Button
-              onClick={() => {
-                if (validateForm()) {
-                  setShowPreview(true);
-                } else {
-                  toast({
-                    title: t("validationError"),
-                    description: t("pleaseFillAllFields"),
-                    variant: "destructive",
-                  });
-                }
-              }}
+              onClick={() => setShowPreview(true)}
               variant="outline"
               size="lg"
               className="min-w-28 sm:min-w-35 border rounded-lg text-sm sm:text-base px-3 sm:px-4"
             >
               <Eye className="w-4 h-4 mr-1 sm:mr-2" />
-              {t("preview")}
+              Preview
             </Button>
             <Button
               onClick={handleGenerateReport}
+              disabled={isGenerating}
               size="lg"
               className="min-w-32 sm:min-w-45 bg-gray-800 text-white rounded-lg text-sm sm:text-base px-3 sm:px-4"
             >
-              <FileDown className="w-4 h-4 mr-1 sm:mr-2" />
-              <span className="hidden sm:inline">{t("generateReport")}</span>
-              <span className="sm:hidden">{t("createReport")}</span>
+              {isGenerating ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-1 sm:mr-2 animate-spin" />
+                  {editingReportId ? "Updating..." : "Creating..."}
+                </>
+              ) : (
+                <>
+                  <FileDown className="w-4 h-4 mr-1 sm:mr-2" />
+                  <span className="hidden sm:inline">
+                    {editingReportId ? "Update Report" : "Create Report"}
+                  </span>
+                  <span className="sm:hidden">
+                    {editingReportId ? "Update" : "Create"}
+                  </span>
+                </>
+              )}
             </Button>
           </div>
         </div>
@@ -899,4 +1169,3 @@ export default function NewReport() {
     </DashboardLayout>
   );
 }
-

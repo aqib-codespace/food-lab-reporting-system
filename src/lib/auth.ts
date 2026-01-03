@@ -68,6 +68,9 @@ export const clientAuth = {
     if (typeof window !== "undefined") {
       localStorage.setItem(AUTH_TOKEN_KEY, user.token);
       localStorage.setItem(AUTH_USER_KEY, JSON.stringify(user));
+
+      // Also set cookie for middleware to read
+      document.cookie = `${AUTH_TOKEN_KEY}=${user.token}; path=/; max-age=86400; SameSite=Lax`;
     }
   },
 
@@ -91,11 +94,16 @@ export const clientAuth = {
     if (typeof window !== "undefined") {
       localStorage.removeItem(AUTH_TOKEN_KEY);
       localStorage.removeItem(AUTH_USER_KEY);
+
+      // Clear cookie
+      document.cookie = `${AUTH_TOKEN_KEY}=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT`;
     }
   },
 
   isAuthenticated(): boolean {
     const auth = this.getAuth();
-    return auth !== null && verifyToken(auth.token);
+    // Don't call verifyToken() in browser as it needs server-side env vars
+    // Just check if auth data exists - middleware handles server-side validation
+    return auth !== null && auth.token.length > 20;
   },
 };

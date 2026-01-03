@@ -1,7 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
-import { FileDown, FileText, Printer } from "lucide-react";
+import { FileDown, FileText } from "lucide-react";
 import { ReportData } from "@/types/report";
 import { generateReportPDF } from "@/lib/export/report-pdf";
 import { generateReportWord } from "@/lib/export/report-word";
@@ -25,6 +25,7 @@ export function ReportPreview({ data }: ReportPreviewProps) {
   };
 
   const getExternalContainersSummary = () => {
+    if (!data.externalContainers) return "";
     return data.externalContainers
       .filter((c) => c.type && c.quantity)
       .map((c) => `(${c.quantity}) ${c.type.toLowerCase()}`)
@@ -32,14 +33,11 @@ export function ReportPreview({ data }: ReportPreviewProps) {
   };
 
   const getInternalContainersSummary = () => {
+    if (!data.internalContainers) return "";
     return data.internalContainers
       .filter((c) => c.type && c.quantity)
       .map((c) => `${c.type}${c.quantity > 1 ? ` ${c.quantity}` : ""}`)
       .join(", ");
-  };
-
-  const handlePrint = () => {
-    window.print();
   };
 
   const handleDownloadPDF = () => {
@@ -78,10 +76,6 @@ export function ReportPreview({ data }: ReportPreviewProps) {
   return (
     <div className="max-w-4xl mx-auto space-y-6">
       <div className="flex gap-3 justify-end no-print">
-        <Button variant="outline" onClick={handlePrint} className="gap-2">
-          <Printer className="w-4 h-4" />
-          Print
-        </Button>
         <Button
           onClick={handleDownloadPDF}
           className="bg-gray-800 text-white hover:opacity-90 gap-2"
@@ -179,7 +173,7 @@ export function ReportPreview({ data }: ReportPreviewProps) {
             <p className="text-sm">
               We put the samples in{" "}
               <span className="bg-success/20 px-1 rounded">
-                {data.samples.length > 0
+                {data.samples && data.samples.length > 0
                   ? [
                       ...new Set(data.samples.map((s) => s.storageLocation)),
                     ].join(" or ")
@@ -195,18 +189,21 @@ export function ReportPreview({ data }: ReportPreviewProps) {
               We open samples it contain food and drinks.
             </p>
 
-            {data.internalContainers.filter((c) => c.type).length > 0 && (
-              <div className="mb-4">
-                {data.internalContainers
-                  .filter((c) => c.type)
-                  .map((container, idx) => (
-                    <p key={idx} className="text-sm">
-                      - {container.type}{" "}
-                      {container.quantity > 1 ? `${container.quantity}:` : ":"}
-                    </p>
-                  ))}
-              </div>
-            )}
+            {data.internalContainers &&
+              data.internalContainers.filter((c) => c.type).length > 0 && (
+                <div className="mb-4">
+                  {data.internalContainers
+                    .filter((c) => c.type)
+                    .map((container, idx) => (
+                      <p key={idx} className="text-sm">
+                        - {container.type}{" "}
+                        {container.quantity > 1
+                          ? `${container.quantity}:`
+                          : ":"}
+                      </p>
+                    ))}
+                </div>
+              )}
 
             <div className="overflow-x-auto">
               <table className="w-full border-collapse text-sm">
@@ -230,64 +227,47 @@ export function ReportPreview({ data }: ReportPreviewProps) {
                   </tr>
                 </thead>
                 <tbody>
-                  {data.samples.map((sample, index) => (
-                    <tr key={sample.id} className="hover:bg-muted/30">
-                      <td className="border border-border px-3 py-2">
-                        <span className="text-xs text-muted-foreground">
-                          ({sample.internalContainerCount || 1})
-                        </span>
-                      </td>
-                      <td className="border border-border px-3 py-2">
-                        <span
-                          className="px-2 py-0.5 rounded text-primary-foreground font-medium text-xs"
-                          style={{ backgroundColor: sample.colorCode }}
-                        >
-                          {sample.sampleNumber}
-                        </span>
-                      </td>
-                      <td className="border border-border px-3 py-2">
-                        <span
-                          className="px-2 py-0.5 rounded text-primary-foreground text-xs"
-                          style={{ backgroundColor: "#22c55e" }}
-                        >
-                          {sample.sampleName || "Food"}
-                        </span>{" "}
-                        <span
-                          className="px-2 py-0.5 rounded text-primary-foreground text-xs"
-                          style={{ backgroundColor: "#06b6d4" }}
-                        >
-                          in {sample.internalContainerCount || 1}{" "}
-                          {sample.internalContainerType || "container"}
-                        </span>
-                      </td>
-                      <td className="border border-border px-3 py-2">
-                        <span
-                          className="px-2 py-0.5 rounded text-primary-foreground text-xs"
-                          style={{ backgroundColor: "#ec4899" }}
-                        >
-                          {sample.netWeight || 0}{" "}
-                          {sample.weightUnit === "kg" ? "kg" : "gram"}
-                          {sample.pureOrTotal === "pure"
-                            ? " (Net weight)"
-                            : " (total weight)"}
-                        </span>{" "}
-                        <span
-                          className="px-2 py-0.5 rounded text-primary-foreground text-xs"
-                          style={{ backgroundColor: "#f97316" }}
-                        >
-                          {sample.pureOrTotal}
-                        </span>
-                      </td>
-                      <td className="border border-border px-3 py-2">
-                        <span
-                          className="px-2 py-0.5 rounded text-primary-foreground text-xs"
-                          style={{ backgroundColor: "#6366f1" }}
-                        >
-                          {sample.weightUsed || 0} gram
-                        </span>
-                      </td>
-                    </tr>
-                  ))}
+                  {data.samples &&
+                    data.samples.map((sample, index) => (
+                      <tr key={sample.id} className="hover:bg-muted/30">
+                        <td className="border border-border px-3 py-2">
+                          <span className="text-xs text-muted-foreground">
+                            ({sample.internalContainerCount || 1})
+                          </span>
+                        </td>
+                        <td className="border border-border px-3 py-2">
+                          <span className="px-2 py-0.5 rounded bg-gray-800 text-white font-medium text-xs">
+                            {sample.sampleNumber}
+                          </span>
+                        </td>
+                        <td className="border border-border px-3 py-2">
+                          <span className="px-2 py-0.5 rounded bg-gray-700 text-white text-xs">
+                            {sample.sampleName || "Food"}
+                          </span>{" "}
+                          <span className="px-2 py-0.5 rounded bg-gray-600 text-white text-xs">
+                            in {sample.internalContainerCount || 1}{" "}
+                            {sample.internalContainerType || "container"}
+                          </span>
+                        </td>
+                        <td className="border border-border px-3 py-2">
+                          <span className="px-2 py-0.5 rounded bg-gray-700 text-white text-xs">
+                            {sample.netWeight || 0}{" "}
+                            {sample.weightUnit === "kg" ? "kg" : "gram"}
+                            {sample.pureOrTotal === "pure"
+                              ? " (Net weight)"
+                              : " (total weight)"}
+                          </span>{" "}
+                          <span className="px-2 py-0.5 rounded bg-gray-600 text-white text-xs">
+                            {sample.pureOrTotal}
+                          </span>
+                        </td>
+                        <td className="border border-border px-3 py-2">
+                          <span className="px-2 py-0.5 rounded bg-gray-700 text-white text-xs">
+                            {sample.weightUsed || 0} gram
+                          </span>
+                        </td>
+                      </tr>
+                    ))}
                 </tbody>
               </table>
             </div>
@@ -295,91 +275,18 @@ export function ReportPreview({ data }: ReportPreviewProps) {
 
           <section className="mt-8">
             <h3 className="font-bold">Signature:</h3>
-            <div className="mt-4 h-16 border-b-2 border-dashed border-border w-64"></div>
+            {data.employee?.signature ? (
+              <div className="mt-4">
+                <img
+                  src={data.employee.signature}
+                  alt="Signature"
+                  className="h-16 w-40  border border-border rounded p-2 bg-white"
+                />
+              </div>
+            ) : (
+              <div className="mt-4 h-16 border-b-2 border-dashed border-border w-64"></div>
+            )}
           </section>
-        </CardContent>
-      </Card>
-
-      <Card className="shadow-lg print:shadow-none">
-        <CardHeader className="pb-4">
-          <CardTitle className="text-base">Compact Report View</CardTitle>
-        </CardHeader>
-        <CardContent className="p-8 pt-0">
-          <div className="flex justify-between items-center mb-4 text-sm">
-            <span>
-              <span className="font-semibold bg-primary text-primary-foreground px-2 py-0.5 rounded">
-                Ref. n:
-              </span>
-              {data.refNumber || "55555"}
-            </span>
-            <span className="font-semibold">
-              {data.employee?.name || "employee name"}
-            </span>
-            <span>
-              <span className="font-semibold bg-warning text-warning-foreground px-2 py-0.5 rounded">
-                date a
-              </span>
-            </span>
-          </div>
-
-          <p className="text-sm mb-2">
-            {getExternalContainersSummary() ||
-              "(2) white plastic bags + (2) box"}{" "}
-            from {data.senderShop?.toLowerCase() || "fish shop"}
-          </p>
-
-          {data.internalContainers.filter((c) => c.type).length > 0 && (
-            <p className="text-sm mb-2">- {getInternalContainersSummary()}:</p>
-          )}
-
-          {data.samples.map((sample) => (
-            <p key={sample.id} className="text-sm mb-1">
-              <span
-                className="px-1.5 py-0.5 rounded text-primary-foreground font-semibold text-xs"
-                style={{ backgroundColor: sample.colorCode }}
-              >
-                {sample.sampleNumber}
-              </span>
-              :{" "}
-              <span
-                className="px-1 py-0.5 rounded text-primary-foreground text-xs"
-                style={{ backgroundColor: "#22c55e" }}
-              >
-                {sample.sampleName || "Food"}
-              </span>{" "}
-              <span
-                className="px-1 py-0.5 rounded text-primary-foreground text-xs"
-                style={{ backgroundColor: "#06b6d4" }}
-              >
-                in {sample.internalContainerCount} of container
-              </span>{" "}
-              Net weight:{" "}
-              <span
-                className="px-1 py-0.5 rounded text-primary-foreground text-xs"
-                style={{ backgroundColor: "#ec4899" }}
-              >
-                {sample.netWeight} {sample.weightUnit === "gram" ? "g" : "kg"}
-              </span>{" "}
-              <span
-                className="px-1 py-0.5 rounded text-primary-foreground text-xs"
-                style={{ backgroundColor: "#f97316" }}
-              >
-                {sample.pureOrTotal}
-              </span>{" "}
-              Used:{" "}
-              <span
-                className="px-1 py-0.5 rounded text-primary-foreground text-xs"
-                style={{ backgroundColor: "#6366f1" }}
-              >
-                {sample.weightUsed} g
-              </span>
-            </p>
-          ))}
-
-          <div className="mt-6">
-            <h3 className="font-bold text-sm">Signature:</h3>
-            <div className="mt-2 h-12 border-b-2 border-dashed border-border w-48"></div>
-          </div>
         </CardContent>
       </Card>
     </div>

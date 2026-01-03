@@ -2,11 +2,11 @@
 
 import { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
-import { useRouter } from "@/i18n/routing";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { LogOut, AlertTriangle, X } from "lucide-react";
 import { clientAuth } from "@/lib/auth";
-import { useTranslations } from "next-intl";
+import { useToast } from "@/hooks/use-toast";
 
 interface LogoutButtonProps {
   className?: string;
@@ -17,8 +17,8 @@ export function LogoutButton({
   className,
   variant = "text",
 }: LogoutButtonProps) {
-  const t = useTranslations("common");
   const router = useRouter();
+  const { toast } = useToast();
   const [isOpen, setIsOpen] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [mounted, setMounted] = useState(false);
@@ -30,14 +30,27 @@ export function LogoutButton({
   const handleLogout = async () => {
     try {
       setIsLoggingOut(true);
-      await fetch("/api/auth/logout", {
-        method: "POST",
-      });
+
+      // Clear auth
       clientAuth.clearAuth();
+
+      // Call logout API
+      await fetch("/api/auth/logout", { method: "POST" });
+
+      toast({
+        title: "Logged Out",
+        description: "You have been successfully logged out.",
+      });
+
       router.push("/login");
       router.refresh();
     } catch (error) {
       console.error("Logout error:", error);
+      toast({
+        variant: "destructive",
+        title: "Logout Failed",
+        description: "An error occurred while logging out.",
+      });
       setIsLoggingOut(false);
     }
   };
@@ -50,7 +63,7 @@ export function LogoutButton({
         className={`w-full justify-start shadow-none  ${className}`}
       >
         <LogOut className="w-4 h-4" />
-        {t("logout")}
+        Logout
       </Button>
 
       {mounted &&

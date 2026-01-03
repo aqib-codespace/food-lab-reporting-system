@@ -1,5 +1,4 @@
 "use client";
-import { useTranslations } from "next-intl";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -72,16 +71,15 @@ const samples = [
 ];
 
 export default function Samples() {
-  const t = useTranslations("samples");
   return (
     <DashboardLayout>
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
         <div>
           <h1 className="text-3xl font-bold bg-linear-to-r from-gray-900 to-gray-600 dark:from-white dark:to-gray-300 bg-clip-text text-transparent">
-            {t("title")}
+            Samples
           </h1>
           <p className="text-gray-600 dark:text-gray-400 mt-2">
-            {t("subtitle")}
+            Browse and manage sample inventory
           </p>
         </div>
       </div>
@@ -90,7 +88,7 @@ export default function Samples() {
         <CardContent className="p-4">
           <div className="relative max-w-md">
             <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 dark:text-gray-400 z-10" />
-            <Input placeholder={t("searchSamples")} className="w-full pl-9" />
+            <Input placeholder="Search samples..." className="w-full pl-9" />
           </div>
         </CardContent>
       </Card>
@@ -130,19 +128,19 @@ export default function Samples() {
 
               <div className="space-y-2 text-sm">
                 <div className="flex justify-between">
-                  <span className="text-muted-foreground">{t("weight")}</span>
+                  <span className="text-muted-foreground">Weight</span>
                   <span className="font-medium text-foreground">
                     {sample.weight}
                   </span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-muted-foreground">{t("used")}</span>
+                  <span className="text-muted-foreground">Used</span>
                   <span className="font-medium text-foreground">
                     {sample.used}
                   </span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-muted-foreground">{t("storage")}</span>
+                  <span className="text-muted-foreground">Storage</span>
                   <span
                     className={cn(
                       "inline-flex items-center px-2 py-1 rounded text-xs font-medium",

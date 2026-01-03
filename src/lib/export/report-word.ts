@@ -9,13 +9,19 @@ import {
   WidthType,
   AlignmentType,
   BorderStyle,
-  HeadingLevel,
   convertInchesToTwip,
 } from "docx";
 import { saveAs } from "file-saver";
 import { ReportData } from "@/types/report";
 
-export const generateReportWord = async (data: ReportData): Promise<void> => {
+/**
+ * Generate Word report with full details including barcode and system numbers
+ * Returns a Blob for uploading to Supabase
+ * Word includes: barcode number, system case number, more detailed info
+ */
+export const generateReportWordBlob = async (
+  data: ReportData
+): Promise<Blob> => {
   const formatDate = (dateStr: string): string => {
     if (!dateStr) return "N/A";
     const date = new Date(dateStr);
@@ -40,192 +46,135 @@ export const generateReportWord = async (data: ReportData): Promise<void> => {
           },
         },
         children: [
-          // Company Header
+          // Header with ref and date
           new Paragraph({
-            alignment: AlignmentType.CENTER,
-            spacing: { after: 150 },
+            spacing: { after: 100 },
             children: [
               new TextRun({
-                text: "FOOD LABORATORY ANALYSIS CENTER",
-                bold: true,
-                size: 28,
-                allCaps: true,
+                text: `Ref. n: ${data.refNumber || "SSSSS"}`,
+                size: 20,
+              }),
+              new TextRun({
+                text: `\t\t\t\t\t\t\t${data.employee?.name || "employee name"}`,
+                size: 20,
+              }),
+              new TextRun({
+                text: `\t\t\t\tdate: ${formatDate(data.date)}`,
+                size: 20,
               }),
             ],
           }),
 
+          // Report number (system)
           new Paragraph({
             alignment: AlignmentType.CENTER,
             spacing: { after: 300 },
             children: [
               new TextRun({
-                text: "Quality Assurance & Sample Testing Division",
-                size: 20,
-                italics: true,
-              }),
-            ],
-          }),
-
-          // Horizontal separator
-          new Paragraph({
-            border: {
-              bottom: {
-                color: "000000",
-                space: 1,
-                style: BorderStyle.SINGLE,
-                size: 8,
-              },
-            },
-            spacing: { after: 250 },
-          }),
-
-          // Header with Ref and Date
-          new Paragraph({
-            spacing: { after: 80 },
-            children: [
-              new TextRun({
-                text: `Ref. n: ${data.refNumber || "------"}`,
-                size: 22,
-              }),
-              new TextRun({
-                text: `\t\t\t\t\t\t\tdate: ${formatDate(data.date)}`,
-                size: 22,
-              }),
-            ],
-          }),
-
-          // Report Number - Centered and Bold
-          new Paragraph({
-            alignment: AlignmentType.CENTER,
-            spacing: { after: 350 },
-            children: [
-              new TextRun({
-                text: `Report number: ${data.reportNumber}`,
+                text: `Report number: ${data.reportNumber || "in system"}`,
                 bold: true,
-                size: 24,
+                size: 22,
               }),
             ],
           }),
 
-          // Introduction Section
+          // Introduction
           new Paragraph({
-            spacing: { before: 100, after: 150 },
+            spacing: { before: 100, after: 120 },
             children: [
               new TextRun({
                 text: "Introduction:",
                 bold: true,
-                size: 22,
-                underline: {},
+                size: 21,
               }),
             ],
           }),
 
           new Paragraph({
-            spacing: { after: 80 },
-            indent: { left: 400 },
+            spacing: { after: 70 },
             children: [
               new TextRun({
-                text: "Produced on date: ",
-                bold: true,
-                size: 21,
-              }),
-              new TextRun({
-                text: formatDate(data.producedDate),
-                size: 21,
+                text: `Produced on date: ${formatDate(data.producedDate)}`,
+                size: 20,
               }),
             ],
           }),
 
           new Paragraph({
-            spacing: { after: 80 },
-            indent: { left: 400 },
+            spacing: { after: 70 },
             children: [
               new TextRun({
-                text: "Expired on: ",
-                bold: true,
-                size: 21,
-              }),
-              new TextRun({
-                text: formatDate(data.expiredDate),
-                size: 21,
+                text: `Expired on: ${formatDate(data.expiredDate)}`,
+                size: 20,
               }),
             ],
           }),
 
           new Paragraph({
-            spacing: { after: 300 },
-            indent: { left: 400 },
+            spacing: { after: 250 },
             children: [
               new TextRun({
-                text: "We received everything, it was in a good condition.",
-                size: 21,
+                text: "We received everything it was in a good conditions.",
+                size: 20,
               }),
             ],
           }),
 
-          // How it looks outside
+          // External containers
           new Paragraph({
-            spacing: { before: 150, after: 150 },
+            spacing: { before: 100, after: 120 },
             children: [
               new TextRun({
                 text: "How it looks out side:",
                 bold: true,
-                size: 22,
-                underline: {},
+                size: 21,
               }),
             ],
           }),
 
           new Paragraph({
-            spacing: { after: 80 },
-            indent: { left: 400 },
+            spacing: { after: 70 },
             children: [
               new TextRun({
                 text: "We received ",
-                size: 21,
+                size: 20,
               }),
               new TextRun({
-                text: data.externalContainers
+                text: (data.externalContainers || [])
                   .filter((c) => c.type && c.quantity)
                   .map((c) => `(${c.quantity}) ${c.type}`)
                   .join(" + "),
-                bold: true,
-                size: 21,
+                size: 20,
               }),
               new TextRun({
-                text: data.barcodeNumber ? `, it has (` : ".",
-                size: 21,
+                text: data.senderShop
+                  ? `, like the one used for ${(
+                      data.senderShop || ""
+                    ).toLowerCase()}`
+                  : "",
+                size: 20,
               }),
-              ...(data.barcodeNumber
-                ? [
-                    new TextRun({
-                      text: "barcode ",
-                      bold: true,
-                      size: 21,
-                    }),
-                    new TextRun({
-                      text: `number: ${data.barcodeNumber}).`,
-                      size: 21,
-                    }),
-                  ]
-                : []),
             ],
           }),
 
-          ...(data.senderShop
+          // Barcode information (Word only - not in PDF)
+          ...(data.barcodeNumber
             ? [
                 new Paragraph({
-                  spacing: { after: 80 },
-                  indent: { left: 400 },
+                  spacing: { after: 70 },
                   children: [
                     new TextRun({
-                      text: "From: ",
-                      bold: true,
-                      size: 21,
+                      text: "it has (",
+                      size: 20,
                     }),
                     new TextRun({
-                      text: data.senderShop,
-                      size: 21,
+                      text: "barcode number",
+                      bold: true,
+                      size: 20,
+                    }),
+                    new TextRun({
+                      text: ").",
+                      size: 20,
                     }),
                   ],
                 }),
@@ -233,92 +182,71 @@ export const generateReportWord = async (data: ReportData): Promise<void> => {
             : []),
 
           new Paragraph({
-            spacing: { after: 300 },
-            indent: { left: 400 },
+            spacing: { after: 250 },
             children: [
               new TextRun({
-                text: "Received by ",
-                size: 21,
-              }),
-              new TextRun({
-                text: data.employee?.name || "employee name",
-                bold: true,
-                size: 21,
-              }),
-              new TextRun({
-                text: `, on ${formatDate(data.date)}.`,
-                size: 21,
+                text: `Received by ${
+                  data.employee?.name || "employee name"
+                }, on date ${formatDate(data.date)}.`,
+                size: 20,
               }),
             ],
           }),
 
-          // Storage Information
+          // Storage
           new Paragraph({
-            spacing: { before: 150, after: 150 },
+            spacing: { before: 100, after: 120 },
             children: [
               new TextRun({
                 text: "Insure its in good storage:",
                 bold: true,
-                size: 22,
-                underline: {},
-              }),
-            ],
-          }),
-
-          new Paragraph({
-            spacing: { after: 300 },
-            indent: { left: 400 },
-            children: [
-              new TextRun({
-                text: "We put the samples in ",
                 size: 21,
-              }),
-              new TextRun({
-                text: [
-                  ...new Set(data.samples.map((s) => s.storageLocation)),
-                ].join(" or "),
-                bold: true,
-                size: 21,
-              }),
-              new TextRun({
-                text: ".",
-                size: 21,
-              }),
-            ],
-          }),
-
-          // What was inside
-          new Paragraph({
-            spacing: { before: 150, after: 150 },
-            children: [
-              new TextRun({
-                text: "What was inside:",
-                bold: true,
-                size: 22,
-                underline: {},
               }),
             ],
           }),
 
           new Paragraph({
             spacing: { after: 250 },
-            indent: { left: 400 },
             children: [
               new TextRun({
-                text: "We open samples it contain ",
-                size: 21,
+                text: "We put the samples in store or ",
+                size: 20,
               }),
               new TextRun({
-                text: data.internalContainers
-                  .filter((c) => c.type)
-                  .map((c) => `${c.type}`)
-                  .join(" and "),
-                bold: true,
-                size: 21,
+                text: [
+                  ...new Set(
+                    (data.samples || []).map(
+                      (s) => s.storageLocation || "storage"
+                    )
+                  ),
+                ].join(" or "),
+                size: 20,
               }),
               new TextRun({
                 text: ".",
+                size: 20,
+              }),
+            ],
+          }),
+
+          // Internal containers
+          new Paragraph({
+            spacing: { before: 100, after: 120 },
+            children: [
+              new TextRun({
+                text: "What was inside:",
+                bold: true,
                 size: 21,
+              }),
+            ],
+          }),
+
+          new Paragraph({
+            spacing: { after: 200 },
+            children: [
+              new TextRun({
+                text: "We open samples it contain food and drinks.",
+                size: 20,
               }),
             ],
           }),
@@ -346,7 +274,7 @@ export const generateReportWord = async (data: ReportData): Promise<void> => {
               // Header Row
               new TableRow({
                 tableHeader: true,
-                height: { value: 600, rule: "atLeast" },
+                height: { value: 550, rule: "atLeast" },
                 children: [
                   new TableCell({
                     children: [
@@ -356,14 +284,14 @@ export const generateReportWord = async (data: ReportData): Promise<void> => {
                           new TextRun({
                             text: "Outer container",
                             bold: true,
-                            size: 20,
+                            size: 19,
                           }),
                         ],
                       }),
                     ],
-                    shading: { fill: "E0F2FE" },
+                    shading: { fill: "E5E7EB" },
                     verticalAlign: "center",
-                    width: { size: 12, type: WidthType.PERCENTAGE },
+                    width: { size: 13, type: WidthType.PERCENTAGE },
                   }),
                   new TableCell({
                     children: [
@@ -373,12 +301,12 @@ export const generateReportWord = async (data: ReportData): Promise<void> => {
                           new TextRun({
                             text: "Sample number",
                             bold: true,
-                            size: 20,
+                            size: 19,
                           }),
                         ],
                       }),
                     ],
-                    shading: { fill: "E0F2FE" },
+                    shading: { fill: "E5E7EB" },
                     verticalAlign: "center",
                     width: { size: 13, type: WidthType.PERCENTAGE },
                   }),
@@ -390,14 +318,14 @@ export const generateReportWord = async (data: ReportData): Promise<void> => {
                           new TextRun({
                             text: "How sample looks like",
                             bold: true,
-                            size: 20,
+                            size: 19,
                           }),
                         ],
                       }),
                     ],
-                    shading: { fill: "E0F2FE" },
+                    shading: { fill: "E5E7EB" },
                     verticalAlign: "center",
-                    width: { size: 20, type: WidthType.PERCENTAGE },
+                    width: { size: 24, type: WidthType.PERCENTAGE },
                   }),
                   new TableCell({
                     children: [
@@ -407,12 +335,12 @@ export const generateReportWord = async (data: ReportData): Promise<void> => {
                           new TextRun({
                             text: "How it weight",
                             bold: true,
-                            size: 20,
+                            size: 19,
                           }),
                         ],
                       }),
                     ],
-                    shading: { fill: "E0F2FE" },
+                    shading: { fill: "E5E7EB" },
                     verticalAlign: "center",
                     width: { size: 25, type: WidthType.PERCENTAGE },
                   }),
@@ -424,41 +352,32 @@ export const generateReportWord = async (data: ReportData): Promise<void> => {
                           new TextRun({
                             text: "used",
                             bold: true,
-                            size: 20,
+                            size: 19,
                           }),
                         ],
                       }),
                     ],
-                    shading: { fill: "E0F2FE" },
+                    shading: { fill: "E5E7EB" },
                     verticalAlign: "center",
-                    width: { size: 15, type: WidthType.PERCENTAGE },
+                    width: { size: 12, type: WidthType.PERCENTAGE },
                   }),
                   new TableCell({
                     children: [
                       new Paragraph({
                         alignment: AlignmentType.CENTER,
-                        children: [
-                          new TextRun({
-                            text: "Storage",
-                            bold: true,
-                            size: 20,
-                          }),
-                        ],
+                        children: [new TextRun({ text: "", size: 19 })],
                       }),
                     ],
-                    shading: { fill: "E0F2FE" },
+                    shading: { fill: "E5E7EB" },
                     verticalAlign: "center",
-                    width: { size: 15, type: WidthType.PERCENTAGE },
+                    width: { size: 13, type: WidthType.PERCENTAGE },
                   }),
                 ],
               }),
               // Data Rows
-              ...data.samples.map((sample) => {
-                // Group samples by outer container logic
-                const outerContainer = `(${sample.internalContainerCount})`;
-
+              ...(data.samples || []).map((sample, idx) => {
                 return new TableRow({
-                  height: { value: 500, rule: "atLeast" },
+                  height: { value: 450, rule: "atLeast" },
                   children: [
                     new TableCell({
                       children: [
@@ -466,8 +385,8 @@ export const generateReportWord = async (data: ReportData): Promise<void> => {
                           alignment: AlignmentType.CENTER,
                           children: [
                             new TextRun({
-                              text: outerContainer,
-                              size: 19,
+                              text: `(${sample.internalContainerCount || 1})`,
+                              size: 18,
                             }),
                           ],
                         }),
@@ -480,8 +399,8 @@ export const generateReportWord = async (data: ReportData): Promise<void> => {
                           alignment: AlignmentType.CENTER,
                           children: [
                             new TextRun({
-                              text: sample.sampleNumber,
-                              size: 19,
+                              text: sample.sampleNumber || "",
+                              size: 18,
                             }),
                           ],
                         }),
@@ -494,8 +413,10 @@ export const generateReportWord = async (data: ReportData): Promise<void> => {
                           alignment: AlignmentType.CENTER,
                           children: [
                             new TextRun({
-                              text: `${sample.sampleName} in ${sample.internalContainerType}`,
-                              size: 19,
+                              text: `${sample.sampleName || "Food"} in ${
+                                sample.internalContainerType || "container"
+                              }`,
+                              size: 18,
                             }),
                           ],
                         }),
@@ -508,14 +429,14 @@ export const generateReportWord = async (data: ReportData): Promise<void> => {
                           alignment: AlignmentType.CENTER,
                           children: [
                             new TextRun({
-                              text: `${sample.netWeight} ${
-                                sample.weightUnit === "kg" ? "kg" : "gram"
+                              text: `${sample.netWeight || 0} ${
+                                sample.weightUnit === "kg" ? "gram" : "gram"
                               } (${
-                                sample.pureOrTotal === "pure"
+                                (sample.pureOrTotal || "pure") === "pure"
                                   ? "Net weight"
                                   : "total weight"
                               })`,
-                              size: 19,
+                              size: 18,
                             }),
                           ],
                         }),
@@ -528,8 +449,8 @@ export const generateReportWord = async (data: ReportData): Promise<void> => {
                           alignment: AlignmentType.CENTER,
                           children: [
                             new TextRun({
-                              text: `${sample.weightUsed} gram`,
-                              size: 19,
+                              text: `${sample.weightUsed || 0} gram`,
+                              size: 18,
                             }),
                           ],
                         }),
@@ -540,12 +461,7 @@ export const generateReportWord = async (data: ReportData): Promise<void> => {
                       children: [
                         new Paragraph({
                           alignment: AlignmentType.CENTER,
-                          children: [
-                            new TextRun({
-                              text: sample.storageLocation,
-                              size: 19,
-                            }),
-                          ],
+                          children: [new TextRun({ text: "", size: 18 })],
                         }),
                       ],
                       verticalAlign: "center",
@@ -557,140 +473,100 @@ export const generateReportWord = async (data: ReportData): Promise<void> => {
           }),
 
           // Spacing before signature
-          new Paragraph({ text: "", spacing: { after: 400 } }),
+          new Paragraph({ text: "", spacing: { after: 350 } }),
 
-          // Horizontal separator
+          // Signature section
           new Paragraph({
-            border: {
-              top: {
-                color: "CCCCCC",
-                space: 1,
-                style: BorderStyle.SINGLE,
-                size: 4,
-              },
-            },
-            spacing: { after: 300 },
-          }),
-
-          // Signature Section
-          new Paragraph({
-            spacing: { after: 50 },
+            spacing: { after: 100 },
             children: [
               new TextRun({
                 text: "Signature:",
                 bold: true,
-                size: 22,
-                underline: {},
+                size: 21,
               }),
             ],
           }),
 
-          new Paragraph({ text: "", spacing: { after: 150 } }),
-          new Paragraph({ text: "", spacing: { after: 150 } }),
+          new Paragraph({ text: "", spacing: { after: 40 } }),
 
-          new Paragraph({
-            text: "________________________________",
-            spacing: { after: 80 },
-          }),
+          // Signature note if available
+          ...(data.employee?.signature
+            ? [
+                new Paragraph({
+                  spacing: { after: 50 },
+                  children: [
+                    new TextRun({
+                      text: "[Signature on file]",
+                      italics: true,
+                      size: 18,
+                      color: "666666",
+                    }),
+                  ],
+                }),
+              ]
+            : []),
 
+          // Employee name
           new Paragraph({
+            spacing: { after: 50 },
             children: [
               new TextRun({
-                text: "Name: ",
-                bold: true,
-                size: 20,
-              }),
-              new TextRun({
-                text: data.employee?.name || "Employee Name",
+                text: `Name: ${data.employee?.name || "N/A"}`,
                 size: 20,
               }),
             ],
-            spacing: { after: 60 },
           }),
 
+          // Employee position
           new Paragraph({
+            spacing: { after: 50 },
             children: [
               new TextRun({
-                text: "Position: ",
-                bold: true,
-                size: 20,
-              }),
-              new TextRun({
-                text: data.employee?.role || "Position",
+                text: `Position: ${data.employee?.role || "N/A"}`,
                 size: 20,
               }),
             ],
-            spacing: { after: 60 },
           }),
 
+          // Date
           new Paragraph({
-            children: [
-              new TextRun({
-                text: "Date: ",
-                bold: true,
-                size: 20,
-              }),
-              new TextRun({
-                text: formatDate(data.date),
-                size: 20,
-              }),
-            ],
-            spacing: { after: 300 },
-          }),
-
-          // Footer separator
-          new Paragraph({
-            border: {
-              top: {
-                color: "CCCCCC",
-                space: 1,
-                style: BorderStyle.SINGLE,
-                size: 4,
-              },
-            },
             spacing: { after: 150 },
-          }),
-
-          // Footer
-          new Paragraph({
-            alignment: AlignmentType.CENTER,
             children: [
               new TextRun({
-                text: `Document generated: ${new Date().toLocaleDateString(
-                  "en-GB"
-                )} at ${new Date().toLocaleTimeString("en-GB", {
-                  hour: "2-digit",
-                  minute: "2-digit",
-                })} | Food Lab Quality Assurance System`,
-                size: 17,
-                color: "666666",
-                italics: true,
+                text: `Date: ${formatDate(data.date)}`,
+                size: 20,
               }),
             ],
           }),
 
-          new Paragraph({
-            alignment: AlignmentType.CENTER,
-            spacing: { before: 50 },
-            children: [
-              new TextRun({
-                text: "This is an official laboratory document - Handle with care",
-                size: 16,
-                color: "999999",
-                italics: true,
-              }),
-            ],
-          }),
+          new Paragraph({ text: "", spacing: { after: 80 } }),
         ],
       },
     ],
   });
 
-  // Generate and save the document
-  const blob = await Packer.toBlob(doc);
+  // Return blob
+  return await Packer.toBlob(doc);
+};
+
+/**
+ * Download Word report directly (for preview/download button)
+ */
+export const generateReportWord = async (data: ReportData): Promise<void> => {
+  const blob = await generateReportWordBlob(data);
   const fileName = `Report_${data.refNumber}_${formatDate(data.date).replace(
     /\//g,
     "-"
   )}.docx`;
   saveAs(blob, fileName);
 };
+
+function formatDate(dateStr: string): string {
+  if (!dateStr) return "N/A";
+  const date = new Date(dateStr);
+  return date.toLocaleDateString("en-GB", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+  });
+}

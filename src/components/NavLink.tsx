@@ -1,7 +1,7 @@
 "use client";
-import { Link } from "@/i18n/routing";
+import Link from "next/link";
 import { forwardRef } from "react";
-import { usePathname } from "@/i18n/routing";
+import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 
 type NavLinkProps = Omit<

@@ -1,7 +1,8 @@
 "use client";
 
 import { Logo } from "@/components/Logo";
-import { usePathname } from "@/i18n/routing";
+import { usePathname } from "next/navigation";
+import Link from "next/link";
 import {
   LayoutDashboard,
   FileText,
@@ -19,10 +20,8 @@ import {
   MapPin,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { Link } from "@/i18n/routing";
 import { LogoutButton } from "@/components/LogoutButton";
 import { useState } from "react";
-import { useTranslations } from "next-intl";
 
 interface SidebarProps {
   isOpen: boolean;
@@ -30,37 +29,36 @@ interface SidebarProps {
 }
 
 export function Sidebar({ isOpen, onClose }: SidebarProps) {
-  const t = useTranslations("nav");
   const pathname = usePathname();
   const [isMasterDataOpen, setIsMasterDataOpen] = useState(true);
 
   const navigation = [
-    { name: t("dashboard"), href: "/", icon: LayoutDashboard },
-    { name: t("newReport"), href: "/new-report", icon: FileText },
-    { name: t("reports"), href: "/reports", icon: FolderOpen },
+    { name: "Dashboard", href: "/", icon: LayoutDashboard },
+    { name: "New Report", href: "/routes/new-report", icon: FileText },
+    { name: "Reports", href: "/routes/reports", icon: FolderOpen },
   ];
 
   const masterDataItems = [
-    { name: t("employees"), href: "/master-data/employees", icon: Users },
+    { name: "Employees", href: "/routes/master-data/employees", icon: Users },
     {
-      name: t("containerTypes"),
-      href: "/master-data/container-types",
+      name: "Container Types",
+      href: "/routes/master-data/container-types",
       icon: Package,
     },
     {
-      name: t("sampleNames"),
-      href: "/master-data/sample-names",
+      name: "Sample Names",
+      href: "/routes/master-data/sample-names",
       icon: TestTube2,
     },
     {
-      name: t("storageLocations"),
-      href: "/master-data/storage-locations",
+      name: "Storage Locations",
+      href: "/routes/master-data/storage-locations",
       icon: MapPin,
     },
   ];
 
   const bottomNavigation = [
-    { name: t("documentation"), href: "/documentation", icon: BookOpen },
+    { name: "Documentation", href: "/routes/documentation", icon: BookOpen },
   ];
 
   const isMasterDataActive =
@@ -153,7 +151,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
                       : "text-gray-600 dark:text-gray-400 group-hover:text-gray-600 dark:group-hover:text-gray-400 group-hover:scale-110"
                   )}
                 />
-                {t("masterData")}
+                Master Data
                 {isMasterDataOpen ? (
                   <ChevronDown className="w-4 h-4 ml-auto" />
                 ) : (

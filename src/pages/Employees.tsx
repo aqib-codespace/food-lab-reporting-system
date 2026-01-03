@@ -1,7 +1,5 @@
-
 "use client";
 import { useState, useMemo, useCallback } from "react";
-import { useTranslations } from "next-intl";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -47,7 +45,6 @@ interface Employee {
 }
 
 export default function Employees() {
-  const t = useTranslations("employees");
   const {
     data: employees,
     loading,
@@ -379,15 +376,15 @@ export default function Employees() {
 
       if (result.success) {
         toast({
-          title: t("success", { ns: "common" }),
-          description: t("successDeleted"),
+          title: "Success",
+          description: "Employee deleted successfully",
         });
         setIsDeleteModalOpen(false);
         setDeletingEmployeeId(null);
       } else {
         toast({
-          title: t("error", { ns: "common" }),
-          description: result.error || t("errorDelete"),
+          title: "Error",
+          description: result.error || "Failed to delete employee",
           variant: "destructive",
         });
       }
@@ -409,10 +406,10 @@ export default function Employees() {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
         <div>
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-            {t("title")}
+            Employees
           </h1>
           <p className="text-gray-600 dark:text-gray-400 mt-1">
-            {t("subtitle")} ({employees.length} total)
+            Manage lab personnel ({employees.length} total)
           </p>
         </div>
 
@@ -421,7 +418,7 @@ export default function Employees() {
           className="bg-gray-800 hover:bg-gray-900 rounded-lg text-white"
         >
           <Plus className="w-4 h-4 mr-2" />
-          {t("addEmployee")}
+          Add Employee
         </Button>
       </div>
 
@@ -437,7 +434,7 @@ export default function Employees() {
           <div className="text-center">
             <AlertTriangle className="w-12 h-12 text-red-500 mx-auto mb-4" />
             <p className="text-red-600 dark:text-red-400">
-              {t("loadingError")}
+              Failed to load employees. Please try again.
             </p>
           </div>
         </div>
@@ -446,8 +443,6 @@ export default function Employees() {
       {/* Data State */}
       {!loading && !error && (
         <>
-        
-
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {filteredEmployees.map((employee) => (
               <Card
@@ -567,7 +562,7 @@ export default function Employees() {
                 <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-800 sticky top-0 bg-white dark:bg-gray-900 z-10">
                   <h2 className="text-xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
                     <User className="w-5 h-5 text-blue-600" />
-                    {editingEmployee ? t("editEmployee") : t("addEmployee")}
+                    {editingEmployee ? "Edit Employee" : "Add Employee"}
                   </h2>
                   <button
                     onClick={() => setIsModalOpen(false)}
@@ -581,7 +576,7 @@ export default function Employees() {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                       <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                        {t("photo")} <span className="text-red-500">*</span>
+                        Photo <span className="text-red-500">*</span>
                       </label>
                       {photoPreview ? (
                         <div className="relative w-full h-32 mx-auto">
@@ -615,7 +610,7 @@ export default function Employees() {
                           <input {...getPhotoInputProps()} />
                           <Upload className="w-8 h-8 text-gray-400 mb-1" />
                           <span className="text-xs text-gray-500 dark:text-gray-400 text-center px-2">
-                            {t("uploadPhoto")}
+                            Drop photo here or click to upload
                           </span>
                         </div>
                       )}
@@ -629,7 +624,7 @@ export default function Employees() {
 
                     <div>
                       <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                        {t("signature")} <span className="text-red-500">*</span>
+                        Signature <span className="text-red-500">*</span>
                       </label>
                       {signaturePreview ? (
                         <div className="relative w-full h-32 mx-auto">
@@ -684,11 +679,11 @@ export default function Employees() {
                   <div className="space-y-4">
                     <div>
                       <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
-                        {t("name")} <span className="text-red-500">*</span>
+                        Name <span className="text-red-500">*</span>
                       </label>
                       <input
                         type="text"
-                        placeholder={t("namePlaceholder")}
+                        placeholder="Enter full name"
                         value={formData.name}
                         onChange={(e) =>
                           setFormData((prev) => ({
@@ -713,13 +708,13 @@ export default function Employees() {
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div>
                         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
-                          {t("email")} <span className="text-red-500">*</span>
+                          Email <span className="text-red-500">*</span>
                         </label>
                         <div className="relative">
                           <Mail className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
                           <input
                             type="email"
-                            placeholder={t("emailPlaceholder")}
+                            placeholder="email@example.com"
                             value={formData.email}
                             onChange={(e) =>
                               setFormData((prev) => ({
@@ -744,13 +739,13 @@ export default function Employees() {
 
                       <div>
                         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
-                          {t("phone")} <span className="text-red-500">*</span>
+                          Phone <span className="text-red-500">*</span>
                         </label>
                         <div className="relative">
                           <Phone className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
                           <input
                             type="tel"
-                            placeholder={t("phonePlaceholder")}
+                            placeholder="+1 (555) 000-0000"
                             value={formData.phone}
                             onChange={(e) =>
                               setFormData((prev) => ({
@@ -776,7 +771,7 @@ export default function Employees() {
 
                     <div>
                       <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
-                        {t("role")} <span className="text-red-500">*</span>
+                        Role <span className="text-red-500">*</span>
                       </label>
                       <select
                         value={formData.role}
@@ -796,10 +791,10 @@ export default function Employees() {
                             : "border-gray-300 dark:border-gray-700"
                         }`}
                       >
-                        <option value="analyst">{t("analyst")}</option>
-                        <option value="technician">{t("technician")}</option>
-                        <option value="manager">{t("manager")}</option>
-                        <option value="admin">{t("admin")}</option>
+                        <option value="analyst">Analyst</option>
+                        <option value="technician">Technician</option>
+                        <option value="manager">Manager</option>
+                        <option value="admin">Admin</option>
                       </select>
                       {validationErrors.role && (
                         <p className="mt-1.5 text-sm text-red-600 dark:text-red-400 flex items-center gap-1">
@@ -817,7 +812,7 @@ export default function Employees() {
                     variant="outline"
                     className="border-gray-300 border rounded-lg dark:border-gray-700"
                   >
-                    {t("cancel", { ns: "common" })}
+                    Cancel
                   </Button>
                   <Button
                     onClick={handleSaveEmployee}
@@ -827,13 +822,11 @@ export default function Employees() {
                     {isSubmitting ? (
                       <>
                         <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                        {editingEmployee ? t("saving") : t("saving")}
+                        Saving...
                       </>
                     ) : (
                       <>
-                        {editingEmployee
-                          ? t("edit") + " " + t("title", { ns: "employees" })
-                          : t("addEmployee")}
+                        {editingEmployee ? "Update Employee" : "Add Employee"}
                       </>
                     )}
                   </Button>
