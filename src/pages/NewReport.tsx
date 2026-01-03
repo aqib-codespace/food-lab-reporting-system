@@ -76,6 +76,8 @@ export default function NewReport() {
   const [isGenerating, setIsGenerating] = useState(false);
   const [editingReportId, setEditingReportId] = useState<string | null>(null);
   const [isLoadingReport, setIsLoadingReport] = useState(false);
+  const [reportCreatedSuccessfully, setReportCreatedSuccessfully] =
+    useState(false);
 
   const { data: employees, loading: employeesLoading } = useEmployees();
   const { data: containerTypes, loading: containerTypesLoading } =
@@ -242,6 +244,28 @@ export default function NewReport() {
     value: ReportData[K]
   ) => {
     setReportData((prev) => ({ ...prev, [field]: value }));
+  };
+
+  // Reset form to initial state
+  const resetForm = () => {
+    const defaultColor =
+      activeColors.length > 0 ? activeColors[0].hex_code : "#ef4444";
+    setReportData({
+      refNumber: "",
+      employee: null,
+      date: new Date().toISOString().split("T")[0],
+      externalContainers: [getDefaultContainer()],
+      senderShop: "",
+      internalContainers: [getDefaultContainer()],
+      samples: [getDefaultSample(0, defaultColor)],
+      barcodeNumber: "",
+      producedDate: "",
+      expiredDate: "",
+      reportNumber: "In System",
+    });
+    setFieldErrors({});
+    setEditingReportId(null);
+    setReportCreatedSuccessfully(false);
   };
 
   // Convert IDs to names for display
@@ -519,6 +543,9 @@ export default function NewReport() {
           "Your report has been saved with 'Pending' status. You can now preview it.",
       });
 
+      // Mark that a new report was created (not an edit)
+      setReportCreatedSuccessfully(true);
+
       // Show preview instead of redirecting
       setShowPreview(true);
     } catch (error) {
@@ -565,7 +592,13 @@ export default function NewReport() {
         <div className="mb-4 flex gap-3">
           <Button
             variant="outline"
-            onClick={() => setShowPreview(false)}
+            onClick={() => {
+              setShowPreview(false);
+              // Reset form if a new report was created
+              if (reportCreatedSuccessfully) {
+                resetForm();
+              }
+            }}
             className="gap-2 border rounded-lg text-sm"
           >
             ← Back to Form

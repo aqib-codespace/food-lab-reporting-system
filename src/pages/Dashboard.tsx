@@ -264,7 +264,7 @@ export default function Dashboard() {
                           report.status === "pending" ? "warning" : "success"
                         }
                         className={cn(
-                          "mt-1 text-xs",
+                          "mt-1 px-3 text-xs",
                           report.status === "pending"
                             ? "bg-yellow-100 dark:bg-yellow-950 text-yellow-700 dark:text-yellow-400"
                             : "bg-green-100 dark:bg-green-950 text-green-700 dark:text-green-400"
