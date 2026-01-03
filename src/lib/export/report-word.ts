@@ -143,15 +143,17 @@ export const generateReportWordBlob = async (
                 text: (data.externalContainers || [])
                   .filter((c) => c.type && c.quantity)
                   .map((c) => `(${c.quantity}) ${c.type}`)
-                  .join(" + "),
+                  .join(" "),
                 size: 20,
               }),
               new TextRun({
                 text: data.senderShop
-                  ? `, like the one used for ${(
+                  ? ` like the one used for ${(
                       data.senderShop || ""
-                    ).toLowerCase()}`
-                  : "",
+                    ).toLowerCase()}, it has (${
+                      data.barcodeNumber || "barcode number"
+                    }).`
+                  : ` it has (${data.barcodeNumber || "barcode number"}).`,
                 size: 20,
               }),
             ],
@@ -489,22 +491,20 @@ export const generateReportWordBlob = async (
 
           new Paragraph({ text: "", spacing: { after: 40 } }),
 
-          // Signature note if available
-          ...(data.employee?.signature
-            ? [
-                new Paragraph({
-                  spacing: { after: 50 },
-                  children: [
-                    new TextRun({
-                      text: "[Signature on file]",
-                      italics: true,
-                      size: 18,
-                      color: "666666",
-                    }),
-                  ],
-                }),
-              ]
-            : []),
+          // Signature placeholder
+          new Paragraph({
+            spacing: { after: 150 },
+            children: [
+              new TextRun({
+                text: data.employee?.signature
+                  ? "[Signature image - see PDF version for actual signature]"
+                  : "_____________________",
+                italics: true,
+                size: 18,
+                color: "666666",
+              }),
+            ],
+          }),
 
           // Employee name
           new Paragraph({

@@ -13,6 +13,7 @@ import {
   uploadGeneratedPDF,
   uploadGeneratedWord,
 } from "@/lib/supabase/storage";
+import { useContainerTypes, useSampleNames } from "@/hooks/useSupabaseData";
 
 export default function ReportDetailPage() {
   const params = useParams();
@@ -21,6 +22,9 @@ export default function ReportDetailPage() {
   const [report, setReport] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [isCompleting, setIsCompleting] = useState(false);
+
+  const { data: containerTypes } = useContainerTypes();
+  const { data: sampleNames } = useSampleNames();
 
   useEffect(() => {
     // Load report from Supabase
@@ -299,7 +303,52 @@ export default function ReportDetailPage() {
         </div>
       </div>
 
-      <ReportPreview data={report} />
+      <ReportPreview
+        data={{
+          ...report,
+          externalContainers:
+            report.external_containers?.map((c: any) => ({
+              id: c.id,
+              quantity: c.quantity,
+              type:
+                containerTypes.find((ct) => ct.id === c.container_type_id)
+                  ?.name || c.container_type_id,
+            })) || [],
+          internalContainers:
+            report.internal_containers?.map((c: any) => ({
+              id: c.id,
+              quantity: c.quantity,
+              type:
+                containerTypes.find((ct) => ct.id === c.container_type_id)
+                  ?.name || c.container_type_id,
+            })) || [],
+          samples:
+            report.samples?.map((s: any) => ({
+              id: s.id,
+              sampleNumber: s.sample_number,
+              sampleName:
+                sampleNames.find((sn) => sn.id === s.sample_name)?.name ||
+                s.sample_name,
+              internalContainerCount: s.internal_container_count,
+              internalContainerType:
+                containerTypes.find((ct) => ct.id === s.internal_container_type)
+                  ?.name || s.internal_container_type,
+              netWeight: s.net_weight,
+              weightUnit: s.weight_unit,
+              pureOrTotal: s.pure_or_total,
+              weightUsed: s.weight_used,
+              colorCode: s.color_code,
+              storageLocation: s.storage_location,
+            })) || [],
+          refNumber: report.ref_number,
+          reportNumber: report.report_number,
+          date: report.report_date,
+          senderShop: report.sender_shop,
+          barcodeNumber: report.barcode_number,
+          producedDate: report.produced_date,
+          expiredDate: report.expired_date,
+        }}
+      />
     </DashboardLayout>
   );
 }

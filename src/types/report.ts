@@ -30,6 +30,7 @@ export interface Sample {
   weightUsed: number;
   colorCode: string;
   storageLocation: string;
+  systemCaseNumber?: string;
 }
 
 export interface ReportData {

@@ -244,6 +244,34 @@ export default function NewReport() {
     setReportData((prev) => ({ ...prev, [field]: value }));
   };
 
+  // Convert IDs to names for display
+  const getDisplayData = (): ReportData => {
+    return {
+      ...reportData,
+      externalContainers: reportData.externalContainers.map((container) => ({
+        ...container,
+        type:
+          containerTypes.find((ct) => ct.id === container.type)?.name ||
+          container.type,
+      })),
+      internalContainers: reportData.internalContainers.map((container) => ({
+        ...container,
+        type:
+          containerTypes.find((ct) => ct.id === container.type)?.name ||
+          container.type,
+      })),
+      samples: reportData.samples.map((sample) => ({
+        ...sample,
+        sampleName:
+          sampleNames.find((sn) => sn.id === sample.sampleName)?.name ||
+          sample.sampleName,
+        internalContainerType:
+          containerTypes.find((ct) => ct.id === sample.internalContainerType)
+            ?.name || sample.internalContainerType,
+      })),
+    };
+  };
+
   const addExternalContainer = () => {
     setReportData((prev) => ({
       ...prev,
@@ -507,6 +535,31 @@ export default function NewReport() {
   };
 
   if (showPreview) {
+    const displayData = {
+      ...reportData,
+      externalContainers: reportData.externalContainers.map((container) => ({
+        ...container,
+        type:
+          containerTypes.find((ct) => ct.id === container.type)?.name ||
+          container.type,
+      })),
+      internalContainers: reportData.internalContainers.map((container) => ({
+        ...container,
+        type:
+          containerTypes.find((ct) => ct.id === container.type)?.name ||
+          container.type,
+      })),
+      samples: reportData.samples.map((sample) => ({
+        ...sample,
+        sampleName:
+          sampleNames.find((sn) => sn.id === sample.sampleName)?.name ||
+          sample.sampleName,
+        internalContainerType:
+          containerTypes.find((ct) => ct.id === sample.internalContainerType)
+            ?.name || sample.internalContainerType,
+      })),
+    };
+
     return (
       <DashboardLayout>
         <div className="mb-4 flex gap-3">
@@ -524,7 +577,7 @@ export default function NewReport() {
             View All Reports
           </Button>
         </div>
-        <ReportPreview data={reportData} />
+        <ReportPreview data={displayData} />
       </DashboardLayout>
     );
   }

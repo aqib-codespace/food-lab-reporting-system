@@ -82,19 +82,18 @@ export const generateReportPDFBlob = async (
   const externalSummary = (data.externalContainers || [])
     .filter((c) => c.type && c.quantity)
     .map((c) => `(${c.quantity}) ${c.type}`)
-    .join(" + ");
+    .join(" ");
 
-  doc.text(`We received ${externalSummary || "containers"}`, 15, yPos);
-  yPos += 5;
-
-  if (data.senderShop) {
-    doc.text(
-      `like the one used for ${(data.senderShop || "").toLowerCase()}.`,
-      15,
-      yPos
-    );
+  const containerText = `We received ${
+    externalSummary || "containers"
+  } like the one used for ${(
+    data.senderShop || "shop"
+  ).toLowerCase()}, it has (${data.barcodeNumber || "barcode number"}).`;
+  const splitText = doc.splitTextToSize(containerText, 180);
+  splitText.forEach((line: string) => {
+    doc.text(line, 15, yPos);
     yPos += 5;
-  }
+  });
 
   doc.text(
     `Received by ${
@@ -132,18 +131,15 @@ export const generateReportPDFBlob = async (
 
   // Samples table - Black and white theme
   const tableData = (data.samples || []).map((sample) => [
+    `(${sample.internalContainerCount || 1})`,
     sample.sampleNumber || "",
-    sample.sampleNumber || "",
-    `${sample.sampleName || "Food"} in ${
+    `${sample.sampleName || "Food"} in ${sample.internalContainerCount || 1} ${
       sample.internalContainerType || "container"
-    }`,
-    `${sample.netWeight || 0} ${
-      sample.weightUnit === "kg" ? "gram" : "gram"
-    } (${
-      (sample.pureOrTotal || "pure") === "pure" ? "Net weight" : "total weight"
+    }-${sample.systemCaseNumber || ""}`,
+    `${sample.netWeight || 0} ${sample.weightUnit === "kg" ? "kg" : "gram"} (${
+      (sample.pureOrTotal || "pure") === "pure" ? "Net weight" : "Total weight"
     })`,
     `${sample.weightUsed || 0} gram`,
-    "",
   ]);
 
   autoTable(doc, {
@@ -155,7 +151,6 @@ export const generateReportPDFBlob = async (
         "How sample looks like",
         "How it weight",
         "used",
-        "",
       ],
     ],
     body: tableData,
@@ -165,23 +160,31 @@ export const generateReportPDFBlob = async (
       textColor: [0, 0, 0],
       fontStyle: "bold",
       fontSize: 8,
-      halign: "center",
+      halign: "left",
       lineColor: [0, 0, 0],
       lineWidth: 0.3,
     },
     bodyStyles: {
-      fontSize: 8,
+      fontSize: 7,
       textColor: [0, 0, 0],
-      halign: "center",
+      halign: "left",
       lineColor: [0, 0, 0],
       lineWidth: 0.1,
     },
     alternateRowStyles: {
       fillColor: [250, 250, 250],
     },
+    columnStyles: {
+      0: { cellWidth: 25 },
+      1: { cellWidth: 25 },
+      2: { cellWidth: 60 },
+      3: { cellWidth: 45 },
+      4: { cellWidth: 25 },
+    },
     margin: { left: 15, right: 15 },
     styles: {
       cellPadding: 3,
+      overflow: "linebreak",
     },
   });
 
@@ -194,22 +197,33 @@ export const generateReportPDFBlob = async (
 
   if (data.employee?.signature) {
     try {
+      // Add signature image
       doc.addImage(
         data.employee.signature,
         "PNG",
         15,
-        finalY + 3,
-        40,
-        15,
+        finalY + 5,
+        50,
+        20,
         undefined,
-        "NONE"
+        "FAST"
       );
+
+      // Add employee details below signature
+      doc.setFontSize(8);
+      doc.setFont("helvetica", "normal");
+      doc.text(`Name: ${data.employee.name || "N/A"}`, 15, finalY + 30);
+      doc.text(`Position: ${data.employee.role || "admin"}`, 15, finalY + 35);
+      doc.text(`Date: ${formatDate(data.date)}`, 15, finalY + 40);
     } catch (error) {
       console.error("Error adding signature:", error);
       doc.line(15, finalY + 20, 65, finalY + 20);
     }
   } else {
     doc.line(15, finalY + 20, 65, finalY + 20);
+    doc.setFontSize(8);
+    doc.setFont("helvetica", "italic");
+    doc.text("[Signature not provided]", 15, finalY + 25);
   }
 
   // Return blob for upload
