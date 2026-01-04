@@ -631,10 +631,10 @@ export default function NewReport() {
   return (
     <DashboardLayout>
       <div className="flex flex-col gap-2 mb-4 sm:mb-6">
-        <h1 className="text-xl sm:text-2xl font-bold text-foreground">
+        <h1 className="text-xl sm:text-2xl dark:text-white font-bold text-foreground">
           {editingReportId ? "Edit Report" : "Create New Report"}
         </h1>
-        <p className="text-sm sm:text-base text-muted-foreground">
+        <p className="text-sm dark:text-gray-200 sm:text-base text-muted-foreground">
           {editingReportId
             ? "Update the report details below"
             : "Fill in the details below to create a new laboratory report"}
@@ -653,7 +653,7 @@ export default function NewReport() {
             <CardContent className="space-y-3 sm:space-y-4 px-4 sm:px-6">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                 <div className="space-y-2" data-error={!!fieldErrors.refNumber}>
-                  <Label htmlFor="refNumber">Reference Number</Label>
+                  <Label className="dark:text-gray-100" htmlFor="refNumber">Reference Number</Label>
                   <Input
                     id="refNumber"
                     placeholder="Enter 6-digit reference number"
@@ -679,7 +679,7 @@ export default function NewReport() {
                   )}
                 </div>
                 <div className="space-y-2" data-error={!!fieldErrors.date}>
-                  <Label htmlFor="date">Date</Label>
+                  <Label className="dark:text-gray-100" htmlFor="date">Date</Label>
                   <Input
                     id="date"
                     type="date"
@@ -718,7 +718,7 @@ export default function NewReport() {
                         onClick={() => updateField("employee", emp)}
                         className={`flex flex-col items-center gap-1 p-3 rounded-lg border-2 transition-all ${
                           reportData.employee?.id === emp.id
-                            ? "border-accent bg-accent/5"
+                            ? "border-accent dark:border-green-600 bg-accent/5"
                             : fieldErrors.employee
                             ? "border-red-500 hover:border-red-600"
                             : "border-border hover:border-accent/50"
@@ -735,7 +735,7 @@ export default function NewReport() {
                             {emp.initials}
                           </div>
                         )}
-                        <span className="text-xs text-muted-foreground truncate w-full text-center">
+                        <span className="text-xs dark:text-white text-muted-foreground truncate w-full text-center">
                           {emp.name.split(" ")[0]}
                         </span>
                       </button>
@@ -765,7 +765,7 @@ export default function NewReport() {
                           size="sm"
                           onClick={() => updateField("employee", null)}
                           aria-label="Clear employee selection"
-                          className="p-2"
+                          className="p-2 dark:text-white"
                         >
                           <X className="w-4 h-4" />
                         </Button>
@@ -788,23 +788,23 @@ export default function NewReport() {
                       )}
 
                       <div className="min-w-0">
-                        <div className="font-medium text-sm truncate">
+                        <div className="font-medium dark:text-gray-100 text-sm truncate">
                           {reportData.employee.name}
                         </div>
                         {reportData.employee.role && (
-                          <div className="text-xs text-muted-foreground mt-0.5 truncate">
+                          <div className="text-xs dark:text-gray-200 text-muted-foreground mt-0.5 truncate">
                             {reportData.employee.role}
                           </div>
                         )}
 
                         <div className="flex flex-col sm:flex-row sm:items-center sm:gap-4 mt-2 text-xs text-muted-foreground">
-                          <div className="flex items-center gap-2 truncate">
+                          <div className="flex dark:text-gray-100 items-center gap-2 truncate">
                             <Mail className="w-4 h-4" />
                             <span className="truncate">
                               {reportData.employee.email ?? "Not Provided"}
                             </span>
                           </div>
-                          <div className="flex items-center gap-2 truncate mt-1 sm:mt-0">
+                          <div className="flex dark:text-gray-100 items-center gap-2 truncate mt-1 sm:mt-0">
                             <Phone className="w-4 h-4" />
                             <span className="truncate">
                               {reportData.employee.phone ?? "Not Provided"}
@@ -820,7 +820,7 @@ export default function NewReport() {
                         <img
                           src={reportData.employee.signature}
                           alt={`${reportData.employee.name} signature`}
-                          className="h-16 w-40 rounded-md"
+                          className="h-16 w-40 dark:border dark:border-gray-400  rounded-md"
                         />
                       ) : (
                         <div className="text-xs text-muted-foreground italic">
@@ -833,7 +833,7 @@ export default function NewReport() {
               )}
 
               <div className="space-y-2">
-                <Label htmlFor="senderShop">Sender Shop</Label>
+                <Label className="dark:text-white" htmlFor="senderShop">Sender Shop</Label>
                 <Select
                   value={reportData.senderShop}
                   onChange={(value) =>
@@ -844,7 +844,7 @@ export default function NewReport() {
                     value: shop,
                   }))}
                   placeholder="Select a shop"
-                  className="input-focus"
+                  className="input-focus "
                 />
               </div>
             </CardContent>
@@ -862,7 +862,7 @@ export default function NewReport() {
                   variant="outline"
                   size="sm"
                   onClick={addExternalContainer}
-                  className="gap-1 border rounded-lg px-2 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm"
+                  className="gap-1 border dark:text-white rounded-lg px-2 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm"
                 >
                   <Plus className="w-3 h-3" />
                   <span className="hidden sm:inline">Add</span>
@@ -942,7 +942,7 @@ export default function NewReport() {
                   variant="outline"
                   size="sm"
                   onClick={addSample}
-                  className="gap-1 border rounded-lg px-2 text-xs sm:text-sm whitespace-nowrap"
+                  className="gap-1 dark:text-white border rounded-lg px-2 text-xs sm:text-sm whitespace-nowrap"
                 >
                   <Plus className="w-3 h-3" />
                   <span className="hidden sm:inline">Add Sample</span>
@@ -986,20 +986,59 @@ export default function NewReport() {
                       <Label className="text-xs sm:text-sm font-medium mb-1.5 block">
                         Sample Name
                       </Label>
-                      <Select
-                        value={sample.sampleName}
-                        onChange={(value) =>
-                          updateSample(sample.id, {
-                            sampleName: value as string,
-                          })
-                        }
-                        options={sampleNames.map((sample) => ({
-                          label: sample.name,
-                          value: sample.id,
-                        }))}
-                        placeholder="Select sample name"
-                        className="input-focus h-10"
-                      />
+
+                      {sampleNamesLoading ? (
+                        <div className="flex items-center gap-2">
+                          <Loader2 className="w-4 h-4 animate-spin text-accent" />
+                          <span className="text-sm text-gray-500">Loading sample names...</span>
+                        </div>
+                      ) : (
+                        <div className="flex gap-3 overflow-x-auto py-2 -mx-2 px-2 scrollbar-thin-light">
+                          {sampleNames.map((sn) => {
+                            const isSelected = sample.sampleName === sn.id;
+                            return (
+                              <button
+                                key={sn.id}
+                                type="button"
+                                onClick={() =>
+                                  updateSample(sample.id, {
+                                    sampleName: isSelected ? "" : sn.id,
+                                  })
+                                }
+                                className={cn(
+                                  "relative flex-shrink-0 min-w-[140px] sm:min-w-[160px] flex flex-col items-center p-3 rounded-lg border transition-all text-xs text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-900",
+                                  isSelected
+                                    ? "ring-2 ring-blue-500 border-blue-500 shadow-lg"
+                                    : "border-gray-200 dark:border-gray-700 hover:shadow"
+                                )}
+                                aria-pressed={isSelected}
+                                aria-label={`Select ${sn.name}`}
+                              >
+                                <div className="w-full h-24 rounded-md overflow-hidden bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
+                                  {sn.image ? (
+                                    // eslint-disable-next-line @next/next/no-img-element
+                                    <img src={sn.image} alt={sn.name} className="w-full h-full object-cover" />
+                                  ) : (
+                                    <div className="w-full h-full flex items-center justify-center text-gray-400">
+                                      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden>
+                                        <path d="M12 2a7 7 0 100 14 7 7 0 000-14z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                                      </svg>
+                                    </div>
+                                  )}
+                                </div>
+
+                                <div className="mt-2 w-full truncate text-center font-medium">
+                                  {sn.name}
+                                </div>
+
+                                {isSelected && (
+                                  <CheckCircle className="w-5 h-5 text-blue-500 absolute top-2 right-2 bg-white rounded-full" />
+                                )}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      )}
                     </div>
                     <div>
                       <Label className="text-xs font-medium mb-1.5 block">
@@ -1139,7 +1178,7 @@ export default function NewReport() {
                                 colorCode: e.target.value,
                               })
                             }
-                            className="w-full px-3 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                            className="w-full dark:text-gray-100 dark:placeholder:text-gray-200 px-3 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20"
                           >
                             <option value="">Select a color</option>
                             {activeColors.map((color: any) => (
@@ -1221,7 +1260,7 @@ export default function NewReport() {
               onClick={() => setShowPreview(true)}
               variant="outline"
               size="lg"
-              className="min-w-28 sm:min-w-35 border rounded-lg text-sm sm:text-base px-3 sm:px-4"
+              className="min-w-28 dark:text-white sm:min-w-35 border rounded-lg text-sm sm:text-base px-3 sm:px-4"
             >
               <Eye className="w-4 h-4 mr-1 sm:mr-2" />
               Preview
@@ -1230,7 +1269,7 @@ export default function NewReport() {
               onClick={handleGenerateReport}
               disabled={isGenerating}
               size="lg"
-              className="min-w-32 sm:min-w-45 bg-gray-800 text-white rounded-lg text-sm sm:text-base px-3 sm:px-4"
+              className="min-w-32 dark:bg-blue-700 sm:min-w-45 bg-gray-800 text-white rounded-lg text-sm sm:text-base px-3 sm:px-4"
             >
               {isGenerating ? (
                 <>

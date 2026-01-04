@@ -334,6 +334,34 @@
     animation: slideInRight 0.4s ease-out;
   }
 
+  /* Thin, light custom scrollbar utility */
+  .scrollbar-thin-light {
+    scrollbar-width: thin; /* Firefox */
+    scrollbar-color: rgba(148,163,184,0.6) transparent;
+  }
+  .scrollbar-thin-light::-webkit-scrollbar {
+    height: 8px;
+    background: transparent;
+  }
+  .scrollbar-thin-light::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  .scrollbar-thin-light::-webkit-scrollbar-thumb {
+    background-color: rgba(148,163,184,0.35);
+    border-radius: 9999px;
+    border: 2px solid transparent;
+    background-clip: content-box;
+  }
+  .scrollbar-thin-light::-webkit-scrollbar-thumb:hover {
+    background-color: rgba(148,163,184,0.55);
+  }
+  .dark .scrollbar-thin-light::-webkit-scrollbar-thumb {
+    background-color: rgba(100,116,139,0.35);
+  }
+  .dark .scrollbar-thin-light::-webkit-scrollbar-thumb:hover {
+    background-color: rgba(100,116,139,0.55);
+  }
+
   /* Body background colors */
   body {
     background-color: hsl(var(--background));

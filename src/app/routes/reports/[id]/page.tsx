@@ -216,26 +216,27 @@ export default function ReportDetailPage() {
     <DashboardLayout>
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
-        <div className="flex items-center gap-4">
+        <div className="flex md:flex-row flex-col md:items-center gap-4">
           <Button
             variant="outline"
             onClick={() => router.push("/routes/reports")}
-            className="gap-2 rounded-lg border"
+            className="gap-2 rounded-lg dark:text-white border"
           >
             <ArrowLeft className="w-4 h-4" />
             Back
           </Button>
           <div>
-            <div className="flex items-center gap-3">
+            <div className="flex  items-center gap-3">
               <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
                 Report #{report.ref_number}
               </h1>
               <Badge
                 variant="flat"
                 className={
+                  
                   report.status === "pending"
-                    ? "bg-yellow-100 dark:bg-yellow-950 text-yellow-700 dark:text-yellow-400"
-                    : "bg-green-100 dark:bg-green-950 text-green-700 dark:text-green-400"
+                    ? "bg-yellow-100 px-3 dark:bg-yellow-950 text-yellow-700 dark:text-yellow-400"
+                    : "bg-green-100 px-3 dark:bg-green-950 text-green-700 dark:text-green-400"
                 }
               >
                 {report.status === "pending" ? "Pending" : "Completed"}
@@ -255,7 +256,7 @@ export default function ReportDetailPage() {
               <Button
                 variant="outline"
                 onClick={handleEditReport}
-                className="gap-2 rounded-lg border"
+                className="gap-2 rounded-lg dark:text-white border"
               >
                 <Edit className="w-4 h-4" />
                 Edit
@@ -276,30 +277,7 @@ export default function ReportDetailPage() {
               </Button>
             </>
           )}
-          {report.status === "completed" && (
-            <div className="flex gap-2">
-              {report.pdf_url && (
-                <Button
-                  onClick={() => window.open(report.pdf_url, "_blank")}
-                  variant="outline"
-                  className="gap-2 rounded-lg border"
-                >
-                  <Download className="w-4 h-4" />
-                  PDF
-                </Button>
-              )}
-              {report.word_url && (
-                <Button
-                  onClick={() => window.open(report.word_url, "_blank")}
-                  variant="outline"
-                  className="gap-2 rounded-lg border"
-                >
-                  <FileText className="w-4 h-4" />
-                  Word
-                </Button>
-              )}
-            </div>
-          )}
+         
         </div>
       </div>
 

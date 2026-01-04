@@ -26,7 +26,7 @@ export function Header({ onMenuClick }: HeaderProps) {
   }, []);
 
   return (
-    <header className="fixed top-0 left-0 lg:left-64 right-0 h-18 bg-white/80 border-b border-gray-200 px-6 flex items-center justify-between gap-4 z-40 backdrop-blur-xl shadow-sm">
+    <header className="fixed top-0 left-0 lg:left-64 right-0 h-18 bg-white/80 dark:bg-gray-950 dark:border-gray-800 border-b border-gray-200 px-6 flex items-center justify-between gap-4 z-40 backdrop-blur-xl shadow-sm">
       <div className="flex items-center gap-4 flex-1">
         <button
           onClick={onMenuClick}
@@ -35,26 +35,19 @@ export function Header({ onMenuClick }: HeaderProps) {
           <Menu className="w-5 h-5" />
         </button>
 
-        <div className="hidden md:flex flex-1 max-w-md relative">
-          <Search className="w-4 h-4 absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none z-10" />
-          <Input
-            type="text"
-            placeholder="Search reports, samples, employees..."
-            className="w-full bg-white border-gray-200"
-          />
-        </div>
+     
       </div>
 
       <div className="flex items-center gap-3">
-        <div className="flex items-center gap-3 bg-gray-100 px-3 py-2 rounded-xl hover:shadow-lg transition-all duration-200 cursor-pointer group">
+        <div className="flex items-center gap-3 dark:bg-gray-700 bg-gray-100 px-3 py-2 rounded-xl hover:shadow-lg transition-all duration-200 cursor-pointer group">
           <div className="w-9 h-9 rounded-full bg-gray-800 flex items-center justify-center shadow-lg group-hover:scale-105 transition-transform">
             <User className="w-5 h-5 text-white" />
           </div>
           <div className="hidden md:flex flex-col">
-            <span className="text-sm font-semibold text-gray-900 leading-tight">
-              {userEmail}
+            <span className="text-sm dark:text-white font-semibold text-gray-900 leading-tight">
+             Admin User
             </span>
-            <span className="text-xs text-gray-600">User</span>
+            <span className="text-xs dark:text-gray-200 text-gray-600">Administrator</span>
           </div>
         </div>
       </div>

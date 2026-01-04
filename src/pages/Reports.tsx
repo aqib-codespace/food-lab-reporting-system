@@ -173,7 +173,7 @@ export default function Reports() {
                       <td className="py-3 px-4 sm:py-4 sm:px-6">
                         <Badge
                           variant="outline"
-                          className="font-normal text-xs px-2 sm:px-3 border-gray-300 dark:border-gray-700"
+                          className="font-normal dark:text-gray-300 text-xs px-2 sm:px-3 border-gray-300 dark:border-gray-700"
                         >
                           {report.sender_shop || "N/A"}
                         </Badge>

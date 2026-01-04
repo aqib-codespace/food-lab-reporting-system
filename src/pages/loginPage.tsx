@@ -136,7 +136,7 @@ export default function LoginPage() {
             )}
 
             <div className="space-y-2">
-              <Label htmlFor="email" className="text-sm font-medium">
+              <Label htmlFor="email" className="text-sm dark:text-white text-gray-800 font-medium">
                 Email
               </Label>
               <Input
@@ -153,7 +153,7 @@ export default function LoginPage() {
 
             <div className="space-y-2">
               <div className="flex items-center justify-between">
-                <Label htmlFor="password" className="text-sm font-medium">
+                <Label htmlFor="password" className="dark:text-white text-gray-800 text-sm font-medium">
                   Password
                 </Label>
               </div>
@@ -168,7 +168,7 @@ export default function LoginPage() {
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-6 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+                  className="absolute  right-6 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
                 >
                   {showPassword ? (
                     <EyeOff className="w-4 h-4" />
@@ -186,7 +186,7 @@ export default function LoginPage() {
 
             <Button
               type="submit"
-              className="w-full flex items-center bg-gray-800 text-white  hover:bg-gray-900 dark:bg-gray-700 dark:hover:bg-gray-600"
+              className="w-full flex items-center bg-gray-800 text-white hover:bg-gray-900 dark:bg-blue-700 dark:hover:bg-blue-800"
               disabled={isSubmitting}
             >
               {isSubmitting ? "Signing In..." : "Sign In"}

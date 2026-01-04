@@ -50,11 +50,11 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
       href: "/routes/master-data/sample-names",
       icon: TestTube2,
     },
-    {
-      name: "Storage Locations",
-      href: "/routes/master-data/storage-locations",
-      icon: MapPin,
-    },
+    // {
+    //   name: "Storage Locations",
+    //   href: "/routes/master-data/storage-locations",
+    //   icon: MapPin,
+    // },
   ];
 
   const bottomNavigation = [

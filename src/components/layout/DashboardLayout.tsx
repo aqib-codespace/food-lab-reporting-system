@@ -27,7 +27,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
   }, []);
 
   return (
-    <div className="min-h-screen flex w-full bg-gray-50 overflow-hidden">
+    <div className="min-h-screen flex w-full bg-gray-50 dark:bg-gray-950 overflow-hidden">
       <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
 
       <div

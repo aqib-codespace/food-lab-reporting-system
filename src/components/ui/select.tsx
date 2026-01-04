@@ -5,6 +5,7 @@ import ReactSelect, {
   StylesConfig,
 } from "react-select";
 import { cn } from "@/lib/utils";
+import React from "react";
 
 export interface SelectOption {
   label: string;
@@ -30,13 +31,45 @@ export function Select({
 }: SelectProps) {
   const selectedOption = options.find((opt) => opt.value === value) || null;
 
+  const [isDark, setIsDark] = React.useState(false);
+
+  React.useEffect(() => {
+    const isDarkPreferred = () =>
+      typeof window !== "undefined" &&
+      (document.documentElement.classList.contains("dark") ||
+        (window.matchMedia &&
+          window.matchMedia("(prefers-color-scheme: dark)").matches));
+
+    setIsDark(isDarkPreferred());
+
+    const mq =
+      typeof window !== "undefined" && window.matchMedia
+        ? window.matchMedia("(prefers-color-scheme: dark)")
+        : null;
+
+    const handler = (e: MediaQueryListEvent) =>
+      setIsDark(document.documentElement.classList.contains("dark") || e.matches);
+
+    if (mq) {
+      if ((mq as MediaQueryList).addEventListener) (mq as MediaQueryList).addEventListener("change", handler);
+      else (mq as MediaQueryList).addListener(handler);
+    }
+
+    return () => {
+      if (mq) {
+        if ((mq as MediaQueryList).removeEventListener) (mq as MediaQueryList).removeEventListener("change", handler);
+        else (mq as MediaQueryList).removeListener(handler);
+      }
+    };
+  }, []);
+
   const customStyles: StylesConfig<SelectOption, false> = {
     control: (base, state) => ({
       ...base,
       minHeight: "40px",
       borderRadius: "0.5rem",
       borderColor: state.isFocused ? "#3b82f6" : "#d1d5db",
-      backgroundColor: "rgba(255, 255, 255, 0.9)",
+      backgroundColor: isDark ? "#1D2737" : "rgba(255, 255, 255, 0.9)",
       boxShadow: state.isFocused ? "0 0 0 2px rgba(59, 130, 246, 0.2)" : "none",
       "&:hover": {
         borderColor: "#3b82f6",
@@ -48,9 +81,13 @@ export function Select({
       backgroundColor: state.isSelected
         ? "#3b82f6"
         : state.isFocused
-        ? "#e0f2fe"
+        ? isDark
+          ? "#4b5563"
+          : "#e0f2fe"
+        : isDark
+        ? "#374151"
         : "white",
-      color: state.isSelected ? "white" : "#111827",
+      color: state.isSelected ? "white" : isDark ? "#f9fafb" : "#111827",
       cursor: "pointer",
       "&:active": {
         backgroundColor: "#3b82f6",
@@ -61,7 +98,8 @@ export function Select({
       borderRadius: "0.5rem",
       boxShadow:
         "0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)",
-      border: "1px solid #e5e7eb",
+      border: isDark ? "1px solid #374151" : "1px solid #e5e7eb",
+      backgroundColor: isDark ? "#374151" : undefined,
     }),
     menuList: (base) => ({
       ...base,
@@ -69,15 +107,15 @@ export function Select({
     }),
     singleValue: (base) => ({
       ...base,
-      color: "#111827",
+      color: isDark ? "#f9fafb" : "#111827",
     }),
     placeholder: (base) => ({
       ...base,
-      color: "#9ca3af",
+      color: isDark ? "#d1d5db" : "#9ca3af",
     }),
     input: (base) => ({
       ...base,
-      color: "#111827",
+      color: isDark ? "#f9fafb" : "#111827",
     }),
   };
 

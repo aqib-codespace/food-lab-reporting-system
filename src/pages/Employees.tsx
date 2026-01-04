@@ -415,7 +415,7 @@ export default function Employees() {
 
         <Button
           onClick={handleAddClick}
-          className="bg-gray-800 hover:bg-gray-900 rounded-lg text-white"
+          className="bg-gray-800 dark:bg-blue-700 hover:bg-gray-900 rounded-lg text-white"
         >
           <Plus className="w-4 h-4 mr-2" />
           Add Employee
@@ -489,12 +489,13 @@ export default function Employees() {
                     <div className="flex items-center">
                       <DropdownMenu.Root>
                         <DropdownMenu.Trigger>
-                          <button className="p-2 rounded-md hover:bg-gray-100 bg-gray-50 dark:hover:bg-gray-800 transition-colors">
-                            <MoreVertical className="w-4 h-4 text-gray-600" />
+                          <button className="p-2 rounded-md dark:text-white dark:bg-gray-800 hover:bg-gray-100 bg-gray-50 dark:hover:bg-gray-800 transition-colors">
+                            <MoreVertical className="w-4 h-4 dark:text-gray-100 text-gray-600" />
                           </button>
                         </DropdownMenu.Trigger>
                         <DropdownMenu.Content>
                           <DropdownMenu.Item
+                          className="dark:text-gray-200"
                             onSelect={() => handleEditClick(employee)}
                           >
                             <Edit2 className="w-3 h-3" />
@@ -810,14 +811,14 @@ export default function Employees() {
                   <Button
                     onClick={() => setIsModalOpen(false)}
                     variant="outline"
-                    className="border-gray-300 border rounded-lg dark:border-gray-700"
+                    className="border-gray-300 dark:text-white border rounded-lg dark:border-gray-700"
                   >
                     Cancel
                   </Button>
                   <Button
                     onClick={handleSaveEmployee}
                     disabled={isSubmitting}
-                    className="bg-gray-800 rounded-lg text-white hover:shadow-lg transition-all"
+                    className="bg-gray-800  dark:bg-blue-700 rounded-lg text-white hover:shadow-lg transition-all"
                   >
                     {isSubmitting ? (
                       <>
@@ -865,7 +866,7 @@ export default function Employees() {
                   <Button
                     onClick={() => setIsDeleteModalOpen(false)}
                     variant="outline"
-                    className="border-gray-300 border rounded-lg dark:border-gray-700"
+                    className="border-gray-300 dark:text-white border rounded-lg dark:border-gray-700"
                   >
                     Cancel
                   </Button>

@@ -34,25 +34,25 @@ export default function Documentation() {
 
       {/* Main Tabs */}
       <Tabs defaultValue="overview" className="w-full">
-        <TabsList className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-7 gap-1 h-auto p-2">
-          <TabsTrigger value="overview" className="gap-2">
+        <TabsList className="flex gap-1 overflow-x-auto scrollbar-thin-light p-2 sm:grid sm:grid-cols-3 lg:grid-cols-7">
+          <TabsTrigger value="overview" className="gap-2 min-w-[120px] sm:min-w-0">
             <BookOpen className="w-4 h-4" />
             <span className="hidden sm:inline">Overview</span>
           </TabsTrigger>
-          <TabsTrigger value="getting-started" className="gap-2">
+          <TabsTrigger value="getting-started" className="gap-2 min-w-[120px] sm:min-w-0">
             <PlayCircle className="w-4 h-4" />
             <span className="hidden sm:inline">Getting Started</span>
           </TabsTrigger>
-          <TabsTrigger value="reports" className="gap-2">
+          <TabsTrigger value="reports" className="gap-2 min-w-[120px] sm:min-w-0">
             <FileText className="w-4 h-4" />
             <span className="hidden sm:inline">Reports</span>
           </TabsTrigger>
 
-          <TabsTrigger value="employees" className="gap-2">
+          <TabsTrigger value="employees" className="gap-2 min-w-[120px] sm:min-w-0">
             <Users className="w-4 h-4" />
             <span className="hidden sm:inline">Employees</span>
           </TabsTrigger>
-          <TabsTrigger value="export" className="gap-2">
+          <TabsTrigger value="export" className="gap-2 min-w-[120px] sm:min-w-0">
             <Download className="w-4 h-4" />
             <span className="hidden sm:inline">Export</span>
           </TabsTrigger>

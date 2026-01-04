@@ -362,7 +362,7 @@ export default function ContainerTypes() {
             </div>
             <Button
               onClick={handleAddClick}
-              className="bg-gray-800 text-white hover:shadow-lg transition-all gap-2 rounded-lg px-4 py-2"
+              className="bg-gray-800 dark:bg-blue-700 text-white hover:shadow-lg transition-all gap-2 rounded-lg px-4 py-2"
             >
               <Plus className="w-4 h-4" />
               Add Container Type
@@ -403,13 +403,14 @@ export default function ContainerTypes() {
                         <div className="flex items-center">
                           <DropdownMenu.Root>
                             <DropdownMenu.Trigger>
-                              <button className="p-2 rounded-md hover:bg-gray-100 bg-gray-50 dark:hover:bg-gray-800 transition-colors">
-                                <MoreVertical className="w-4 h-4 text-gray-600" />
+                              <button className="p-2 rounded-md dark:bg-gray-700 hover:bg-gray-100 bg-gray-50 dark:hover:bg-gray-800 transition-colors">
+                                <MoreVertical className="w-4 h-4 dark:text-gray-200 text-gray-600" />
                               </button>
                             </DropdownMenu.Trigger>
                             <DropdownMenu.Content>
                               <DropdownMenu.Item
                                 onSelect={() => handleEditClick(container)}
+                                 className="dark:text-gray-200"
                               >
                                 <Edit2 className="w-3 h-3" />
                                 <span>Edit</span>
@@ -478,13 +479,14 @@ export default function ContainerTypes() {
                         <div className="flex items-center">
                           <DropdownMenu.Root>
                             <DropdownMenu.Trigger>
-                              <button className="p-2 rounded-md hover:bg-gray-100 bg-gray-50 dark:hover:bg-gray-800 transition-colors">
-                                <MoreVertical className="w-4 h-4 text-gray-600" />
+                              <button className="p-2 dark:bg-gray-700 rounded-md hover:bg-gray-100 bg-gray-50 dark:hover:bg-gray-800 transition-colors">
+                                <MoreVertical className="w-4 h-4 dark:text-gray-200 text-gray-600" />
                               </button>
                             </DropdownMenu.Trigger>
                             <DropdownMenu.Content>
                               <DropdownMenu.Item
                                 onSelect={() => handleEditClick(container)}
+                                className="dark:text-gray-200"
                               >
                                 <Edit2 className="w-3 h-3" />
                                 <span>Edit</span>
@@ -526,7 +528,7 @@ export default function ContainerTypes() {
               </div>
               <Button
                 onClick={handleAddColorClick}
-                className="bg-gray-800 text-white hover:bg-gray-900 transition-all gap-2 rounded-lg px-4 py-2"
+                className="bg-gray-800 dark:bg-blue-700 text-white hover:bg-gray-900 transition-all gap-2 rounded-lg px-4 py-2"
               >
                 <Plus className="w-4 h-4" />
                 Add Color
@@ -576,13 +578,14 @@ export default function ContainerTypes() {
                         </div>
                         <DropdownMenu.Root>
                           <DropdownMenu.Trigger>
-                            <button className="p-1.5 rounded-md hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
-                              <MoreVertical className="w-4 h-4 text-gray-600" />
+                            <button className="p-1.5 rounded-md dark:bg-gray-700 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
+                              <MoreVertical className="w-4 h-4 dark:text-gray-200 text-gray-600" />
                             </button>
                           </DropdownMenu.Trigger>
                           <DropdownMenu.Content>
                             <DropdownMenu.Item
                               onSelect={() => handleEditColorClick(color)}
+                              className="dark:text-gray-200"
                             >
                               <Edit2 className="w-3 h-3" />
                               <span>Edit</span>
@@ -649,7 +652,7 @@ export default function ContainerTypes() {
                           name: e.target.value,
                         }))
                       }
-                      className={`w-full px-4 py-2.5 bg-white dark:bg-gray-800 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 ${
+                      className={`w-full px-4 dark:text-gray-300 py-2.5 bg-white dark:bg-gray-800 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 ${
                         validationErrors.name
                           ? "border-red-500"
                           : "border-gray-300 dark:border-gray-700"
@@ -675,7 +678,7 @@ export default function ContainerTypes() {
                           category: e.target.value as "external" | "internal",
                         }))
                       }
-                      className={`w-full px-4 py-2.5 bg-white dark:bg-gray-800 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 ${
+                      className={`w-full dark:text-gray-300 px-4 py-2.5 bg-white dark:bg-gray-800 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 ${
                         validationErrors.category
                           ? "border-red-500"
                           : "border-gray-300 dark:border-gray-700"
@@ -706,7 +709,7 @@ export default function ContainerTypes() {
                         }))
                       }
                       rows={3}
-                      className="w-full px-4 py-2.5 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                      className="w-full  dark:text-gray-300 px-4 py-2.5 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20"
                     />
                   </div>
                 </div>
@@ -715,13 +718,13 @@ export default function ContainerTypes() {
                   <Button
                     onClick={() => setIsModalOpen(false)}
                     variant="outline"
-                    className="border-gray-300 border rounded-lg"
+                    className="border-gray-300 dark:text-white border rounded-lg"
                   >
                     Cancel
                   </Button>
                   <Button
                     onClick={handleSaveContainer}
-                    className="bg-gray-800 rounded-lg text-white"
+                    className="bg-gray-800 dark:bg-blue-700 rounded-lg text-white"
                   >
                     {editingContainer ? "Update" : "Add"} Container Type
                   </Button>
@@ -761,7 +764,7 @@ export default function ContainerTypes() {
                   <Button
                     onClick={() => setIsDeleteModalOpen(false)}
                     variant="outline"
-                    className="border-gray-300 border rounded-lg"
+                    className="border-gray-300 dark:text-white border rounded-lg"
                   >
                     Cancel
                   </Button>
@@ -809,7 +812,7 @@ export default function ContainerTypes() {
                           name: e.target.value,
                         }))
                       }
-                      className={`w-full px-4 py-2.5 bg-white dark:bg-gray-800 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/20 ${
+                      className={`w-full px-4 py-2.5 dark:text-gray-300 bg-white dark:bg-gray-800 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/20 ${
                         colorValidationErrors.name
                           ? "border-red-500"
                           : "border-gray-300 dark:border-gray-700"
@@ -849,14 +852,14 @@ export default function ContainerTypes() {
                     onClick={() => setIsColorModalOpen(false)}
                     variant="outline"
                     disabled={isSubmitting}
-                    className="border-gray-300 border rounded-lg"
+                    className="border-gray-300 dark:text-white border rounded-lg"
                   >
                     Cancel
                   </Button>
                   <Button
                     onClick={handleSaveColor}
                     disabled={isSubmitting}
-                    className="bg-gray-800 rounded-lg text-white hover:bg-gray-900"
+                    className="bg-gray-800 rounded-lg dark:bg-blue-700 text-white hover:bg-gray-900"
                   >
                     {isSubmitting ? (
                       <>
@@ -904,7 +907,7 @@ export default function ContainerTypes() {
                     onClick={() => setIsColorDeleteModalOpen(false)}
                     variant="outline"
                     disabled={isSubmitting}
-                    className="border-gray-300 border rounded-lg"
+                    className="border-gray-300 dark:text-white border rounded-lg"
                   >
                     Cancel
                   </Button>

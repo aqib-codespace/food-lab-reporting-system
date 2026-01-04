@@ -18,6 +18,8 @@ import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import { useReports } from "@/hooks/useReports";
+import { useEmployees } from "@/hooks/useSupabaseData";
+
 
 const stats = [
   {
@@ -61,6 +63,7 @@ const stats = [
 export default function Dashboard() {
   const route = useRouter();
   const { reports, loading } = useReports();
+  const { data: employees, loading: employeesLoading } = useEmployees();
 
   const recentReports = reports.slice(0, 4);
 
@@ -69,6 +72,7 @@ export default function Dashboard() {
     (acc, report) => acc + (report.samples?.length || 0),
     0
   );
+  const totalEmployees = employees?.length || 0;
 
   const stats = [
     {
@@ -81,12 +85,12 @@ export default function Dashboard() {
       color: "from-blue-500 to-blue-600",
     },
     {
-      title: "Total Samples",
-      value: totalSamples.toString(),
+      title: "Employees",
+      value: totalEmployees.toString(),
       change: "+8.2%",
       trend: "up" as const,
-      icon: Package,
-      description: "Tracked Total",
+      icon: Users,
+      description: "Active employees",
       color: "from-emerald-500 to-emerald-600",
     },
     {
@@ -123,7 +127,7 @@ export default function Dashboard() {
         <Button
           onClick={() => route.push("/routes/new-report")}
           size="lg"
-          className="bg-gray-800 px-4 py-2 rounded-lg  text-white hover:opacity-90 transition-opacity shadow-lg w-full sm:w-auto"
+          className="bg-gray-800 dark:bg-blue-700 px-4 py-2 rounded-lg  text-white hover:opacity-90 transition-opacity shadow-lg w-full sm:w-auto"
         >
           <Plus className="w-5 h-5 mr-2" />
           New Report

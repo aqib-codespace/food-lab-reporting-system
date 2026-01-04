@@ -86,6 +86,7 @@ export interface Database {
           name: string;
           code: string | null;
           category: string | null;
+          image: string | null;
           description: string | null;
           status: "active" | "inactive";
           created_at: string;
@@ -96,6 +97,7 @@ export interface Database {
           name: string;
           code?: string | null;
           category?: string | null;
+          image?: string | null;
           description?: string | null;
           status?: "active" | "inactive";
           created_at?: string;
@@ -106,6 +108,7 @@ export interface Database {
           name?: string;
           code?: string | null;
           category?: string | null;
+          image?: string | null;
           description?: string | null;
           status?: "active" | "inactive";
           updated_at?: string;
