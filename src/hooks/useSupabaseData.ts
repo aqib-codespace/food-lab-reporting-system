@@ -8,6 +8,7 @@ import {
 import type { Database } from "@/types/supabase";
 
 type Employee = Database["public"]["Tables"]["employees"]["Row"];
+type Role = Database["public"]["Tables"]["roles"]["Row"];
 type ContainerType = Database["public"]["Tables"]["container_types"]["Row"];
 type SampleName = Database["public"]["Tables"]["sample_names"]["Row"];
 type StorageLocation = Database["public"]["Tables"]["storage_locations"]["Row"];
@@ -46,11 +47,21 @@ export function useEmployees(): UseDataResult<Employee> {
       setError(null);
       const { data: employees, error: fetchError } = await supabase
         .from("employees")
-        .select("*")
+        .select(
+          `
+          *,
+          roles:role_id (
+            id,
+            name,
+            description
+          )
+        `
+        )
         .eq("status", "active")
         .order("created_at", { ascending: false });
 
       if (fetchError) throw fetchError;
+
       setData(employees || []);
     } catch (err) {
       setError(handleSupabaseError(err));
@@ -107,6 +118,101 @@ export function useEmployees(): UseDataResult<Employee> {
     try {
       const { error: deleteError } = await supabase
         .from("employees")
+        .delete()
+        .eq("id", id);
+
+      if (deleteError) throw deleteError;
+
+      await fetchData();
+      return { success: true };
+    } catch (err) {
+      return { success: false, error: handleSupabaseError(err) };
+    }
+  };
+
+  return { data, loading, error, refetch: fetchData, create, update, remove };
+}
+
+export function useRoles(): UseDataResult<Role> {
+  const [data, setData] = useState<Role[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const fetchData = useCallback(async () => {
+    if (!isSupabaseConfigured()) {
+      setError(
+        "Supabase is not configured. Please check your environment variables."
+      );
+      setLoading(false);
+      return;
+    }
+
+    try {
+      setLoading(true);
+      setError(null);
+      const { data: roles, error: fetchError } = await supabase
+        .from("roles")
+        .select("*")
+        .eq("status", "active")
+        .order("created_at", { ascending: false });
+
+      if (fetchError) throw fetchError;
+      setData(roles || []);
+    } catch (err) {
+      setError(handleSupabaseError(err));
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
+
+  const create = async (
+    item: Database["public"]["Tables"]["roles"]["Insert"]
+  ) => {
+    try {
+      // @ts-ignore - Supabase type inference issue
+      const { data: newRole, error: createError } = await supabase
+        .from("roles")
+        .insert([item])
+        .select()
+        .single();
+
+      if (createError) throw createError;
+
+      await fetchData();
+      return { success: true, data: newRole };
+    } catch (err) {
+      return { success: false, error: handleSupabaseError(err) };
+    }
+  };
+
+  const update = async (
+    id: string,
+    updates: Database["public"]["Tables"]["roles"]["Update"]
+  ) => {
+    try {
+      // @ts-ignore - Supabase type inference issue
+      const { error: updateError } = await supabase
+        .from("roles")
+        .update(updates)
+        .eq("id", id);
+
+      if (updateError) throw updateError;
+
+      await fetchData();
+      return { success: true };
+    } catch (err) {
+      return { success: false, error: handleSupabaseError(err) };
+    }
+  };
+
+  const remove = async (id: string) => {
+    try {
+      const { error: deleteError } = await supabase
+        .from("roles")
         .delete()
         .eq("id", id);
 
@@ -392,6 +498,105 @@ export function useStorageLocations(): UseDataResult<StorageLocation> {
     try {
       const { error: deleteError } = await supabase
         .from("storage_locations")
+        .delete()
+        .eq("id", id);
+
+      if (deleteError) throw deleteError;
+
+      await fetchData();
+      return { success: true };
+    } catch (err) {
+      return { success: false, error: handleSupabaseError(err) };
+    }
+  };
+
+  return { data, loading, error, refetch: fetchData, create, update, remove };
+}
+
+export function useSenderShops(): UseDataResult<
+  Database["public"]["Tables"]["sender_shops"]["Row"]
+> {
+  const [data, setData] = useState<
+    Database["public"]["Tables"]["sender_shops"]["Row"][]
+  >([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const fetchData = useCallback(async () => {
+    if (!isSupabaseConfigured()) {
+      setError(
+        "Supabase is not configured. Please check your environment variables."
+      );
+      setLoading(false);
+      return;
+    }
+
+    try {
+      setLoading(true);
+      setError(null);
+      const { data: senderShops, error: fetchError } = await supabase
+        .from("sender_shops")
+        .select("*")
+        .eq("status", "active")
+        .order("created_at", { ascending: false });
+
+      if (fetchError) throw fetchError;
+      setData(senderShops || []);
+    } catch (err) {
+      setError(handleSupabaseError(err));
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
+
+  const create = async (
+    item: Database["public"]["Tables"]["sender_shops"]["Insert"]
+  ) => {
+    try {
+      // @ts-ignore - Supabase type inference issue
+      const { data: newSenderShop, error: createError } = await supabase
+        .from("sender_shops")
+        .insert([item])
+        .select()
+        .single();
+
+      if (createError) throw createError;
+
+      await fetchData();
+      return { success: true, data: newSenderShop };
+    } catch (err) {
+      return { success: false, error: handleSupabaseError(err) };
+    }
+  };
+
+  const update = async (
+    id: string,
+    updates: Database["public"]["Tables"]["sender_shops"]["Update"]
+  ) => {
+    try {
+      // @ts-ignore - Supabase type inference issue
+      const { error: updateError } = await supabase
+        .from("sender_shops")
+        .update(updates)
+        .eq("id", id);
+
+      if (updateError) throw updateError;
+
+      await fetchData();
+      return { success: true };
+    } catch (err) {
+      return { success: false, error: handleSupabaseError(err) };
+    }
+  };
+
+  const remove = async (id: string) => {
+    try {
+      const { error: deleteError } = await supabase
+        .from("sender_shops")
         .delete()
         .eq("id", id);
 

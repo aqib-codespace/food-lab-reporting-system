@@ -268,3 +268,79 @@ export async function updateReportFileUrls(
     };
   }
 }
+
+/**
+ * Upload sender shop image to employee-files bucket under sender-shop folder
+ */
+export async function uploadSenderShopImage(
+  file: File,
+  senderShopId: string
+): Promise<{ success: boolean; url?: string; error?: string }> {
+  try {
+    const fileExtension = file.name.split(".").pop();
+    const fileName = `${senderShopId}.${fileExtension}`;
+    const filePath = `sender-shop/${fileName}`;
+
+    const { data, error } = await supabase.storage
+      .from("employee-files")
+      .upload(filePath, file, {
+        cacheControl: "3600",
+        upsert: true,
+      });
+
+    if (error) {
+      console.error("Sender shop image upload error:", error);
+      return { success: false, error: error.message };
+    }
+
+    const {
+      data: { publicUrl },
+    } = supabase.storage.from("employee-files").getPublicUrl(filePath);
+
+    return { success: true, url: publicUrl };
+  } catch (err) {
+    console.error("Unexpected sender shop image upload error:", err);
+    return {
+      success: false,
+      error: err instanceof Error ? err.message : "Unknown error occurred",
+    };
+  }
+}
+
+/**
+ * Upload container type image to employee-files bucket under container-type folder
+ */
+export async function uploadContainerTypeImage(
+  file: File,
+  containerTypeId: string
+): Promise<{ success: boolean; url?: string; error?: string }> {
+  try {
+    const fileExtension = file.name.split(".").pop();
+    const fileName = `${containerTypeId}.${fileExtension}`;
+    const filePath = `container-type/${fileName}`;
+
+    const { data, error } = await supabase.storage
+      .from("employee-files")
+      .upload(filePath, file, {
+        cacheControl: "3600",
+        upsert: true,
+      });
+
+    if (error) {
+      console.error("Container type image upload error:", error);
+      return { success: false, error: error.message };
+    }
+
+    const {
+      data: { publicUrl },
+    } = supabase.storage.from("employee-files").getPublicUrl(filePath);
+
+    return { success: true, url: publicUrl };
+  } catch (err) {
+    console.error("Unexpected container type image upload error:", err);
+    return {
+      success: false,
+      error: err instanceof Error ? err.message : "Unknown error occurred",
+    };
+  }
+}

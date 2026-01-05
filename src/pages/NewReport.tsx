@@ -17,21 +17,22 @@ import {
   Calendar,
   User,
   Package,
-  Mail,
-  Phone,
   FileDown,
+  Info,
+  Search,
 } from "lucide-react";
 import {
   ReportData,
   Sample,
   ContainerEntry,
-  SENDER_SHOPS,
   COLOR_OPTIONS,
 } from "@/types/report";
 import {
   useEmployees,
   useContainerTypes,
   useSampleNames,
+  useRoles,
+  useSenderShops,
 } from "@/hooks/useSupabaseData";
 import { useColors } from "@/hooks/useColors";
 import { supabase } from "@/lib/supabase/client";
@@ -53,8 +54,7 @@ const getDefaultSample = (index: number, defaultColor?: string): Sample => ({
   id: generateId(),
   sampleNumber: `S${index + 1}`,
   sampleName: "",
-  internalContainerCount: 1,
-  internalContainerType: "",
+  internalContainers: [{ id: generateId(), quantity: 1, type: "" }],
   netWeight: 0,
   weightUnit: "gram",
   pureOrTotal: "pure",
@@ -79,7 +79,18 @@ export default function NewReport() {
   const [reportCreatedSuccessfully, setReportCreatedSuccessfully] =
     useState(false);
 
+  // Search states
+  const [employeeSearch, setEmployeeSearch] = useState("");
+  const [senderShopSearch, setSenderShopSearch] = useState("");
+  const [sampleSearches, setSampleSearches] = useState<Record<string, string>>(
+    {}
+  );
+  const [externalContainerSearch, setExternalContainerSearch] = useState("");
+  const [internalContainerSearch, setInternalContainerSearch] = useState("");
+
   const { data: employees, loading: employeesLoading } = useEmployees();
+  const { data: roles, loading: rolesLoading } = useRoles();
+  const { data: senderShops, loading: senderShopsLoading } = useSenderShops();
   const { data: containerTypes, loading: containerTypesLoading } =
     useContainerTypes();
   const { data: sampleNames, loading: sampleNamesLoading } = useSampleNames();
@@ -88,6 +99,22 @@ export default function NewReport() {
   const activeColors = allColors.filter(
     (color: any) => color.status === "active"
   );
+
+  // Filter data based on search
+  const filteredEmployees = employees.filter((emp) =>
+    emp.name.toLowerCase().includes(employeeSearch.toLowerCase())
+  );
+
+  const filteredSenderShops = senderShops.filter((shop) =>
+    shop.name.toLowerCase().includes(senderShopSearch.toLowerCase())
+  );
+
+  const getFilteredSampleNames = (sampleId: string) => {
+    const search = sampleSearches[sampleId] || "";
+    return sampleNames.filter((sn) =>
+      sn.name.toLowerCase().includes(search.toLowerCase())
+    );
+  };
 
   const STORAGE_LOCATION_OPTIONS = [
     { label: "Shop", value: "shop" },
@@ -100,6 +127,14 @@ export default function NewReport() {
   );
   const internalContainerTypes = containerTypes.filter(
     (ct) => ct.category === "internal"
+  );
+
+  // Filter containers based on search
+  const filteredExternalContainerTypes = externalContainerTypes.filter((ct) =>
+    ct.name.toLowerCase().includes(externalContainerSearch.toLowerCase())
+  );
+  const filteredInternalContainerTypes = internalContainerTypes.filter((ct) =>
+    ct.name.toLowerCase().includes(internalContainerSearch.toLowerCase())
   );
 
   const defaultColorCode =
@@ -138,11 +173,15 @@ export default function NewReport() {
               employees:employee_id (
                 id,
                 name,
-                email,
-                role,
+                role_id,
                 photo,
                 signature,
-                initials
+                initials,
+                roles:role_id (
+                  id,
+                  name,
+                  description
+                )
               )
             `
             )
@@ -206,8 +245,9 @@ export default function NewReport() {
                 id: s.id || generateId(),
                 sampleNumber: s.sample_number || `S${idx + 1}`,
                 sampleName: s.sample_name || "",
-                internalContainerCount: s.internal_container_count || 1,
-                internalContainerType: s.internal_container_type || "",
+                internalContainers: s.internal_containers || [
+                  { id: generateId(), quantity: 1, type: "" },
+                ],
                 netWeight: s.net_weight || 0,
                 weightUnit: s.weight_unit || "gram",
                 pureOrTotal: s.pure_or_total || "pure",
@@ -365,7 +405,13 @@ export default function NewReport() {
       const filtered = prev.samples.filter((s) => s.id !== id);
       return {
         ...prev,
-        samples: filtered.map((s, i) => ({ ...s, sampleNumber: `S${i + 1}` })),
+        samples: filtered.map((s, i) => ({
+          ...s,
+          sampleNumber: `S${i + 1}`,
+          internalContainers: s.internalContainers || [
+            { id: generateId(), quantity: 1, type: "" },
+          ],
+        })),
       };
     });
   };
@@ -374,7 +420,16 @@ export default function NewReport() {
     setReportData((prev) => ({
       ...prev,
       samples: prev.samples.map((s) =>
-        s.id === id ? { ...s, ...updates } : s
+        s.id === id
+          ? {
+              ...s,
+              ...updates,
+              internalContainers: updates.internalContainers ||
+                s.internalContainers || [
+                  { id: generateId(), quantity: 1, type: "" },
+                ],
+            }
+          : s
       ),
     }));
   };
@@ -415,7 +470,7 @@ export default function NewReport() {
           description: "Your changes have been saved successfully.",
         });
 
-        router.push(`/routes/reports/${reportData.id}`);
+        router.push(`/routes/examination-team/${reportData.id}`);
         return;
       }
 
@@ -427,6 +482,7 @@ export default function NewReport() {
           {
             ref_number: reportData.refNumber || null,
             employee_id: reportData.employee?.id || null,
+            opener_id: reportData.employee?.id || null, // Person who created the case
             report_date:
               reportData.date || new Date().toISOString().split("T")[0],
             sender_shop: reportData.senderShop || null,
@@ -450,8 +506,7 @@ export default function NewReport() {
           report_id: reportId,
           sample_number: sample.sampleNumber || null,
           sample_name: sample.sampleName || null,
-          internal_container_count: sample.internalContainerCount || null,
-          internal_container_type: sample.internalContainerType || null,
+          internal_containers: sample.internalContainers || [],
           net_weight: sample.netWeight || null,
           weight_unit: sample.weightUnit || "gram",
           pure_or_total: sample.pureOrTotal || "pure",
@@ -604,10 +659,10 @@ export default function NewReport() {
             ← Back to Form
           </Button>
           <Button
-            onClick={() => router.push("/routes/reports")}
+            onClick={() => router.push("/routes/examination-team")}
             className="gap-2 bg-gray-800 text-white rounded-lg"
           >
-            View All Reports
+            View All Cases
           </Button>
         </div>
         <ReportPreview data={displayData} />
@@ -621,7 +676,7 @@ export default function NewReport() {
         <div className="flex items-center justify-center min-h-[400px]">
           <Loader2 className="w-8 h-8 animate-spin text-gray-400" />
           <span className="ml-3 text-gray-600 dark:text-gray-400">
-            Loading report...
+            Loading case...
           </span>
         </div>
       </DashboardLayout>
@@ -632,28 +687,73 @@ export default function NewReport() {
     <DashboardLayout>
       <div className="flex flex-col gap-2 mb-4 sm:mb-6">
         <h1 className="text-xl sm:text-2xl dark:text-white font-bold text-foreground">
-          {editingReportId ? "Edit Report" : "Create New Report"}
+          {editingReportId ? "Edit Case" : "Create New Case"}
         </h1>
         <p className="text-sm dark:text-gray-200 sm:text-base text-muted-foreground">
           {editingReportId
-            ? "Update the report details below"
-            : "Fill in the details below to create a new laboratory report"}
+            ? "Update the case details below"
+            : "Fill in the details below to create a new laboratory case"}
         </p>
       </div>
 
       <div className="grid grid-cols-1 gap-4 sm:gap-6 pb-24">
+        {/* Additional Info */}
+        <Card>
+          <CardHeader className="pb-3 sm:pb-4 px-4 sm:px-6">
+            <CardTitle className="text-sm sm:text-base font-semibold flex items-center gap-2">
+              <Info className="w-4 h-4 text-accent" />
+              Additional Information
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3 sm:space-y-4 px-4 sm:px-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="producedDate">Produced Date</Label>
+                <Input
+                  id="producedDate"
+                  type="date"
+                  value={reportData.producedDate}
+                  onChange={(e) => updateField("producedDate", e.target.value)}
+                  className="input-focus"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="expiredDate">Expired Date</Label>
+                <Input
+                  id="expiredDate"
+                  type="date"
+                  value={reportData.expiredDate}
+                  onChange={(e) => updateField("expiredDate", e.target.value)}
+                  className="input-focus"
+                />
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="barcodeNumber">Barcode Number</Label>
+              <Input
+                id="barcodeNumber"
+                placeholder="Enter barcode number"
+                value={reportData.barcodeNumber}
+                onChange={(e) => updateField("barcodeNumber", e.target.value)}
+                className="input-focus"
+              />
+            </div>
+          </CardContent>
+        </Card>
         <div className="space-y-6">
           <Card>
             <CardHeader className="pb-3 sm:pb-4 px-4 sm:px-6">
               <CardTitle className="text-sm sm:text-base font-semibold flex items-center gap-2">
                 <Calendar className="w-4 h-4 text-accent" />
-                Report Details
+                Case Details
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-3 sm:space-y-4 px-4 sm:px-6">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                 <div className="space-y-2" data-error={!!fieldErrors.refNumber}>
-                  <Label className="dark:text-gray-100" htmlFor="refNumber">Reference Number</Label>
+                  <Label className="dark:text-gray-100" htmlFor="refNumber">
+                    Reference Number
+                  </Label>
                   <Input
                     id="refNumber"
                     placeholder="Enter 6-digit reference number"
@@ -679,7 +779,9 @@ export default function NewReport() {
                   )}
                 </div>
                 <div className="space-y-2" data-error={!!fieldErrors.date}>
-                  <Label className="dark:text-gray-100" htmlFor="date">Date</Label>
+                  <Label className="dark:text-gray-100" htmlFor="date">
+                    Date
+                  </Label>
                   <Input
                     id="date"
                     type="date"
@@ -700,7 +802,17 @@ export default function NewReport() {
               </div>
 
               <div className="space-y-2" data-error={!!fieldErrors.employee}>
-                <Label>Select Employee</Label>
+                <div className="flex items-center justify-between gap-3">
+                  <Label>Select Employee</Label>
+                  <div className="relative flex-1 max-w-xs">
+                    <Input
+                      placeholder="Search employees..."
+                      value={employeeSearch}
+                      onChange={(e) => setEmployeeSearch(e.target.value)}
+                      className="pl-9 h-9 text-sm mb-2 bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-700"
+                    />
+                  </div>
+                </div>
                 {employeesLoading ? (
                   <div className="flex items-center justify-center p-8 text-muted-foreground">
                     <Loader2 className="w-5 h-5 animate-spin" />
@@ -709,37 +821,60 @@ export default function NewReport() {
                   <div className="text-center p-8 text-muted-foreground">
                     No employees found. Please add employees first.
                   </div>
+                ) : filteredEmployees.length === 0 ? (
+                  <div className="text-center p-8 text-muted-foreground">
+                    No employees match your search.
+                  </div>
                 ) : (
-                  <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
-                    {employees.map((emp) => (
-                      <button
-                        key={emp.id}
-                        type="button"
-                        onClick={() => updateField("employee", emp)}
-                        className={`flex flex-col items-center gap-1 p-3 rounded-lg border-2 transition-all ${
-                          reportData.employee?.id === emp.id
-                            ? "border-accent dark:border-green-600 bg-accent/5"
-                            : fieldErrors.employee
-                            ? "border-red-500 hover:border-red-600"
-                            : "border-border hover:border-accent/50"
-                        }`}
-                      >
-                        {emp.photo ? (
-                          <img
-                            src={emp.photo}
-                            alt={emp.name}
-                            className="w-10 h-10 rounded-full object-cover"
-                          />
-                        ) : (
-                          <div className="w-10 h-10 rounded-full flex items-center justify-center text-sm font-semibold bg-accent/10 text-accent">
-                            {emp.initials}
-                          </div>
-                        )}
-                        <span className="text-xs dark:text-white text-muted-foreground truncate w-full text-center">
-                          {emp.name.split(" ")[0]}
-                        </span>
-                      </button>
-                    ))}
+                  <div className="overflow-x-auto pb-2 scrollbar-thin-light">
+                    <div className="flex gap-2">
+                      {filteredEmployees.map((emp) => {
+                        const isSelected = reportData.employee?.id === emp.id;
+                        const roleName = emp.role_id
+                          ? roles.find((r) => r.id === emp.role_id)?.name ||
+                            null
+                          : null;
+                        return (
+                          <button
+                            key={emp.id}
+                            type="button"
+                            onClick={() => updateField("employee", emp)}
+                            className={`flex-shrink-0 w-44 flex flex-col items-center gap-1 p-3 rounded-lg border-2 transition-all relative ${
+                              isSelected
+                                ? "border-accent dark:border-green-600 bg-accent/5"
+                                : fieldErrors.employee
+                                ? "border-red-500 hover:border-red-600"
+                                : "border-border hover:border-accent/50"
+                            }`}
+                          >
+                            {emp.photo ? (
+                              <img
+                                src={emp.photo}
+                                alt={emp.name}
+                                className="w-24 h-16 rounded-lg object-cover"
+                              />
+                            ) : (
+                              <div className="w-24 h-16 rounded-lg flex items-center justify-center text-sm font-semibold bg-accent/10 text-accent">
+                                {emp.initials}
+                              </div>
+                            )}
+                            <div className="flex flex-col items-center w-full">
+                              <span className="text-xs dark:text-white text-muted-foreground truncate w-full text-center font-medium">
+                                {emp.name.split(" ")[0]}
+                              </span>
+                              {roleName && (
+                                <span className="text-[10px] text-blue-600 dark:text-blue-400 truncate w-full text-center mt-0.5">
+                                  {roleName}
+                                </span>
+                              )}
+                            </div>
+                            {isSelected && (
+                              <CheckCircle className="w-5 h-5 text-blue-500 dark:text-green-500 absolute top-2 right-2 bg-white dark:bg-gray-900 rounded-full" />
+                            )}
+                          </button>
+                        );
+                      })}
+                    </div>
                   </div>
                 )}
                 {fieldErrors.employee && (
@@ -774,12 +909,12 @@ export default function NewReport() {
                   </CardHeader>
 
                   <CardContent className="flex items-center gap-4 py-3">
-                    <div className="flex items-start gap-3 min-w-0">
+                    <div className="flex items-center gap-3">
                       {reportData.employee.photo ? (
                         <img
                           src={reportData.employee.photo}
                           alt={reportData.employee.name}
-                          className="w-12 h-12 rounded-full object-cover"
+                          className="w-24 h-24 rounded-lg object-cover"
                         />
                       ) : (
                         <div className="w-12 h-12 rounded-full flex items-center justify-center text-sm font-semibold bg-accent/10 text-accent">
@@ -787,65 +922,100 @@ export default function NewReport() {
                         </div>
                       )}
 
-                      <div className="min-w-0">
-                        <div className="font-medium dark:text-gray-100 text-sm truncate">
+                      <div>
+                        <div className="font-medium dark:text-gray-100 text-sm">
                           {reportData.employee.name}
                         </div>
-                        {reportData.employee.role && (
-                          <div className="text-xs dark:text-gray-200 text-muted-foreground mt-0.5 truncate">
-                            {reportData.employee.role}
-                          </div>
-                        )}
-
-                        <div className="flex flex-col sm:flex-row sm:items-center sm:gap-4 mt-2 text-xs text-muted-foreground">
-                          <div className="flex dark:text-gray-100 items-center gap-2 truncate">
-                            <Mail className="w-4 h-4" />
-                            <span className="truncate">
-                              {reportData.employee.email ?? "Not Provided"}
-                            </span>
-                          </div>
-                          <div className="flex dark:text-gray-100 items-center gap-2 truncate mt-1 sm:mt-0">
-                            <Phone className="w-4 h-4" />
-                            <span className="truncate">
-                              {reportData.employee.phone ?? "Not Provided"}
-                            </span>
-                          </div>
-                        </div>
+                        {reportData.employee.role_id &&
+                          (() => {
+                            const roleName = roles.find(
+                              (r) => r.id === reportData.employee?.role_id
+                            )?.name;
+                            return roleName ? (
+                              <div className="text-xs text-blue-600 dark:text-blue-400 mt-0.5">
+                                {roleName}
+                              </div>
+                            ) : null;
+                          })()}
                       </div>
                     </div>
 
-                    <div className="ml-auto">
-                      <p>Signature</p>
-                      {reportData.employee.signature ? (
+                    {reportData.employee.signature && (
+                      <div className="ml-auto">
                         <img
                           src={reportData.employee.signature}
                           alt={`${reportData.employee.name} signature`}
-                          className="h-16 w-40 dark:border dark:border-gray-400  rounded-md"
+                          className="h-16 w-40 dark:border dark:border-gray-400 rounded-md"
                         />
-                      ) : (
-                        <div className="text-xs text-muted-foreground italic">
-                          No signature available
-                        </div>
-                      )}
-                    </div>
+                      </div>
+                    )}
                   </CardContent>
                 </Card>
               )}
 
               <div className="space-y-2">
-                <Label className="dark:text-white" htmlFor="senderShop">Sender Shop</Label>
-                <Select
-                  value={reportData.senderShop}
-                  onChange={(value) =>
-                    updateField("senderShop", value as string)
-                  }
-                  options={SENDER_SHOPS.map((shop) => ({
-                    label: shop,
-                    value: shop,
-                  }))}
-                  placeholder="Select a shop"
-                  className="input-focus "
-                />
+                <div className="flex items-center justify-between gap-3">
+                  <Label className="dark:text-white">Sender Shop</Label>
+                  <div className="relative flex-1 max-w-xs">
+                    <Input
+                      placeholder="Search sender shops..."
+                      value={senderShopSearch}
+                      onChange={(e) => setSenderShopSearch(e.target.value)}
+                      className="pl-9 h-9 mb-2 text-sm bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-700"
+                    />
+                  </div>
+                </div>
+                {senderShopsLoading ? (
+                  <div className="flex items-center justify-center p-8 text-muted-foreground">
+                    <Loader2 className="w-5 h-5 animate-spin" />
+                  </div>
+                ) : senderShops.length === 0 ? (
+                  <div className="text-center p-8 text-muted-foreground">
+                    No sender shops found. Please add shops first.
+                  </div>
+                ) : filteredSenderShops.length === 0 ? (
+                  <div className="text-center p-8 text-muted-foreground">
+                    No sender shops match your search.
+                  </div>
+                ) : (
+                  <div className="overflow-x-auto pb-2 scrollbar-thin-light">
+                    <div className="flex gap-2">
+                      {filteredSenderShops.map((shop) => {
+                        const isSelected = reportData.senderShop === shop.name;
+                        return (
+                          <button
+                            key={shop.id}
+                            type="button"
+                            onClick={() => updateField("senderShop", shop.name)}
+                            className={`shrink-0 w-44 flex flex-col items-center gap-2 p-3 rounded-lg border-2 transition-all relative ${
+                              isSelected
+                                ? "border-blue-500 dark:border-blue-600 bg-blue-50 dark:bg-blue-900/20"
+                                : "border-border hover:border-blue-300 dark:hover:border-blue-700"
+                            }`}
+                          >
+                            {shop.image ? (
+                              <img
+                                src={shop.image}
+                                alt={shop.name}
+                                className="w-20 h-20 rounded-md object-cover"
+                              />
+                            ) : (
+                              <div className="w-20 h-20 rounded-md bg-gradient-to-br from-blue-100 to-indigo-200 dark:from-blue-900/30 dark:to-indigo-900/30 flex items-center justify-center">
+                                <Package className="w-8 h-8 text-blue-600 dark:text-blue-400" />
+                              </div>
+                            )}
+                            <span className="text-xs dark:text-white text-gray-700 truncate w-full text-center font-medium">
+                              {shop.name}
+                            </span>
+                            {isSelected && (
+                              <CheckCircle className="w-5 h-5 text-blue-500 dark:text-blue-400 absolute top-2 right-2 bg-white dark:bg-gray-900 rounded-full" />
+                            )}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
               </div>
             </CardContent>
           </Card>
@@ -873,49 +1043,101 @@ export default function NewReport() {
               {reportData.externalContainers.map((container, index) => (
                 <div
                   key={container.id}
-                  className="flex gap-2 sm:gap-3 items-end animate-fade-in"
+                  className="space-y-3 p-4 rounded-xl bg-gray-50 dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700 animate-fade-in"
                 >
-                  <div className="w-16 sm:w-20">
-                    <Label className="text-xs">Qty</Label>
-                    <Input
-                      type="number"
-                      min="1"
-                      value={container.quantity || ""}
-                      onChange={(e) =>
-                        updateExternalContainer(container.id, {
-                          quantity: parseInt(e.target.value) || 0,
-                        })
-                      }
-                      className="input-focus"
-                    />
+                  <div className="flex items-center justify-between">
+                    <Label className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                      Container Type
+                    </Label>
+                    {reportData.externalContainers.length > 1 && (
+                      <Button
+                        variant="text"
+                        size="sm"
+                        onClick={() => removeExternalContainer(container.id)}
+                        className="text-red-500 border border-red-500 h-8 px-3 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    )}
                   </div>
-                  <div className="flex-1">
-                    <Label className="text-xs">Container Type</Label>
-                    <Select
-                      value={container.type}
-                      onChange={(value) =>
-                        updateExternalContainer(container.id, {
-                          type: value as string,
-                        })
-                      }
-                      options={externalContainerTypes.map((type) => ({
-                        label: type.name,
-                        value: type.id,
-                      }))}
-                      placeholder="Select type"
-                      className="input-focus"
-                    />
+
+                  <div className="flex justify-between items-end gap-3">
+                    <div className="flex-shrink-0 w-24">
+                      <Label className="text-xs font-medium mb-1.5 block text-gray-700 dark:text-gray-300">
+                        Quantity
+                      </Label>
+                      <Input
+                        type="number"
+                        min="1"
+                        value={container.quantity || ""}
+                        onChange={(e) =>
+                          updateExternalContainer(container.id, {
+                            quantity: parseInt(e.target.value) || 0,
+                          })
+                        }
+                        className="input-focus h-10"
+                      />
+                    </div>
+                    <div className="  ">
+                    
+                      <div className="relative">
+                        <Input
+                          placeholder="Search container types..."
+                          value={externalContainerSearch}
+                          onChange={(e) =>
+                            setExternalContainerSearch(e.target.value)
+                          }
+                          className="h-10 text-sm bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600"
+                        />
+                      </div>
+                    </div>
                   </div>
-                  {reportData.externalContainers.length > 1 && (
-                    <Button
-                      variant="text"
-                      size="sm"
-                      onClick={() => removeExternalContainer(container.id)}
-                      className="text-destructive text-red-500 border border-red-500 py-5 px-2  rounded-lg  hover:text-destructive/80 hover:bg-red-50 "
-                    >
-                      <Trash2 className="w-5 h-4" />
-                    </Button>
-                  )}
+
+                  <div>
+                    {filteredExternalContainerTypes.length > 0 && (
+                      <div className="flex gap-3 overflow-x-auto pb-2 -mx-1 px-1">
+                        {filteredExternalContainerTypes.map((type) => {
+                          const isSelected = container.type === type.id;
+                          return (
+                            <button
+                              key={type.id}
+                              onClick={() =>
+                                updateExternalContainer(container.id, {
+                                  type: type.id,
+                                })
+                              }
+                              className={cn(
+                                "flex-shrink-0 relative rounded-lg border-2 transition-all duration-200 p-3 min-w-44 max-w-44",
+                                isSelected
+                                  ? "border-blue-500 bg-blue-50 dark:bg-blue-900/30 shadow-lg"
+                                  : "border-gray-200 dark:border-gray-600 hover:border-blue-300 hover:shadow-md"
+                              )}
+                            >
+                              <div className="w-20 h-20 mx-auto rounded-lg overflow-hidden bg-white dark:bg-gray-700 flex items-center justify-center">
+                                {type.image ? (
+                                  <img
+                                    src={type.image}
+                                    alt={type.name}
+                                    className="w-full h-full object-cover"
+                                  />
+                                ) : (
+                                  <Package className="w-8 h-8 text-gray-400" />
+                                )}
+                              </div>
+                              <div className="mt-2 text-center">
+                                <p className="text-xs font-medium text-gray-900 dark:text-gray-100 line-clamp-2">
+                                  {type.name}
+                                </p>
+                              </div>
+                              {isSelected && (
+                                <CheckCircle className="w-5 h-5 text-blue-500 absolute top-2 right-2 bg-white dark:bg-blue-900 rounded-full" />
+                              )}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
                 </div>
               ))}
             </CardContent>
@@ -983,18 +1205,39 @@ export default function NewReport() {
 
                   <div className="space-y-3">
                     <div>
-                      <Label className="text-xs sm:text-sm font-medium mb-1.5 block">
-                        Sample Name
-                      </Label>
+                      <div className="flex items-center justify-between gap-3 mb-1.5">
+                        <Label className="text-xs sm:text-sm font-medium">
+                          Sample Name
+                        </Label>
+                        <div className="relative flex-1 max-w-[300px]">
+                          <Input
+                            placeholder="Search samples..."
+                            value={sampleSearches[sample.id] || ""}
+                            onChange={(e) =>
+                              setSampleSearches((prev) => ({
+                                ...prev,
+                                [sample.id]: e.target.value,
+                              }))
+                            }
+                            className="pl-7 h-5 mb-4 text-xs bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-700"
+                          />
+                        </div>
+                      </div>
 
                       {sampleNamesLoading ? (
                         <div className="flex items-center gap-2">
                           <Loader2 className="w-4 h-4 animate-spin text-accent" />
-                          <span className="text-sm text-gray-500">Loading sample names...</span>
+                          <span className="text-sm text-gray-500">
+                            Loading sample names...
+                          </span>
+                        </div>
+                      ) : getFilteredSampleNames(sample.id).length === 0 ? (
+                        <div className="text-center p-4 text-sm text-muted-foreground">
+                          No samples match your search.
                         </div>
                       ) : (
                         <div className="flex gap-3 overflow-x-auto py-2 -mx-2 px-2 scrollbar-thin-light">
-                          {sampleNames.map((sn) => {
+                          {getFilteredSampleNames(sample.id).map((sn) => {
                             const isSelected = sample.sampleName === sn.id;
                             return (
                               <button
@@ -1017,11 +1260,28 @@ export default function NewReport() {
                                 <div className="w-full h-24 rounded-md overflow-hidden bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
                                   {sn.image ? (
                                     // eslint-disable-next-line @next/next/no-img-element
-                                    <img src={sn.image} alt={sn.name} className="w-full h-full object-cover" />
+                                    <img
+                                      src={sn.image}
+                                      alt={sn.name}
+                                      className="w-full h-full object-cover"
+                                    />
                                   ) : (
                                     <div className="w-full h-full flex items-center justify-center text-gray-400">
-                                      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden>
-                                        <path d="M12 2a7 7 0 100 14 7 7 0 000-14z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                                      <svg
+                                        width="24"
+                                        height="24"
+                                        viewBox="0 0 24 24"
+                                        fill="none"
+                                        xmlns="http://www.w3.org/2000/svg"
+                                        aria-hidden
+                                      >
+                                        <path
+                                          d="M12 2a7 7 0 100 14 7 7 0 000-14z"
+                                          stroke="currentColor"
+                                          strokeWidth="1.5"
+                                          strokeLinecap="round"
+                                          strokeLinejoin="round"
+                                        />
                                       </svg>
                                     </div>
                                   )}
@@ -1041,37 +1301,99 @@ export default function NewReport() {
                       )}
                     </div>
                     <div>
-                      <Label className="text-xs font-medium mb-1.5 block">
-                        Internal Container Type
-                      </Label>
-                      <div className="flex gap-2">
-                        <Input
-                          type="number"
-                          min="1"
-                          value={sample.internalContainerCount || ""}
-                          onChange={(e) =>
+                      <div className="flex items-center justify-between mb-2">
+                        <Label className="text-xs font-medium">
+                          Internal Containers
+                        </Label>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
+                            const newContainer = {
+                              id: generateId(),
+                              quantity: 1,
+                              type: "",
+                            };
                             updateSample(sample.id, {
-                              internalContainerCount:
-                                parseInt(e.target.value) || 0,
-                            })
-                          }
-                          className="input-focus h-10 w-16"
-                          placeholder="Qty"
-                        />
-                        <Select
-                          value={sample.internalContainerType}
-                          onChange={(value) =>
-                            updateSample(sample.id, {
-                              internalContainerType: value as string,
-                            })
-                          }
-                          options={internalContainerTypes.map((type) => ({
-                            label: type.name,
-                            value: type.id,
-                          }))}
-                          placeholder="Select type"
-                          className="input-focus h-10 flex-1"
-                        />
+                              internalContainers: [
+                                ...(sample.internalContainers || []),
+                                newContainer,
+                              ],
+                            });
+                          }}
+                          className="gap-1 border dark:text-white rounded-lg px-2 py-1 text-xs h-7"
+                        >
+                          <Plus className="w-3 h-3" />
+                          Add
+                        </Button>
+                      </div>
+                      <div className="space-y-2">
+                        {(sample.internalContainers || []).map(
+                          (container, containerIdx) => (
+                            <div
+                              key={container.id}
+                              className="flex gap-2 p-2 rounded "
+                            >
+                              <Input
+                                type="number"
+                                min="1"
+                                value={container.quantity || ""}
+                                onChange={(e) => {
+                                  const updated = [
+                                    ...(sample.internalContainers || []),
+                                  ];
+                                  updated[containerIdx] = {
+                                    ...container,
+                                    quantity: parseInt(e.target.value) || 0,
+                                  };
+                                  updateSample(sample.id, {
+                                    internalContainers: updated,
+                                  });
+                                }}
+                                className="input-focus h-9 w-16"
+                                placeholder="Qty"
+                              />
+                              <Select
+                                value={container.type}
+                                onChange={(value) => {
+                                  const updated = [
+                                    ...(sample.internalContainers || []),
+                                  ];
+                                  updated[containerIdx] = {
+                                    ...container,
+                                    type: value as string,
+                                  };
+                                  updateSample(sample.id, {
+                                    internalContainers: updated,
+                                  });
+                                }}
+                                options={internalContainerTypes.map((type) => ({
+                                  label: type.name,
+                                  value: type.id,
+                                }))}
+                                placeholder="Select type"
+                                className="input-focus h-9 flex-1"
+                              />
+                              {(sample.internalContainers || []).length > 1 && (
+                                <Button
+                                  variant="text"
+                                  size="sm"
+                                  onClick={() => {
+                                    const updated = (
+                                      sample.internalContainers || []
+                                    ).filter((_, idx) => idx !== containerIdx);
+                                    updateSample(sample.id, {
+                                      internalContainers: updated,
+                                    });
+                                  }}
+                                  className="text-red-500 border border-red-500 py-2 px-2 rounded-lg hover:bg-red-50"
+                                >
+                                  <Trash2 className="w-4 h-4" />
+                                </Button>
+                              )}
+                            </div>
+                          )
+                        )}
                       </div>
                     </div>
                   </div>
@@ -1209,48 +1531,6 @@ export default function NewReport() {
             </CardContent>
           </Card>
         </div>
-        {/* Additional Info */}
-        <Card>
-          <CardHeader className="pb-3 sm:pb-4 px-4 sm:px-6">
-            <CardTitle className="text-sm sm:text-base font-semibold">
-              Additional Information
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3 sm:space-y-4 px-4 sm:px-6">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="producedDate">Produced Date</Label>
-                <Input
-                  id="producedDate"
-                  type="date"
-                  value={reportData.producedDate}
-                  onChange={(e) => updateField("producedDate", e.target.value)}
-                  className="input-focus"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="expiredDate">Expired Date</Label>
-                <Input
-                  id="expiredDate"
-                  type="date"
-                  value={reportData.expiredDate}
-                  onChange={(e) => updateField("expiredDate", e.target.value)}
-                  className="input-focus"
-                />
-              </div>
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="barcodeNumber">Barcode Number</Label>
-              <Input
-                id="barcodeNumber"
-                placeholder="Enter barcode number"
-                value={reportData.barcodeNumber}
-                onChange={(e) => updateField("barcodeNumber", e.target.value)}
-                className="input-focus"
-              />
-            </div>
-          </CardContent>
-        </Card>
       </div>
 
       <div className="fixed bottom-0 left-0 lg:left-64 right-0 bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-800 shadow-lg z-50">
@@ -1280,7 +1560,7 @@ export default function NewReport() {
                 <>
                   <FileDown className="w-4 h-4 mr-1 sm:mr-2" />
                   <span className="hidden sm:inline">
-                    {editingReportId ? "Update Report" : "Create Report"}
+                    {editingReportId ? "Update Case" : "Create Case"}
                   </span>
                   <span className="sm:hidden">
                     {editingReportId ? "Update" : "Create"}

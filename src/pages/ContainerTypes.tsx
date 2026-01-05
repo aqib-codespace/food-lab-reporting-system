@@ -15,12 +15,14 @@ import {
   Loader2,
   MoreVertical,
   Palette,
+  Upload,
 } from "lucide-react";
 import { z } from "zod";
 import { useContainerTypes } from "@/hooks/useSupabaseData";
 import { useColors } from "@/hooks/useColors";
 import { useToast } from "@/hooks/use-toast";
 import DropdownMenu from "@/components/ui/dropdown-menu";
+import { uploadContainerTypeImage } from "@/lib/supabase/storage";
 
 const containerTypeFormSchema = z.object({
   name: z.string().min(1, "Name is required").max(100, "Name is too long"),
@@ -42,6 +44,7 @@ interface ContainerType {
   name: string;
   description?: string | null;
   category: "external" | "internal";
+  image?: string | null;
   status: "active" | "inactive";
   created_at: string;
   updated_at: string;
@@ -80,11 +83,14 @@ export default function ContainerTypes() {
     null
   );
   const [deletingColorId, setDeletingColorId] = useState<string | null>(null);
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string>("");
 
   const [formData, setFormData] = useState({
     name: "",
     description: "",
     category: "external" as "external" | "internal",
+    image: "",
   });
 
   const [colorFormData, setColorFormData] = useState({
@@ -105,9 +111,31 @@ export default function ContainerTypes() {
 
   const handleAddClick = () => {
     setEditingContainer(null);
-    setFormData({ name: "", description: "", category: "external" });
+    setFormData({ name: "", description: "", category: "external", image: "" });
+    setImageFile(null);
+    setImagePreview("");
     setValidationErrors({});
     setIsModalOpen(true);
+  };
+
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (!file.type.startsWith("image/")) {
+        toast({
+          title: "Invalid File",
+          description: "Please select an image file",
+          variant: "destructive",
+        });
+        return;
+      }
+      setImageFile(file);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setImagePreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
   };
 
   const handleEditClick = (container: ContainerType) => {
@@ -116,7 +144,10 @@ export default function ContainerTypes() {
       name: container.name,
       description: container.description || "",
       category: container.category,
+      image: container.image || "",
     });
+    setImagePreview(container.image || "");
+    setImageFile(null);
     setValidationErrors({});
     setIsModalOpen(true);
   };
@@ -139,8 +170,35 @@ export default function ContainerTypes() {
     setIsSubmitting(true);
 
     try {
+      let imageUrl = formData.image;
+
+      if (imageFile) {
+        const tempId = editingContainer?.id || `temp-${Date.now()}`;
+        const uploadResult = await uploadContainerTypeImage(imageFile, tempId);
+
+        if (!uploadResult.success) {
+          toast({
+            title: "Image Upload Failed",
+            description: uploadResult.error || "Failed to upload image",
+            variant: "destructive",
+          });
+          setIsSubmitting(false);
+          return;
+        }
+
+        imageUrl = uploadResult.url || "";
+      }
+
+      const containerData = {
+        name: formData.name,
+        description: formData.description || null,
+        category: formData.category,
+        image: imageUrl || null,
+        status: "active" as const,
+      };
+
       if (editingContainer) {
-        const updateResult = await update(editingContainer.id, formData);
+        const updateResult = await update(editingContainer.id, containerData);
         if (updateResult.success) {
           toast({
             title: "Success",
@@ -156,10 +214,7 @@ export default function ContainerTypes() {
           });
         }
       } else {
-        const createResult = await create({
-          ...formData,
-          status: "active",
-        });
+        const createResult = await create(containerData);
         if (createResult.success) {
           toast({
             title: "Success",
@@ -338,12 +393,12 @@ export default function ContainerTypes() {
   return (
     <DashboardLayout>
       {loading && (
-        <div className="flex items-center justify-center min-h-[400px]">
+        <div className="flex items-center justify-center min-h-100">
           <Loader2 className="w-8 h-8 animate-spin text-accent" />
         </div>
       )}
       {error && (
-        <div className="flex flex-col items-center justify-center min-h-[400px] gap-4">
+        <div className="flex flex-col items-center justify-center min-h-100 gap-4">
           <AlertTriangle className="w-12 h-12 text-red-500" />
           <p className="text-red-600 dark:text-red-400">{error}</p>
         </div>
@@ -385,8 +440,16 @@ export default function ContainerTypes() {
                     <CardContent className="p-5">
                       <div className="flex items-start justify-between mb-3">
                         <div className="flex items-center gap-3">
-                          <div className="w-12 h-12 rounded-lg bg-blue-100 dark:bg-blue-900/20 flex items-center justify-center">
-                            <Package className="w-6 h-6 text-blue-600" />
+                          <div className="w-12 h-12 rounded-lg bg-blue-100 dark:bg-blue-900/20 flex items-center justify-center overflow-hidden">
+                            {container.image ? (
+                              <img
+                                src={container.image}
+                                alt={container.name}
+                                className="w-full h-full object-cover"
+                              />
+                            ) : (
+                              <Package className="w-6 h-6 text-blue-600" />
+                            )}
                           </div>
                           <div>
                             <h3 className="font-semibold text-gray-900 dark:text-white">
@@ -410,7 +473,7 @@ export default function ContainerTypes() {
                             <DropdownMenu.Content>
                               <DropdownMenu.Item
                                 onSelect={() => handleEditClick(container)}
-                                 className="dark:text-gray-200"
+                                className="dark:text-gray-200"
                               >
                                 <Edit2 className="w-3 h-3" />
                                 <span>Edit</span>
@@ -461,8 +524,16 @@ export default function ContainerTypes() {
                     <CardContent className="p-5">
                       <div className="flex items-start justify-between mb-3">
                         <div className="flex items-center gap-3">
-                          <div className="w-12 h-12 rounded-lg bg-purple-100 dark:bg-purple-900/20 flex items-center justify-center">
-                            <Package className="w-6 h-6 text-purple-600" />
+                          <div className="w-12 h-12 rounded-lg bg-purple-100 dark:bg-purple-900/20 flex items-center justify-center overflow-hidden">
+                            {container.image ? (
+                              <img
+                                src={container.image}
+                                alt={container.name}
+                                className="w-full h-full object-cover"
+                              />
+                            ) : (
+                              <Package className="w-6 h-6 text-purple-600" />
+                            )}
                           </div>
                           <div>
                             <h3 className="font-semibold text-gray-900 dark:text-white">
@@ -692,6 +763,45 @@ export default function ContainerTypes() {
                         <AlertTriangle className="w-3.5 h-3.5" />
                         {validationErrors.category}
                       </p>
+                    )}
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
+                      Container Image
+                    </label>
+                    {imagePreview ? (
+                      <div className="relative">
+                        <img
+                          src={imagePreview}
+                          alt="Preview"
+                          className="w-full h-48 object-cover rounded-lg border-2 border-gray-200 dark:border-gray-700"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setImageFile(null);
+                            setImagePreview("");
+                            setFormData((prev) => ({ ...prev, image: "" }));
+                          }}
+                          className="absolute -top-2 -right-2 w-7 h-7 bg-red-500 hover:bg-red-600 text-white rounded-full flex items-center justify-center shadow-lg transition-all"
+                        >
+                          <X className="w-4 h-4" />
+                        </button>
+                      </div>
+                    ) : (
+                      <label className="flex flex-col items-center justify-center w-full h-48 border-2 border-dashed border-gray-300 dark:border-gray-700 rounded-lg cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
+                        <Upload className="w-8 h-8 text-gray-400 mb-1" />
+                        <span className="text-sm text-gray-500 dark:text-gray-400">
+                          Click to upload image
+                        </span>
+                        <input
+                          type="file"
+                          className="hidden"
+                          accept="image/*"
+                          onChange={handleImageChange}
+                        />
+                      </label>
                     )}
                   </div>
 

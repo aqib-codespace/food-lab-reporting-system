@@ -21,44 +21,7 @@ import { useReports } from "@/hooks/useReports";
 import { useEmployees } from "@/hooks/useSupabaseData";
 
 
-const stats = [
-  {
-    title: "Total Reports",
-    value: "1,247",
-    change: "+12.5%",
-    trend: "up",
-    icon: FileText,
-    description: "This month",
-    color: "from-blue-500 to-blue-600",
-  },
-  {
-    title: "Total Samples",
-    value: "4,892",
-    change: "+8.2%",
-    trend: "up",
-    icon: Package,
-    description: "Tracked this month",
-    color: "from-emerald-500 to-emerald-600",
-  },
-  {
-    title: "Avg. Processing",
-    value: "2.4 min",
-    change: "-15%",
-    trend: "down",
-    icon: Clock,
-    description: "Per report",
-    color: "from-amber-500 to-amber-600",
-  },
-  {
-    title: "Efficiency",
-    value: "94.2%",
-    change: "+3.1%",
-    trend: "up",
-    icon: TrendingUp,
-    description: "Completion rate",
-    color: "from-purple-500 to-purple-600",
-  },
-];
+
 
 export default function Dashboard() {
   const route = useRouter();
@@ -76,7 +39,7 @@ export default function Dashboard() {
 
   const stats = [
     {
-      title: "Total Reports",
+      title: "Total Cases",
       value: totalReports.toString(),
       change: "+12.5%",
       trend: "up" as const,
@@ -125,12 +88,12 @@ export default function Dashboard() {
           </p>
         </div>
         <Button
-          onClick={() => route.push("/routes/new-report")}
+          onClick={() => route.push("/routes/opening-team")}
           size="lg"
           className="bg-gray-800 dark:bg-blue-700 px-4 py-2 rounded-lg  text-white hover:opacity-90 transition-opacity shadow-lg w-full sm:w-auto"
         >
           <Plus className="w-5 h-5 mr-2" />
-          New Report
+          New Case
         </Button>
       </div>
 
@@ -195,7 +158,7 @@ export default function Dashboard() {
             <div>
               <CardTitle className="text-lg sm:text-xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
                 <Calendar className="w-4 h-4 sm:w-5 sm:h-5 text-blue-600" />
-                Recent Reports
+                Recent Cases
               </CardTitle>
               <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 mt-1">
                 Your latest sample tracking activities
@@ -204,7 +167,7 @@ export default function Dashboard() {
             <Button
               variant="outline"
               size="sm"
-              onClick={() => route.push("/routes/reports")}
+              onClick={() => route.push("/routes/examination-team")}
               className="gap-1"
             >
               View All
@@ -218,15 +181,15 @@ export default function Dashboard() {
               <div className="py-20 text-center">
                 <FileText className="w-16 h-16 text-gray-300 dark:text-gray-600 mx-auto mb-4" />
                 <p className="text-gray-500 dark:text-gray-400 mb-4">
-                  No reports yet. Create your first report to get started.
+                  No cases yet. Create your first case to get started.
                 </p>
                 <Button
-                  onClick={() => route.push("/routes/new-report")}
+                  onClick={() => route.push("/routes/opening-team")}
                   size="sm"
                   className="bg-gray-800 px-4 rounded-lg  text-white"
                 >
                   <Plus className="w-4 h-4 mr-2" />
-                  Create New Report
+                  Create New Case
                 </Button>
               </div>
             ) : (
@@ -234,7 +197,7 @@ export default function Dashboard() {
                 <div
                   key={report.id}
                   className="flex items-center justify-between p-3 sm:p-4 rounded-xl bg-gray-50 dark:bg-gray-800/50 hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-200 cursor-pointer group"
-                  onClick={() => route.push(`/routes/reports/${report.id}`)}
+                  onClick={() => route.push(`/routes/examination-team/${report.id}`)}
                 >
                   <div className="flex items-center gap-3 sm:gap-4 flex-1 min-w-0">
                     <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-gray-800 flex items-center justify-center shadow-lg group-hover:scale-105 transition-transform shrink-0">

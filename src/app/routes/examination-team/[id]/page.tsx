@@ -141,10 +141,13 @@ export default function ReportDetailPage() {
       await uploadGeneratedPDF(report.id, report.ref_number, pdfBlob);
       await uploadGeneratedWord(report.id, report.ref_number, wordBlob);
 
-      // Update report status directly
+      // Update report status and set examiner to current employee
       const { error: updateError } = await (supabase as any)
         .from("reports")
-        .update({ status: "completed" })
+        .update({
+          status: "completed",
+          examiner_id: report.employee_id, // Current employee becomes examiner
+        })
         .eq("id", report.id);
 
       if (updateError) throw updateError;
@@ -200,7 +203,7 @@ export default function ReportDetailPage() {
               The report you're looking for doesn't exist or has been removed.
             </p>
             <Button
-              onClick={() => router.push("/routes/reports")}
+              onClick={() => router.push("/routes/examination-team")}
               className="bg-gray-800 text-white"
             >
               <ArrowLeft className="w-4 h-4 mr-2" />
@@ -219,7 +222,7 @@ export default function ReportDetailPage() {
         <div className="flex md:flex-row flex-col md:items-center gap-4">
           <Button
             variant="outline"
-            onClick={() => router.push("/routes/reports")}
+            onClick={() => router.push("/routes/examination-team")}
             className="gap-2 rounded-lg dark:text-white border"
           >
             <ArrowLeft className="w-4 h-4" />
@@ -233,7 +236,6 @@ export default function ReportDetailPage() {
               <Badge
                 variant="flat"
                 className={
-                  
                   report.status === "pending"
                     ? "bg-yellow-100 px-3 dark:bg-yellow-950 text-yellow-700 dark:text-yellow-400"
                     : "bg-green-100 px-3 dark:bg-green-950 text-green-700 dark:text-green-400"
@@ -277,7 +279,6 @@ export default function ReportDetailPage() {
               </Button>
             </>
           )}
-         
         </div>
       </div>
 

@@ -1,18 +1,27 @@
 export interface Employee {
   id: string;
   name: string;
-  email: string;
-  phone: string;
-  role: "admin" | "analyst" | "technician" | "manager";
+  role_id: string | null;
   initials: string;
   photo: string | null;
   signature: string | null;
   status: "active" | "inactive";
   created_at: string;
   updated_at: string;
+  roles?: {
+    id: string;
+    name: string;
+    description: string | null;
+  };
 }
 
 export interface ContainerEntry {
+  id: string;
+  quantity: number;
+  type: string;
+}
+
+export interface InternalContainerEntry {
   id: string;
   quantity: number;
   type: string;
@@ -22,8 +31,7 @@ export interface Sample {
   id: string;
   sampleNumber: string;
   sampleName: string;
-  internalContainerCount: number;
-  internalContainerType: string;
+  internalContainers: InternalContainerEntry[];
   netWeight: number;
   weightUnit: "gram" | "kg";
   pureOrTotal: "pure" | "total";

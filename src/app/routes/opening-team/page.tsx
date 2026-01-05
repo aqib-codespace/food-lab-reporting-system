@@ -2,9 +2,9 @@ import NewReport from "@/pages/NewReport";
 import { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "New Report",
+  title: "New Case - Opening Team",
   description:
-    "Create a new laboratory report with sample tracking and professional PDF/Word export.",
+    "Create a new laboratory case with sample tracking and professional PDF/Word export.",
 };
 
 export default function NewReportPage() {

@@ -12,13 +12,36 @@ export type Json =
 export interface Database {
   public: {
     Tables: {
+      roles: {
+        Row: {
+          id: string;
+          name: string;
+          description: string | null;
+          status: "active" | "inactive";
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          name: string;
+          description?: string | null;
+          status?: "active" | "inactive";
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          name?: string;
+          description?: string | null;
+          status?: "active" | "inactive";
+          updated_at?: string;
+        };
+      };
       employees: {
         Row: {
           id: string;
           name: string;
-          email: string;
-          phone: string;
-          role: "admin" | "analyst" | "technician" | "manager";
+          role_id: string | null;
           initials: string;
           photo: string | null;
           signature: string | null;
@@ -29,9 +52,7 @@ export interface Database {
         Insert: {
           id?: string;
           name: string;
-          email: string;
-          phone: string;
-          role: "admin" | "analyst" | "technician" | "manager";
+          role_id?: string | null;
           initials: string;
           photo?: string | null;
           signature?: string | null;
@@ -42,9 +63,7 @@ export interface Database {
         Update: {
           id?: string;
           name?: string;
-          email?: string;
-          phone?: string;
-          role?: "admin" | "analyst" | "technician" | "manager";
+          role_id?: string | null;
           initials?: string;
           photo?: string | null;
           signature?: string | null;
@@ -58,6 +77,7 @@ export interface Database {
           name: string;
           description: string | null;
           category: "external" | "internal";
+          image: string | null;
           status: "active" | "inactive";
           created_at: string;
           updated_at: string;
@@ -67,6 +87,7 @@ export interface Database {
           name: string;
           description?: string | null;
           category: "external" | "internal";
+          image?: string | null;
           status?: "active" | "inactive";
           created_at?: string;
           updated_at?: string;
@@ -76,6 +97,7 @@ export interface Database {
           name?: string;
           description?: string | null;
           category?: "external" | "internal";
+          image?: string | null;
           status?: "active" | "inactive";
           updated_at?: string;
         };
@@ -151,6 +173,34 @@ export interface Database {
           updated_at?: string;
         };
       };
+      sender_shops: {
+        Row: {
+          id: string;
+          name: string;
+          image: string | null;
+          description: string | null;
+          status: "active" | "inactive";
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          name: string;
+          image?: string | null;
+          description?: string | null;
+          status?: "active" | "inactive";
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          name?: string;
+          image?: string | null;
+          description?: string | null;
+          status?: "active" | "inactive";
+          updated_at?: string;
+        };
+      };
       sample_colors: {
         Row: {
           id: string;
@@ -181,6 +231,8 @@ export interface Database {
           id: string;
           ref_number: string;
           employee_id: string;
+          opener_id: string | null;
+          examiner_id: string | null;
           report_date: string;
           sender_shop: string | null;
           barcode_number: string | null;
@@ -197,6 +249,8 @@ export interface Database {
           id?: string;
           ref_number: string;
           employee_id: string;
+          opener_id?: string | null;
+          examiner_id?: string | null;
           report_date: string;
           sender_shop?: string | null;
           barcode_number?: string | null;
@@ -213,6 +267,8 @@ export interface Database {
           id?: string;
           ref_number?: string;
           employee_id?: string;
+          opener_id?: string | null;
+          examiner_id?: string | null;
           report_date?: string;
           sender_shop?: string | null;
           barcode_number?: string | null;

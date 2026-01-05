@@ -21,6 +21,14 @@ export interface ReportWithDetails extends Report {
     email: string;
     role: string;
   };
+  opener?: {
+    id: string;
+    name: string;
+  };
+  examiner?: {
+    id: string;
+    name: string;
+  };
   samples?: ReportSample[];
   external_containers?: ReportExternalContainer[];
   internal_containers?: ReportInternalContainer[];
@@ -61,6 +69,14 @@ export function useReports() {
             name,
             email,
             role
+          ),
+          opener:opener_id (
+            id,
+            name
+          ),
+          examiner:examiner_id (
+            id,
+            name
           )
         `
         )

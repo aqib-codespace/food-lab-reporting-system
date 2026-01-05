@@ -34,8 +34,12 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
 
   const navigation = [
     { name: "Dashboard", href: "/", icon: LayoutDashboard },
-    { name: "New Report", href: "/routes/new-report", icon: FileText },
-    { name: "Reports", href: "/routes/reports", icon: FolderOpen },
+    { name: "Opening Team", href: "/routes/opening-team", icon: FileText },
+    {
+      name: "Examination Team",
+      href: "/routes/examination-team",
+      icon: FolderOpen,
+    },
   ];
 
   const masterDataItems = [
@@ -49,6 +53,11 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
       name: "Sample Names",
       href: "/routes/master-data/sample-names",
       icon: TestTube2,
+    },
+    {
+      name: "Sender Shops",
+      href: "/routes/master-data/sender-shops",
+      icon: MapPin,
     },
     // {
     //   name: "Storage Locations",

@@ -2,7 +2,6 @@
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Select, type SelectOption } from "@/components/ui/select";
 import { Button, Badge } from "rizzui";
 import {
   Search,
@@ -39,7 +38,7 @@ export default function Reports() {
   );
 
   const handleViewReport = (id: string) => {
-    router.push(`/routes/reports/${id}`);
+    router.push(`/routes/examination-team/${id}`);
   };
 
   const handleDeleteReport = (id: string) => {
@@ -73,10 +72,10 @@ export default function Reports() {
       <div className="flex flex-col gap-4 mb-6">
         <div>
           <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-2 text-gray-900 dark:text-white">
-            All Reports
+            All Cases
           </h1>
           <p className="text-gray-600 dark:text-gray-400 text-sm sm:text-base">
-            View and manage all laboratory reports
+            View and manage all laboratory cases
           </p>
         </div>
         <div className="flex flex-col sm:flex-row gap-3">
@@ -109,11 +108,11 @@ export default function Reports() {
                   <th className="text-left py-3 px-4 sm:py-4 sm:px-6 font-semibold text-gray-900 dark:text-white text-xs sm:text-sm w-[110px] sm:w-auto">
                     Date
                   </th>
-                  <th className="text-left py-3 px-4 sm:py-4 sm:px-6 font-semibold text-gray-900 dark:text-white text-xs sm:text-sm w-[120px] sm:w-auto">
-                    Employee
+                  <th className="text-left py-3 px-4 sm:py-4 sm:px-6 font-semibold text-gray-900 dark:text-white text-xs sm:text-sm w-[130px] sm:w-auto">
+                    Opener Name
                   </th>
                   <th className="text-left py-3 px-4 sm:py-4 sm:px-6 font-semibold text-gray-900 dark:text-white text-xs sm:text-sm w-[130px] sm:w-auto">
-                    Shop
+                    Examiner Name
                   </th>
                   <th className="text-left py-3 px-4 sm:py-4 sm:px-6 font-semibold text-gray-900 dark:text-white text-xs sm:text-sm w-[80px] sm:w-auto">
                     Samples
@@ -129,7 +128,7 @@ export default function Reports() {
               <tbody className="bg-white dark:bg-gray-900">
                 {filteredReports.length === 0 ? (
                   <tr>
-                    <td colSpan={7} className="py-12">
+                    <td colSpan={8} className="py-12">
                       <div className="text-center">
                         <FileText className="w-16 h-16 text-gray-300 dark:text-gray-600 mx-auto mb-4" />
                         <p className="text-gray-500 dark:text-gray-400 mb-4">
@@ -142,7 +141,7 @@ export default function Reports() {
                             onClick={() => router.push("/routes/new-report")}
                             className="bg-gray-800 rounded-lg  text-white"
                           >
-                            Create New Report
+                            Create New Case
                           </Button>
                         )}
                       </div>
@@ -168,15 +167,14 @@ export default function Reports() {
                         {format(new Date(report.created_at), "MMM dd, yyyy")}
                       </td>
                       <td className="py-3 px-4 sm:py-4 sm:px-6 text-gray-900 dark:text-white font-medium text-xs sm:text-sm">
-                        {report.employee?.name || "N/A"}
+                        {report.opener?.name || "N/A"}
                       </td>
-                      <td className="py-3 px-4 sm:py-4 sm:px-6">
-                        <Badge
-                          variant="outline"
-                          className="font-normal dark:text-gray-300 text-xs px-2 sm:px-3 border-gray-300 dark:border-gray-700"
-                        >
-                          {report.sender_shop || "N/A"}
-                        </Badge>
+                      <td className="py-3 px-4 sm:py-4 sm:px-6 text-gray-900 dark:text-white font-medium text-xs sm:text-sm">
+                        {report.examiner?.name || (
+                          <span className="text-gray-400 dark:text-gray-600 italic">
+                            Pending
+                          </span>
+                        )}
                       </td>
                       <td className="py-3 px-4 sm:py-4 sm:px-6">
                         <span className="inline-flex items-center justify-center w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-blue-100 dark:bg-blue-950 text-blue-600 dark:text-blue-400 text-xs font-semibold">
@@ -229,20 +227,20 @@ export default function Reports() {
                                   className="w-full px-4 py-2 text-left text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2 transition-colors"
                                 >
                                   <Eye className="w-4 h-4" />
-                                  View Report
+                                  View Case
                                 </button>
                                 <button
                                   onClick={(e) => {
                                     e.stopPropagation();
                                     router.push(
-                                      `/routes/new-report?edit=${report.id}`
+                                      `/routes/opening-team?edit=${report.id}`
                                     );
                                     setOpenDropdown(null);
                                   }}
                                   className="w-full px-4 py-2 text-left text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2 transition-colors"
                                 >
                                   <Edit className="w-4 h-4" />
-                                  Edit Report
+                                  Edit Case
                                 </button>
                                 <button
                                   onClick={(e) => {
@@ -253,7 +251,7 @@ export default function Reports() {
                                   className="w-full px-4 py-2 text-left text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950 flex items-center gap-2 transition-colors"
                                 >
                                   <Trash2 className="w-4 h-4" />
-                                  Delete Report
+                                  Delete Case
                                 </button>
                               </div>
                             </>
@@ -306,13 +304,13 @@ export default function Reports() {
               </div>
               <div>
                 <h3 className="text-xl font-bold text-gray-900 dark:text-white">
-                  Delete Report
+                  Delete Case
                 </h3>
               </div>
             </div>
 
             <p className="text-gray-600 dark:text-gray-400 mb-6 ml-15">
-              Are you sure you want to delete this report? This action cannot be
+              Are you sure you want to delete this case? This action cannot be
               undone.
             </p>
 
