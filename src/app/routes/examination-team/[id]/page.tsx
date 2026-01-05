@@ -180,7 +180,7 @@ export default function ReportDetailPage() {
   if (!params || !reportId || loading) {
     return (
       <DashboardLayout>
-        <div className="flex flex-col items-center justify-center min-h-[400px]">
+        <div className="flex flex-col items-center justify-center min-h-100">
           <div className="text-center">
             <p className="text-gray-600 dark:text-gray-400">
               Loading report...
@@ -194,7 +194,7 @@ export default function ReportDetailPage() {
   if (!report) {
     return (
       <DashboardLayout>
-        <div className="flex flex-col items-center justify-center min-h-[400px]">
+        <div className="flex flex-col items-center justify-center min-h-100">
           <div className="text-center">
             <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
               Report Not Found
@@ -308,10 +308,13 @@ export default function ReportDetailPage() {
               sampleName:
                 sampleNames.find((sn) => sn.id === s.sample_name)?.name ||
                 s.sample_name,
-              internalContainerCount: s.internal_container_count,
-              internalContainerType:
-                containerTypes.find((ct) => ct.id === s.internal_container_type)
-                  ?.name || s.internal_container_type,
+              internalContainers: s.internal_containers?.map((container: any) => ({
+                id: container.id,
+                quantity: container.quantity,
+                type:
+                  containerTypes.find((ct) => ct.id === container.type)?.name ||
+                  container.type,
+              })) || [],
               netWeight: s.net_weight,
               weightUnit: s.weight_unit,
               pureOrTotal: s.pure_or_total,

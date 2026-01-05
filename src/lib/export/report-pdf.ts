@@ -2,11 +2,7 @@ import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import { ReportData } from "@/types/report";
 
-/**
- * Generate PDF report as black and white only (no colors)
- * Returns a Blob for uploading to Supabase
- * PDF should NOT include: barcode number, system case number (Word only)
- */
+
 export const generateReportPDFBlob = async (
   data: ReportData
 ): Promise<Blob> => {
@@ -42,16 +38,27 @@ export const generateReportPDFBlob = async (
     align: "center",
   });
 
-  // Reference header info
+  // Reference header info - Improved layout
   doc.setFillColor(240, 240, 240);
   doc.rect(10, 30, 190, 10, "F");
 
   doc.setTextColor(0, 0, 0);
   doc.setFontSize(9);
   doc.setFont("helvetica", "bold");
-  doc.text(`Ref. n: ${data.refNumber || "------"}`, 15, 36);
-  doc.text(`Employee: ${data.employee?.name || "N/A"}`, 75, 36);
-  doc.text(`Date: ${formatDate(data.date)}`, 155, 36);
+  
+  // Use consistent spacing for better alignment
+  const refText = `Ref. n: ${data.refNumber || "------"}`;
+  const employeeName = data.employee?.name || "N/A";
+  const dateText = `date: ${formatDate(data.date)}`;
+  
+  // Left aligned ref number
+  doc.text(refText, 15, 36);
+  
+  // Center aligned employee name
+  doc.text(employeeName, 105, 36, { align: "center" });
+  
+  // Right aligned date
+  doc.text(dateText, 195, 36, { align: "right" });
 
   let yPos = 50;
 
@@ -86,9 +93,9 @@ export const generateReportPDFBlob = async (
 
   const containerText = `We received ${
     externalSummary || "containers"
-  } like the one used for ${(
+  } like the one used for ${
     data.senderShop || "shop"
-  ).toLowerCase()}, it has (${data.barcodeNumber || "barcode number"}).`;
+  }.`;
   const splitText = doc.splitTextToSize(containerText, 180);
   splitText.forEach((line: string) => {
     doc.text(line, 15, yPos);
@@ -127,20 +134,48 @@ export const generateReportPDFBlob = async (
   doc.setFontSize(9);
   doc.setFont("helvetica", "normal");
   doc.text("We open samples it contain food and drinks.", 15, yPos);
-  yPos += 10;
+  yPos += 5;
+
+  // List internal containers if any
+  if (data.internalContainers && data.internalContainers.length > 0) {
+    const internalList = data.internalContainers
+      .filter((c) => c.type && c.quantity)
+      .map((c) => `- ${c.quantity}x ${c.type}`)
+      .join("\n");
+    if (internalList) {
+      yPos += 5;
+      const lines = internalList.split("\n");
+      lines.forEach((line) => {
+        doc.text(line, 15, yPos);
+        yPos += 5;
+      });
+    }
+  }
+  yPos += 5;
 
   // Samples table - Black and white theme
-  const tableData = (data.samples || []).map((sample) => [
-    `(${sample.internalContainerCount || 1})`,
-    sample.sampleNumber || "",
-    `${sample.sampleName || "Food"} in ${sample.internalContainerCount || 1} ${
-      sample.internalContainerType || "container"
-    }-${sample.systemCaseNumber || ""}`,
-    `${sample.netWeight || 0} ${sample.weightUnit === "kg" ? "kg" : "gram"} (${
-      (sample.pureOrTotal || "pure") === "pure" ? "Net weight" : "Total weight"
-    })`,
-    `${sample.weightUsed || 0} gram`,
-  ]);
+  const tableData = (data.samples || []).map((sample) => {
+    // Format internal containers display - simplified for PDF
+    const internalContainersText = (sample.internalContainers || [])
+      .filter((c) => c.type && c.quantity)
+      .map((c) => `(${c.quantity})`)
+      .join(" + ") || "(1)";
+    
+    const containerDetails = (sample.internalContainers || [])
+      .filter((c) => c.type && c.quantity)
+      .map((c) => `${c.quantity}x ${c.type}`)
+      .join(" + ") || "container";
+
+    return [
+      internalContainersText,
+      sample.sampleNumber || "",
+      `${sample.sampleName || "Food"} in ${containerDetails}`,
+      `${sample.netWeight || 0} ${sample.weightUnit === "kg" ? "kg" : "gram"} (${
+        (sample.pureOrTotal || "pure") === "pure" ? "Net weight" : "Total weight"
+      })`,
+      `${sample.weightUsed || 0} gram`,
+    ];
+  });
 
   autoTable(doc, {
     startY: yPos,
@@ -213,7 +248,7 @@ export const generateReportPDFBlob = async (
       doc.setFontSize(8);
       doc.setFont("helvetica", "normal");
       doc.text(`Name: ${data.employee.name || "N/A"}`, 15, finalY + 30);
-      doc.text(`Position: ${data.employee.role || "admin"}`, 15, finalY + 35);
+      doc.text(`Position: ${data.employee.roles?.name || "analyst"}`, 15, finalY + 35);
       doc.text(`Date: ${formatDate(data.date)}`, 15, finalY + 40);
     } catch (error) {
       console.error("Error adding signature:", error);

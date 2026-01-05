@@ -288,6 +288,7 @@ export interface Database {
           sample_number: string | null;
           sample_name_id: string | null;
           sample_name: string | null;
+          internal_containers: Json | null;
           internal_container_count: number | null;
           internal_container_type: string | null;
           net_weight: number | null;
@@ -306,6 +307,7 @@ export interface Database {
           sample_number?: string | null;
           sample_name_id?: string | null;
           sample_name?: string | null;
+          internal_containers?: Json | null;
           internal_container_count?: number | null;
           internal_container_type?: string | null;
           net_weight?: number | null;
@@ -324,6 +326,7 @@ export interface Database {
           sample_number?: string | null;
           sample_name_id?: string | null;
           sample_name?: string | null;
+          internal_containers?: Json | null;
           internal_container_count?: number | null;
           internal_container_type?: string | null;
           net_weight?: number | null;

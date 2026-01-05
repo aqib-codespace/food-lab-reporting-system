@@ -244,13 +244,33 @@ export const generateReportWordBlob = async (
           }),
 
           new Paragraph({
-            spacing: { after: 200 },
+            spacing: { after: 100 },
             children: [
               new TextRun({
                 text: "We open samples it contain food and drinks.",
                 size: 20,
               }),
             ],
+          }),
+
+          // List internal containers if available
+          ...((data.internalContainers || [])
+            .filter((c) => c.type && c.quantity)
+            .map((container) => 
+              new Paragraph({
+                spacing: { after: 50 },
+                children: [
+                  new TextRun({
+                    text: `- ${container.quantity}x ${container.type}`,
+                    size: 20,
+                  }),
+                ],
+              })
+            )),
+
+          new Paragraph({
+            spacing: { after: 100 },
+            children: [new TextRun({ text: "", size: 10 })],
           }),
 
           // Samples Table
@@ -286,14 +306,14 @@ export const generateReportWordBlob = async (
                           new TextRun({
                             text: "Outer container",
                             bold: true,
-                            size: 19,
+                            size: 18,
                           }),
                         ],
                       }),
                     ],
-                    shading: { fill: "E5E7EB" },
+                    shading: { fill: "D1D5DB" },
                     verticalAlign: "center",
-                    width: { size: 13, type: WidthType.PERCENTAGE },
+                    width: { size: 15, type: WidthType.PERCENTAGE },
                   }),
                   new TableCell({
                     children: [
@@ -303,14 +323,14 @@ export const generateReportWordBlob = async (
                           new TextRun({
                             text: "Sample number",
                             bold: true,
-                            size: 19,
+                            size: 18,
                           }),
                         ],
                       }),
                     ],
-                    shading: { fill: "E5E7EB" },
+                    shading: { fill: "D1D5DB" },
                     verticalAlign: "center",
-                    width: { size: 13, type: WidthType.PERCENTAGE },
+                    width: { size: 12, type: WidthType.PERCENTAGE },
                   }),
                   new TableCell({
                     children: [
@@ -320,14 +340,14 @@ export const generateReportWordBlob = async (
                           new TextRun({
                             text: "How sample looks like",
                             bold: true,
-                            size: 19,
+                            size: 18,
                           }),
                         ],
                       }),
                     ],
-                    shading: { fill: "E5E7EB" },
+                    shading: { fill: "D1D5DB" },
                     verticalAlign: "center",
-                    width: { size: 24, type: WidthType.PERCENTAGE },
+                    width: { size: 28, type: WidthType.PERCENTAGE },
                   }),
                   new TableCell({
                     children: [
@@ -337,14 +357,14 @@ export const generateReportWordBlob = async (
                           new TextRun({
                             text: "How it weight",
                             bold: true,
-                            size: 19,
+                            size: 18,
                           }),
                         ],
                       }),
                     ],
-                    shading: { fill: "E5E7EB" },
+                    shading: { fill: "D1D5DB" },
                     verticalAlign: "center",
-                    width: { size: 25, type: WidthType.PERCENTAGE },
+                    width: { size: 23, type: WidthType.PERCENTAGE },
                   }),
                   new TableCell({
                     children: [
@@ -378,6 +398,17 @@ export const generateReportWordBlob = async (
               }),
               // Data Rows
               ...(data.samples || []).map((sample, idx) => {
+                // Format internal containers - show counts clearly
+                const containerCounts = (sample.internalContainers || [])
+                  .filter((c) => c.type && c.quantity)
+                  .map((c) => `(${c.quantity})`)
+                  .join(" + ") || "(1)";
+                
+                const containerDetails = (sample.internalContainers || [])
+                  .filter((c) => c.type && c.quantity)
+                  .map((c) => `${c.quantity}x ${c.type}`)
+                  .join(" + ") || "container";
+
                 return new TableRow({
                   height: { value: 450, rule: "atLeast" },
                   children: [
@@ -387,7 +418,7 @@ export const generateReportWordBlob = async (
                           alignment: AlignmentType.CENTER,
                           children: [
                             new TextRun({
-                              text: `(${sample.internalContainerCount || 1})`,
+                              text: containerCounts,
                               size: 18,
                             }),
                           ],
@@ -415,9 +446,7 @@ export const generateReportWordBlob = async (
                           alignment: AlignmentType.CENTER,
                           children: [
                             new TextRun({
-                              text: `${sample.sampleName || "Food"} in ${
-                                sample.internalContainerType || "container"
-                              }`,
+                              text: `${sample.sampleName || "Food"} in ${containerDetails}`,
                               size: 18,
                             }),
                           ],
@@ -491,20 +520,18 @@ export const generateReportWordBlob = async (
 
           new Paragraph({ text: "", spacing: { after: 40 } }),
 
-          // Signature placeholder
-          new Paragraph({
-            spacing: { after: 150 },
-            children: [
-              new TextRun({
-                text: data.employee?.signature
-                  ? "[Signature image - see PDF version for actual signature]"
-                  : "_____________________",
-                italics: true,
-                size: 18,
-                color: "666666",
-              }),
-            ],
-          }),
+          // Signature line (placeholder if no signature)
+          ...(data.employee?.signature ? [] : [
+            new Paragraph({
+              spacing: { after: 150 },
+              children: [
+                new TextRun({
+                  text: "_____________________",
+                  size: 18,
+                }),
+              ],
+            }),
+          ]),
 
           // Employee name
           new Paragraph({
@@ -522,7 +549,7 @@ export const generateReportWordBlob = async (
             spacing: { after: 50 },
             children: [
               new TextRun({
-                text: `Position: ${data.employee?.role || "N/A"}`,
+                text: `Position: ${data.employee?.roles?.name || "analyst"}`,
                 size: 20,
               }),
             ],

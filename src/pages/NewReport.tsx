@@ -329,9 +329,12 @@ export default function NewReport() {
         sampleName:
           sampleNames.find((sn) => sn.id === sample.sampleName)?.name ||
           sample.sampleName,
-        internalContainerType:
-          containerTypes.find((ct) => ct.id === sample.internalContainerType)
-            ?.name || sample.internalContainerType,
+        internalContainers: sample.internalContainers?.map((container) => ({
+          ...container,
+          type:
+            containerTypes.find((ct) => ct.id === container.type)?.name ||
+            container.type,
+        })) || [],
       })),
     };
   };
@@ -636,9 +639,12 @@ export default function NewReport() {
         sampleName:
           sampleNames.find((sn) => sn.id === sample.sampleName)?.name ||
           sample.sampleName,
-        internalContainerType:
-          containerTypes.find((ct) => ct.id === sample.internalContainerType)
-            ?.name || sample.internalContainerType,
+        internalContainers: sample.internalContainers?.map((container) => ({
+          ...container,
+          type:
+            containerTypes.find((ct) => ct.id === container.type)?.name ||
+            container.type,
+        })) || [],
       })),
     };
 
@@ -673,7 +679,7 @@ export default function NewReport() {
   if (isLoadingReport) {
     return (
       <DashboardLayout>
-        <div className="flex items-center justify-center min-h-[400px]">
+        <div className="flex items-center justify-center min-h-100">
           <Loader2 className="w-8 h-8 animate-spin text-gray-400" />
           <span className="ml-3 text-gray-600 dark:text-gray-400">
             Loading case...
@@ -839,7 +845,7 @@ export default function NewReport() {
                             key={emp.id}
                             type="button"
                             onClick={() => updateField("employee", emp)}
-                            className={`flex-shrink-0 w-44 flex flex-col items-center gap-1 p-3 rounded-lg border-2 transition-all relative ${
+                            className={`shrink-0 w-44 flex flex-col items-center gap-2 p-3 rounded-lg border-2 transition-all relative ${
                               isSelected
                                 ? "border-accent dark:border-green-600 bg-accent/5"
                                 : fieldErrors.employee
@@ -847,17 +853,19 @@ export default function NewReport() {
                                 : "border-border hover:border-accent/50"
                             }`}
                           >
-                            {emp.photo ? (
-                              <img
-                                src={emp.photo}
-                                alt={emp.name}
-                                className="w-24 h-16 rounded-lg object-cover"
-                              />
-                            ) : (
-                              <div className="w-24 h-16 rounded-lg flex items-center justify-center text-sm font-semibold bg-accent/10 text-accent">
-                                {emp.initials}
-                              </div>
-                            )}
+                            <div className="w-24 h-24 rounded-lg overflow-hidden bg-accent/10 flex items-center justify-center">
+                              {emp.photo ? (
+                                <img
+                                  src={emp.photo}
+                                  alt={emp.name}
+                                  className="w-full h-full object-cover"
+                                />
+                              ) : (
+                                <span className="text-lg font-semibold text-accent">
+                                  {emp.initials}
+                                </span>
+                              )}
+                            </div>
                             <div className="flex flex-col items-center w-full">
                               <span className="text-xs dark:text-white text-muted-foreground truncate w-full text-center font-medium">
                                 {emp.name.split(" ")[0]}
@@ -993,17 +1001,17 @@ export default function NewReport() {
                                 : "border-border hover:border-blue-300 dark:hover:border-blue-700"
                             }`}
                           >
-                            {shop.image ? (
-                              <img
-                                src={shop.image}
-                                alt={shop.name}
-                                className="w-20 h-20 rounded-md object-cover"
-                              />
-                            ) : (
-                              <div className="w-20 h-20 rounded-md bg-gradient-to-br from-blue-100 to-indigo-200 dark:from-blue-900/30 dark:to-indigo-900/30 flex items-center justify-center">
+                            <div className="w-24 h-24 rounded-lg overflow-hidden bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
+                              {shop.image ? (
+                                <img
+                                  src={shop.image}
+                                  alt={shop.name}
+                                  className="w-full h-full object-cover"
+                                />
+                              ) : (
                                 <Package className="w-8 h-8 text-blue-600 dark:text-blue-400" />
-                              </div>
-                            )}
+                              )}
+                            </div>
                             <span className="text-xs dark:text-white text-gray-700 truncate w-full text-center font-medium">
                               {shop.name}
                             </span>
@@ -1062,7 +1070,7 @@ export default function NewReport() {
                   </div>
 
                   <div className="flex justify-between items-end gap-3">
-                    <div className="flex-shrink-0 w-24">
+                    <div className="shrink-0 w-24">
                       <Label className="text-xs font-medium mb-1.5 block text-gray-700 dark:text-gray-300">
                         Quantity
                       </Label>
@@ -1078,7 +1086,7 @@ export default function NewReport() {
                         className="input-focus h-10"
                       />
                     </div>
-                    <div className="  ">
+                    <div className=" sm:w-65 e">
                     
                       <div className="relative">
                         <Input
@@ -1107,13 +1115,13 @@ export default function NewReport() {
                                 })
                               }
                               className={cn(
-                                "flex-shrink-0 relative rounded-lg border-2 transition-all duration-200 p-3 min-w-44 max-w-44",
+                                "shrink-0 relative rounded-lg border-2 transition-all duration-200 p-3 w-44",
                                 isSelected
                                   ? "border-blue-500 bg-blue-50 dark:bg-blue-900/30 shadow-lg"
                                   : "border-gray-200 dark:border-gray-600 hover:border-blue-300 hover:shadow-md"
                               )}
                             >
-                              <div className="w-20 h-20 mx-auto rounded-lg overflow-hidden bg-white dark:bg-gray-700 flex items-center justify-center">
+                              <div className="w-24 h-24 mx-auto rounded-lg overflow-hidden bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
                                 {type.image ? (
                                   <img
                                     src={type.image}
@@ -1209,7 +1217,7 @@ export default function NewReport() {
                         <Label className="text-xs sm:text-sm font-medium">
                           Sample Name
                         </Label>
-                        <div className="relative flex-1 max-w-[300px]">
+                        <div className="relative flex-1 max-w-75">
                           <Input
                             placeholder="Search samples..."
                             value={sampleSearches[sample.id] || ""}
@@ -1249,50 +1257,34 @@ export default function NewReport() {
                                   })
                                 }
                                 className={cn(
-                                  "relative flex-shrink-0 min-w-[140px] sm:min-w-[160px] flex flex-col items-center p-3 rounded-lg border transition-all text-xs text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-900",
+                                  "relative shrink-0 w-44 flex flex-col items-center p-3 rounded-lg border-2 transition-all bg-white dark:bg-gray-900",
                                   isSelected
-                                    ? "ring-2 ring-blue-500 border-blue-500 shadow-lg"
-                                    : "border-gray-200 dark:border-gray-700 hover:shadow"
+                                    ? "border-blue-500 bg-blue-50 dark:bg-blue-900/30 shadow-lg"
+                                    : "border-gray-200 dark:border-gray-700 hover:border-blue-300 hover:shadow-md"
                                 )}
                                 aria-pressed={isSelected}
                                 aria-label={`Select ${sn.name}`}
                               >
-                                <div className="w-full h-24 rounded-md overflow-hidden bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
+                                <div className="w-24 h-24 rounded-lg overflow-hidden bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
                                   {sn.image ? (
-                                    // eslint-disable-next-line @next/next/no-img-element
                                     <img
                                       src={sn.image}
                                       alt={sn.name}
                                       className="w-full h-full object-cover"
                                     />
                                   ) : (
-                                    <div className="w-full h-full flex items-center justify-center text-gray-400">
-                                      <svg
-                                        width="24"
-                                        height="24"
-                                        viewBox="0 0 24 24"
-                                        fill="none"
-                                        xmlns="http://www.w3.org/2000/svg"
-                                        aria-hidden
-                                      >
-                                        <path
-                                          d="M12 2a7 7 0 100 14 7 7 0 000-14z"
-                                          stroke="currentColor"
-                                          strokeWidth="1.5"
-                                          strokeLinecap="round"
-                                          strokeLinejoin="round"
-                                        />
-                                      </svg>
-                                    </div>
+                                    <Package className="w-8 h-8 text-gray-400" />
                                   )}
                                 </div>
 
-                                <div className="mt-2 w-full truncate text-center font-medium">
-                                  {sn.name}
+                                <div className="mt-2 w-full text-center">
+                                  <p className="text-xs font-medium text-gray-900 dark:text-gray-100 line-clamp-2">
+                                    {sn.name}
+                                  </p>
                                 </div>
 
                                 {isSelected && (
-                                  <CheckCircle className="w-5 h-5 text-blue-500 absolute top-2 right-2 bg-white rounded-full" />
+                                  <CheckCircle className="w-5 h-5 text-blue-500 absolute top-2 right-2 bg-white dark:bg-blue-900 rounded-full" />
                                 )}
                               </button>
                             );

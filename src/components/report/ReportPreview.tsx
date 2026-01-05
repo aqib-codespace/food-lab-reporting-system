@@ -192,14 +192,15 @@ export function ReportPreview({ data }: ReportPreviewProps) {
             {data.internalContainers &&
               data.internalContainers.filter((c) => c.type).length > 0 && (
                 <div className="mb-4">
+                  <p className="text-sm font-semibold mb-2">Internal Containers:</p>
                   {data.internalContainers
                     .filter((c) => c.type)
                     .map((container, idx) => (
                       <p key={idx} className="text-sm">
                         - {container.type}{" "}
                         {container.quantity > 1
-                          ? `${container.quantity}:`
-                          : ":"}
+                          ? `(Quantity: ${container.quantity})`
+                          : ""}
                       </p>
                     ))}
                 </div>
@@ -231,9 +232,19 @@ export function ReportPreview({ data }: ReportPreviewProps) {
                     data.samples.map((sample, index) => (
                       <tr key={sample.id} className="hover:bg-muted/30">
                         <td className="border border-border px-3 py-2">
-                          <span className="text-xs text-muted-foreground">
-                            ({sample.internalContainerCount || 1})
-                          </span>
+                          {sample.internalContainers && sample.internalContainers.length > 0 ? (
+                            <div className="space-y-1">
+                              {sample.internalContainers.map((container, idx) => (
+                                <div key={idx} className="text-xs text-muted-foreground">
+                                  ({container.quantity}) {container.type}
+                                </div>
+                              ))}
+                            </div>
+                          ) : (
+                            <span className="text-xs text-muted-foreground">
+                              (1) container
+                            </span>
+                          )}
                         </td>
                         <td className="border border-border px-3 py-2">
                           <span className="px-2 py-0.5 rounded bg-gray-800 text-white font-medium text-xs">
@@ -244,10 +255,6 @@ export function ReportPreview({ data }: ReportPreviewProps) {
                           <div className="space-y-1">
                             <span className="px-2 py-0.5 rounded bg-gray-700 text-white text-xs">
                               {sample.sampleName || "Food"}
-                            </span>{" "}
-                            <span className="px-2 py-0.5 rounded bg-gray-600 text-white text-xs">
-                              in {sample.internalContainerCount || 1}{" "}
-                              {sample.internalContainerType || "container"}
                             </span>
                             {sample.systemCaseNumber && (
                               <span className="px-2 py-0.5 rounded bg-gray-500 text-white text-xs block mt-1">
@@ -281,17 +288,16 @@ export function ReportPreview({ data }: ReportPreviewProps) {
           </section>
 
           <section className="mt-8">
-            <h3 className="font-bold mb-4">Signature:</h3>
             {data.employee?.signature ? (
               <div className="space-y-2">
                 <img
                   src={data.employee.signature}
                   alt="Employee Signature"
-                  className="h-20 w-auto max-w-[200px] border border-border rounded p-2 bg-white object-contain"
+                  className="h-20 w-auto max-w-50 border border-border rounded p-2 bg-white object-contain"
                 />
                 <div className="text-sm text-muted-foreground space-y-1">
                   <p>Name: {data.employee.name || "N/A"}</p>
-                  <p>Position: {data.employee.role || "admin"}</p>
+                  <p>Position: {data.employee.roles?.name || "analyst"}</p>
                   <p>Date: {formatDate(data.date)}</p>
                 </div>
               </div>
