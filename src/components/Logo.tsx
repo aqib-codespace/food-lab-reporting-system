@@ -1,5 +1,5 @@
-import { FlaskConical } from "lucide-react";
 import { cn } from "@/lib/utils";
+import Image from "next/image";
 
 interface LogoProps {
   collapsed?: boolean;
@@ -9,11 +9,25 @@ interface LogoProps {
 export function Logo({ collapsed = false, className }: LogoProps) {
   return (
     <div className={cn("flex items-center gap-3", className)}>
-      <div className="relative">
-        <div className="p-2.5 rounded-xl bg-gray-800 shadow-lg">
-          <FlaskConical className="w-6 h-6 text-white" strokeWidth={2.5} />
-        </div>
-        <div className="absolute inset-0 bg-gray-800/20 blur-xl rounded-full -z-10" />
+      <div className="relative w-10 h-10">
+        {/* Light mode logo */}
+        <Image
+          src="/logo.png"
+          alt="FoodLab Logo"
+          width={40}
+          height={40}
+          className="dark:hidden"
+          priority
+        />
+        {/* Dark mode logo */}
+        <Image
+          src="/dark-logo.png"
+          alt="FoodLab Logo"
+          width={40}
+          height={40}
+          className="hidden dark:block"
+          priority
+        />
       </div>
 
       {!collapsed && (
@@ -33,8 +47,21 @@ export function Logo({ collapsed = false, className }: LogoProps) {
 export function LogoCompact({ className }: { className?: string }) {
   return (
     <div className={cn("flex items-center gap-2", className)}>
-      <div className="p-1.5 rounded-lg bg-gray-800">
-        <FlaskConical className="w-4 h-4 text-white" strokeWidth={2.5} />
+      <div className="relative w-6 h-6">
+        <Image
+          src="/logo.png"
+          alt="FoodLab Logo"
+          width={24}
+          height={24}
+          className="dark:hidden"
+        />
+        <Image
+          src="/dark-logo.png"
+          alt="FoodLab Logo"
+          width={24}
+          height={24}
+          className="hidden dark:block"
+        />
       </div>
       <span className="text-sm font-bold text-gray-900 dark:text-white">
         FoodLab
@@ -45,20 +72,27 @@ export function LogoCompact({ className }: { className?: string }) {
 
 export function LogoIcon({
   className,
-  size = 6,
+  size = 32,
 }: {
   className?: string;
   size?: number;
 }) {
   return (
     <div className={cn("relative", className)}>
-      <div className="p-2 rounded-xl bg-gray-800 shadow-lg">
-        <FlaskConical
-          className={`w-${size} h-${size} text-white`}
-          strokeWidth={2.5}
-        />
-      </div>
-      <div className="absolute inset-0 bg-blue-500/20 blur-lg rounded-full -z-10" />
+      <Image
+        src="/logo.png"
+        alt="FoodLab Logo"
+        width={size}
+        height={size}
+        className="dark:hidden"
+      />
+      <Image
+        src="/dark-logo.png"
+        alt="FoodLab Logo"
+        width={size}
+        height={size}
+        className="hidden dark:block"
+      />
     </div>
   );
 }

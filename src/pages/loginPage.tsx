@@ -22,6 +22,7 @@ import {
   ArrowRight,
   AlertCircle,
 } from "lucide-react";
+import Link from "next/link";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -136,7 +137,10 @@ export default function LoginPage() {
             )}
 
             <div className="space-y-2">
-              <Label htmlFor="email" className="text-sm dark:text-white text-gray-800 font-medium">
+              <Label
+                htmlFor="email"
+                className="text-sm dark:text-white text-gray-800 font-medium"
+              >
                 Email
               </Label>
               <Input
@@ -152,11 +156,12 @@ export default function LoginPage() {
             </div>
 
             <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <Label htmlFor="password" className="dark:text-white text-gray-800 text-sm font-medium">
-                  Password
-                </Label>
-              </div>
+              <Label
+                htmlFor="password"
+                className="dark:text-white text-gray-800 text-sm font-medium mb-2"
+              >
+                Password
+              </Label>
               <div className="relative">
                 <Input
                   id="password"
@@ -196,7 +201,7 @@ export default function LoginPage() {
         </div>
       </div>
 
-      <div className="hidden lg:flex flex-1 bg-linear-to-br from-gray-900 via-gray-800 to-gray-900 dark:from-gray-950 dark:via-gray-900 dark:to-gray-950 p-12 items-center justify-center relative overflow-hidden">
+      <div className="hidden lg:flex flex-1 bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 dark:from-gray-950 dark:via-gray-900 dark:to-gray-950 p-12 items-center justify-center relative overflow-hidden">
         <div className="absolute inset-0 opacity-10">
           <div
             className="absolute inset-0"

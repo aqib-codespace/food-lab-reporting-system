@@ -10,27 +10,36 @@ import {
   AlignmentType,
   BorderStyle,
   convertInchesToTwip,
+  ImageRun,
+  HeightRule,
+  VerticalAlign,
 } from "docx";
 import { saveAs } from "file-saver";
 import { ReportData } from "@/types/report";
 
-/**
- * Generate Word report with full details including barcode and system numbers
- * Returns a Blob for uploading to Supabase
- * Word includes: barcode number, system case number, more detailed info
- */
 export const generateReportWordBlob = async (
   data: ReportData
 ): Promise<Blob> => {
   const formatDate = (dateStr: string): string => {
-    if (!dateStr) return "N/A";
+    if (!dateStr) return "غير محدد";
     const date = new Date(dateStr);
-    return date.toLocaleDateString("en-GB", {
+    return date.toLocaleDateString("ar-EG", {
       day: "2-digit",
       month: "2-digit",
       year: "numeric",
     });
   };
+
+  // Prepare signature image if available
+  let signatureImageBytes: ArrayBuffer | null = null;
+  if (data.employee?.signature) {
+    try {
+      const response = await fetch(data.employee.signature);
+      signatureImageBytes = await response.arrayBuffer();
+    } catch (error) {
+      console.error("Error loading signature image:", error);
+    }
+  }
 
   const doc = new Document({
     sections: [
@@ -39,28 +48,26 @@ export const generateReportWordBlob = async (
           page: {
             margin: {
               top: convertInchesToTwip(0.8),
-              right: convertInchesToTwip(0.8),
+              right: convertInchesToTwip(1.0),
               bottom: convertInchesToTwip(0.8),
-              left: convertInchesToTwip(0.8),
+              left: convertInchesToTwip(1.0),
             },
           },
         },
         children: [
-          // Header with ref and date
+          // Header - RTL layout (Date | Employee Name | Ref Number)
           new Paragraph({
-            spacing: { after: 100 },
+            alignment: AlignmentType.RIGHT,
+            bidirectional: true,
+            spacing: { after: 200 },
             children: [
               new TextRun({
-                text: `Ref. n: ${data.refNumber || "SSSSS"}`,
-                size: 20,
-              }),
-              new TextRun({
-                text: `\t\t\t\t\t\t\t${data.employee?.name || "employee name"}`,
-                size: 20,
-              }),
-              new TextRun({
-                text: `\t\t\t\tdate: ${formatDate(data.date)}`,
-                size: 20,
+                text: `${formatDate(data.date)} :التاريخ          ${
+                  data.employee?.name || "اسم الموظف"
+                }          ${data.refNumber || "-----"} :المرجع رقم`,
+                size: 22,
+                bold: true,
+                rightToLeft: true,
               }),
             ],
           }),
@@ -68,212 +75,228 @@ export const generateReportWordBlob = async (
           // Report number (system)
           new Paragraph({
             alignment: AlignmentType.CENTER,
-            spacing: { after: 300 },
+            bidirectional: true,
+            spacing: { after: 400 },
             children: [
               new TextRun({
-                text: `Report number: ${data.reportNumber || "in system"}`,
+                text: `رقم التقرير في النظام: ${
+                  data.reportNumber || "في النظام"
+                }`,
                 bold: true,
-                size: 22,
+                size: 26,
+                rightToLeft: true,
               }),
             ],
           }),
 
           // Introduction
           new Paragraph({
-            spacing: { before: 100, after: 120 },
+            alignment: AlignmentType.RIGHT,
+            bidirectional: true,
+            spacing: { before: 100, after: 150 },
             children: [
               new TextRun({
-                text: "Introduction:",
+                text: ":المقدمة",
                 bold: true,
-                size: 21,
+                size: 24,
+                rightToLeft: true,
               }),
             ],
           }),
 
           new Paragraph({
-            spacing: { after: 70 },
+            alignment: AlignmentType.RIGHT,
+            bidirectional: true,
+            spacing: { after: 80 },
             children: [
               new TextRun({
-                text: `Produced on date: ${formatDate(data.producedDate)}`,
-                size: 20,
+                text: `${formatDate(data.producedDate)} :تاريخ الإنتاج`,
+                size: 22,
+                rightToLeft: true,
               }),
             ],
           }),
 
           new Paragraph({
-            spacing: { after: 70 },
+            alignment: AlignmentType.RIGHT,
+            bidirectional: true,
+            spacing: { after: 80 },
             children: [
               new TextRun({
-                text: `Expired on: ${formatDate(data.expiredDate)}`,
-                size: 20,
+                text: `${formatDate(data.producedDate)} :تاريخ الإنتاج`,
+                size: 22,
+                rightToLeft: true,
               }),
             ],
           }),
 
           new Paragraph({
-            spacing: { after: 250 },
+            alignment: AlignmentType.RIGHT,
+            bidirectional: true,
+            spacing: { after: 80 },
             children: [
               new TextRun({
-                text: "We received everything it was in a good conditions.",
-                size: 20,
+                text: `${formatDate(data.expiredDate)} :تاريخ انتهاء الصلاحية`,
+                size: 22,
+                rightToLeft: true,
               }),
             ],
           }),
 
-          // External containers
           new Paragraph({
-            spacing: { before: 100, after: 120 },
+            alignment: AlignmentType.RIGHT,
+            bidirectional: true,
+            spacing: { after: 300 },
             children: [
               new TextRun({
-                text: "How it looks out side:",
+                text: ".تم استلام كل شيء وكان في حالة جيدة",
+                size: 22,
+                rightToLeft: true,
+              }),
+            ],
+          }),
+
+          // External appearance
+          new Paragraph({
+            alignment: AlignmentType.RIGHT,
+            bidirectional: true,
+            spacing: { before: 100, after: 150 },
+            children: [
+              new TextRun({
+                text: ":المظهر الخارجي",
                 bold: true,
-                size: 21,
+                size: 24,
+                rightToLeft: true,
               }),
             ],
           }),
 
           new Paragraph({
-            spacing: { after: 70 },
+            alignment: AlignmentType.RIGHT,
+            bidirectional: true,
+            spacing: { after: 80 },
             children: [
               new TextRun({
-                text: "We received ",
-                size: 20,
-              }),
-              new TextRun({
-                text: (data.externalContainers || [])
+                text: `تم استلام ${(data.externalContainers || [])
                   .filter((c) => c.type && c.quantity)
                   .map((c) => `(${c.quantity}) ${c.type}`)
-                  .join(" "),
-                size: 20,
-              }),
-              new TextRun({
-                text: data.senderShop
-                  ? ` like the one used for ${(
-                      data.senderShop || ""
-                    ).toLowerCase()}, it has (${
-                      data.barcodeNumber || "barcode number"
-                    }).`
-                  : ` it has (${data.barcodeNumber || "barcode number"}).`,
-                size: 20,
+                  .join(" + ")}${
+                  data.senderShop
+                    ? ` مثل تلك المستخدمة في ${data.senderShop}`
+                    : ""
+                }${
+                  data.barcodeNumber
+                    ? `، رقم الباركود (${data.barcodeNumber})`
+                    : ""
+                }.`,
+                size: 22,
+                rightToLeft: true,
               }),
             ],
           }),
 
-          // Barcode information (Word only - not in PDF)
-          ...(data.barcodeNumber
-            ? [
-                new Paragraph({
-                  spacing: { after: 70 },
-                  children: [
-                    new TextRun({
-                      text: "it has (",
-                      size: 20,
-                    }),
-                    new TextRun({
-                      text: "barcode number",
-                      bold: true,
-                      size: 20,
-                    }),
-                    new TextRun({
-                      text: ").",
-                      size: 20,
-                    }),
-                  ],
-                }),
-              ]
-            : []),
-
           new Paragraph({
-            spacing: { after: 250 },
+            alignment: AlignmentType.RIGHT,
+            bidirectional: true,
+            spacing: { after: 300 },
             children: [
               new TextRun({
-                text: `Received by ${
-                  data.employee?.name || "employee name"
-                }, on date ${formatDate(data.date)}.`,
-                size: 20,
+                text: `.تم الاستلام بواسطة ${
+                  data.employee?.name || "اسم الموظف"
+                }، بتاريخ ${formatDate(data.date)}`,
+                size: 22,
+                rightToLeft: true,
               }),
             ],
           }),
 
           // Storage
           new Paragraph({
-            spacing: { before: 100, after: 120 },
+            alignment: AlignmentType.RIGHT,
+            bidirectional: true,
+            spacing: { before: 100, after: 150 },
             children: [
               new TextRun({
-                text: "Insure its in good storage:",
+                text: ":التأكد من التخزين الجيد",
                 bold: true,
-                size: 21,
+                size: 24,
+                rightToLeft: true,
               }),
             ],
           }),
 
           new Paragraph({
-            spacing: { after: 250 },
+            alignment: AlignmentType.RIGHT,
+            bidirectional: true,
+            spacing: { after: 300 },
             children: [
               new TextRun({
-                text: "We put the samples in store or ",
-                size: 20,
-              }),
-              new TextRun({
-                text: [
+                text: `.تم وضع العينات في ${[
                   ...new Set(
                     (data.samples || []).map(
-                      (s) => s.storageLocation || "storage"
+                      (s) => s.storageLocation || "المخزن"
                     )
                   ),
-                ].join(" or "),
-                size: 20,
-              }),
-              new TextRun({
-                text: ".",
-                size: 20,
+                ].join(" أو ")}`,
+                size: 22,
+                rightToLeft: true,
               }),
             ],
           }),
 
           // Internal containers
           new Paragraph({
-            spacing: { before: 100, after: 120 },
+            alignment: AlignmentType.RIGHT,
+            bidirectional: true,
+            spacing: { before: 100, after: 150 },
             children: [
               new TextRun({
-                text: "What was inside:",
+                text: ":ما كان بالداخل",
                 bold: true,
-                size: 21,
+                size: 24,
+                rightToLeft: true,
               }),
             ],
           }),
 
           new Paragraph({
-            spacing: { after: 100 },
+            alignment: AlignmentType.RIGHT,
+            bidirectional: true,
+            spacing: { after: 120 },
             children: [
               new TextRun({
-                text: "We open samples it contain food and drinks.",
-                size: 20,
+                text: ".تم فتح العينات وتحتوي على أطعمة ومشروبات",
+                size: 22,
+                rightToLeft: true,
               }),
             ],
           }),
 
           // List internal containers if available
-          ...((data.internalContainers || [])
+          ...(data.internalContainers || [])
             .filter((c) => c.type && c.quantity)
-            .map((container) => 
-              new Paragraph({
-                spacing: { after: 50 },
-                children: [
-                  new TextRun({
-                    text: `- ${container.quantity}x ${container.type}`,
-                    size: 20,
-                  }),
-                ],
-              })
-            )),
+            .map(
+              (container) =>
+                new Paragraph({
+                  alignment: AlignmentType.RIGHT,
+                  bidirectional: true,
+                  spacing: { after: 60 },
+                  children: [
+                    new TextRun({
+                      text: `${container.type} ${container.quantity}x •`,
+                      size: 22,
+                      rightToLeft: true,
+                    }),
+                  ],
+                })
+            ),
 
           new Paragraph({
-            spacing: { after: 100 },
-            children: [new TextRun({ text: "", size: 10 })],
+            spacing: { after: 150 },
+            children: [new TextRun({ text: "", size: 10, rightToLeft: true })],
           }),
 
-          // Samples Table
+          // Samples Table - Arabic RTL
           new Table({
             width: { size: 100, type: WidthType.PERCENTAGE },
             borders: {
@@ -293,209 +316,227 @@ export const generateReportWordBlob = async (
               },
             },
             rows: [
-              // Header Row
+              // Header Row - RTL
               new TableRow({
                 tableHeader: true,
-                height: { value: 550, rule: "atLeast" },
+                height: { value: 600, rule: HeightRule.ATLEAST },
                 children: [
                   new TableCell({
                     children: [
                       new Paragraph({
                         alignment: AlignmentType.CENTER,
+                        bidirectional: true,
                         children: [
                           new TextRun({
-                            text: "Outer container",
+                            text: "المستخدم",
                             bold: true,
-                            size: 18,
+                            size: 22,
+                            rightToLeft: true,
                           }),
                         ],
                       }),
                     ],
-                    shading: { fill: "D1D5DB" },
-                    verticalAlign: "center",
+                    shading: { fill: "34495E" },
+                    verticalAlign: VerticalAlign.CENTER,
                     width: { size: 15, type: WidthType.PERCENTAGE },
                   }),
                   new TableCell({
                     children: [
                       new Paragraph({
                         alignment: AlignmentType.CENTER,
+                        bidirectional: true,
                         children: [
                           new TextRun({
-                            text: "Sample number",
+                            text: "الوزن",
                             bold: true,
-                            size: 18,
+                            size: 22,
+                            color: "FFFFFF",
+                            rightToLeft: true,
                           }),
                         ],
                       }),
                     ],
-                    shading: { fill: "D1D5DB" },
-                    verticalAlign: "center",
-                    width: { size: 12, type: WidthType.PERCENTAGE },
+                    shading: { fill: "34495E" },
+                    verticalAlign: VerticalAlign.CENTER,
+                    width: { size: 20, type: WidthType.PERCENTAGE },
                   }),
                   new TableCell({
                     children: [
                       new Paragraph({
                         alignment: AlignmentType.CENTER,
+                        bidirectional: true,
                         children: [
                           new TextRun({
-                            text: "How sample looks like",
+                            text: "شكل العينة",
                             bold: true,
-                            size: 18,
+                            size: 22,
+                            color: "FFFFFF",
+                            rightToLeft: true,
                           }),
                         ],
                       }),
                     ],
-                    shading: { fill: "D1D5DB" },
-                    verticalAlign: "center",
-                    width: { size: 28, type: WidthType.PERCENTAGE },
+                    shading: { fill: "34495E" },
+                    verticalAlign: VerticalAlign.CENTER,
+                    width: { size: 30, type: WidthType.PERCENTAGE },
                   }),
                   new TableCell({
                     children: [
                       new Paragraph({
                         alignment: AlignmentType.CENTER,
+                        bidirectional: true,
                         children: [
                           new TextRun({
-                            text: "How it weight",
+                            text: "رقم العينة",
                             bold: true,
-                            size: 18,
+                            size: 22,
+                            color: "FFFFFF",
+                            rightToLeft: true,
                           }),
                         ],
                       }),
                     ],
-                    shading: { fill: "D1D5DB" },
-                    verticalAlign: "center",
-                    width: { size: 23, type: WidthType.PERCENTAGE },
+                    shading: { fill: "34495E" },
+                    verticalAlign: VerticalAlign.CENTER,
+                    width: { size: 15, type: WidthType.PERCENTAGE },
                   }),
                   new TableCell({
                     children: [
                       new Paragraph({
                         alignment: AlignmentType.CENTER,
+                        bidirectional: true,
                         children: [
                           new TextRun({
-                            text: "used",
+                            text: "الحاوية الخارجية",
                             bold: true,
-                            size: 19,
+                            size: 22,
+                            color: "FFFFFF",
+                            rightToLeft: true,
                           }),
                         ],
                       }),
                     ],
-                    shading: { fill: "E5E7EB" },
-                    verticalAlign: "center",
-                    width: { size: 12, type: WidthType.PERCENTAGE },
-                  }),
-                  new TableCell({
-                    children: [
-                      new Paragraph({
-                        alignment: AlignmentType.CENTER,
-                        children: [new TextRun({ text: "", size: 19 })],
-                      }),
-                    ],
-                    shading: { fill: "E5E7EB" },
-                    verticalAlign: "center",
-                    width: { size: 13, type: WidthType.PERCENTAGE },
+                    shading: { fill: "34495E" },
+                    verticalAlign: VerticalAlign.CENTER,
+                    width: { size: 20, type: WidthType.PERCENTAGE },
                   }),
                 ],
               }),
               // Data Rows
               ...(data.samples || []).map((sample, idx) => {
-                // Format internal containers - show counts clearly
-                const containerCounts = (sample.internalContainers || [])
-                  .filter((c) => c.type && c.quantity)
-                  .map((c) => `(${c.quantity})`)
-                  .join(" + ") || "(1)";
-                
-                const containerDetails = (sample.internalContainers || [])
-                  .filter((c) => c.type && c.quantity)
-                  .map((c) => `${c.quantity}x ${c.type}`)
-                  .join(" + ") || "container";
+                const containerCounts =
+                  (sample.internalContainers || [])
+                    .filter((c) => c.type && c.quantity)
+                    .map((c) => `(${c.quantity})`)
+                    .join(" + ") || "(1)";
+
+                const containerDetails =
+                  (sample.internalContainers || [])
+                    .filter((c) => c.type && c.quantity)
+                    .map((c) => `${c.type} ${c.quantity}x`)
+                    .join(" + ") || "حاوية";
+
+                const sampleDetails = [
+                  sample.sampleName || "طعام",
+                  `في ${containerDetails}`,
+                  sample.systemCaseNumber || "",
+                ]
+                  .filter(Boolean)
+                  .join("\n");
 
                 return new TableRow({
-                  height: { value: 450, rule: "atLeast" },
+                  height: { value: 500, rule: HeightRule.ATLEAST },
                   children: [
                     new TableCell({
                       children: [
                         new Paragraph({
                           alignment: AlignmentType.CENTER,
+                          bidirectional: true,
                           children: [
                             new TextRun({
-                              text: containerCounts,
-                              size: 18,
+                              text: `${sample.weightUsed || 0} جرام`,
+                              size: 20,
+                              rightToLeft: true,
                             }),
                           ],
                         }),
                       ],
-                      verticalAlign: "center",
+                      verticalAlign: VerticalAlign.CENTER,
+                      shading: { fill: idx % 2 === 0 ? "FFFFFF" : "F8F9FA" },
                     }),
                     new TableCell({
                       children: [
                         new Paragraph({
                           alignment: AlignmentType.CENTER,
-                          children: [
-                            new TextRun({
-                              text: sample.sampleNumber || "",
-                              size: 18,
-                            }),
-                          ],
-                        }),
-                      ],
-                      verticalAlign: "center",
-                    }),
-                    new TableCell({
-                      children: [
-                        new Paragraph({
-                          alignment: AlignmentType.CENTER,
-                          children: [
-                            new TextRun({
-                              text: `${sample.sampleName || "Food"} in ${containerDetails}`,
-                              size: 18,
-                            }),
-                          ],
-                        }),
-                      ],
-                      verticalAlign: "center",
-                    }),
-                    new TableCell({
-                      children: [
-                        new Paragraph({
-                          alignment: AlignmentType.CENTER,
+                          bidirectional: true,
                           children: [
                             new TextRun({
                               text: `${sample.netWeight || 0} ${
-                                sample.weightUnit === "kg" ? "gram" : "gram"
-                              } (${
+                                sample.weightUnit === "kg" ? "كجم" : "جرام"
+                              }\n(${
                                 (sample.pureOrTotal || "pure") === "pure"
-                                  ? "Net weight"
-                                  : "total weight"
+                                  ? "الوزن الصافي"
+                                  : "الوزن الإجمالي"
                               })`,
-                              size: 18,
+                              size: 20,
+                              rightToLeft: true,
                             }),
                           ],
                         }),
                       ],
-                      verticalAlign: "center",
+                      verticalAlign: VerticalAlign.CENTER,
+                      shading: { fill: idx % 2 === 0 ? "FFFFFF" : "F8F9FA" },
                     }),
                     new TableCell({
                       children: [
                         new Paragraph({
                           alignment: AlignmentType.CENTER,
+                          bidirectional: true,
                           children: [
                             new TextRun({
-                              text: `${sample.weightUsed || 0} gram`,
-                              size: 18,
+                              text: sampleDetails,
+                              size: 20,
+                              rightToLeft: true,
                             }),
                           ],
                         }),
                       ],
-                      verticalAlign: "center",
+                      verticalAlign: VerticalAlign.CENTER,
+                      shading: { fill: idx % 2 === 0 ? "FFFFFF" : "F8F9FA" },
                     }),
                     new TableCell({
                       children: [
                         new Paragraph({
                           alignment: AlignmentType.CENTER,
-                          children: [new TextRun({ text: "", size: 18 })],
+                          bidirectional: true,
+                          children: [
+                            new TextRun({
+                              text: sample.sampleNumber || "",
+                              size: 20,
+                              rightToLeft: true,
+                            }),
+                          ],
                         }),
                       ],
-                      verticalAlign: "center",
+                      verticalAlign: VerticalAlign.CENTER,
+                      shading: { fill: idx % 2 === 0 ? "FFFFFF" : "F8F9FA" },
+                    }),
+                    new TableCell({
+                      children: [
+                        new Paragraph({
+                          alignment: AlignmentType.CENTER,
+                          bidirectional: true,
+                          children: [
+                            new TextRun({
+                              text: containerCounts,
+                              size: 20,
+                              rightToLeft: true,
+                            }),
+                          ],
+                        }),
+                      ],
+                      verticalAlign: VerticalAlign.CENTER,
+                      shading: { fill: idx % 2 === 0 ? "FFFFFF" : "F8F9FA" },
                     }),
                   ],
                 });
@@ -504,69 +545,79 @@ export const generateReportWordBlob = async (
           }),
 
           // Spacing before signature
-          new Paragraph({ text: "", spacing: { after: 350 } }),
+          new Paragraph({ text: "", spacing: { after: 400 } }),
 
-          // Signature section
-          new Paragraph({
-            spacing: { after: 100 },
-            children: [
-              new TextRun({
-                text: "Signature:",
-                bold: true,
-                size: 21,
-              }),
-            ],
-          }),
-
-          new Paragraph({ text: "", spacing: { after: 40 } }),
-
-          // Signature line (placeholder if no signature)
-          ...(data.employee?.signature ? [] : [
-            new Paragraph({
-              spacing: { after: 150 },
-              children: [
-                new TextRun({
-                  text: "_____________________",
-                  size: 18,
+          // Signature image if available
+          ...(signatureImageBytes
+            ? [
+                new Paragraph({
+                  alignment: AlignmentType.RIGHT,
+                  spacing: { after: 150 },
+                  children: [
+                    new ImageRun({
+                      data: new Uint8Array(signatureImageBytes),
+                      transformation: {
+                        width: 200,
+                        height: 80,
+                      },
+                      type: "png",
+                    }),
+                  ],
                 }),
-              ],
-            }),
-          ]),
+              ]
+            : [
+                new Paragraph({
+                  alignment: AlignmentType.RIGHT,
+                  spacing: { after: 150 },
+                  children: [
+                    new TextRun({
+                      text: "_____________________",
+                      size: 22,
+                      rightToLeft: true,
+                    }),
+                  ],
+                }),
+              ]),
 
-          // Employee name
+          // Employee details
           new Paragraph({
-            spacing: { after: 50 },
+            alignment: AlignmentType.RIGHT,
+            bidirectional: true,
+            spacing: { after: 70 },
             children: [
               new TextRun({
-                text: `Name: ${data.employee?.name || "N/A"}`,
-                size: 20,
+                text: `${data.employee?.name || "غير محدد"} :الاسم`,
+                size: 22,
+                rightToLeft: true,
               }),
             ],
           }),
 
-          // Employee position
           new Paragraph({
-            spacing: { after: 50 },
+            alignment: AlignmentType.RIGHT,
+            bidirectional: true,
+            spacing: { after: 70 },
             children: [
               new TextRun({
-                text: `Position: ${data.employee?.roles?.name || "analyst"}`,
-                size: 20,
+                text: `${data.employee?.roles?.name || "محلل"} :المنصب`,
+                size: 22,
+                rightToLeft: true,
               }),
             ],
           }),
 
-          // Date
           new Paragraph({
-            spacing: { after: 150 },
+            alignment: AlignmentType.RIGHT,
+            bidirectional: true,
+            spacing: { after: 200 },
             children: [
               new TextRun({
-                text: `Date: ${formatDate(data.date)}`,
-                size: 20,
+                text: `${formatDate(data.date)} :التاريخ`,
+                size: 22,
+                rightToLeft: true,
               }),
             ],
           }),
-
-          new Paragraph({ text: "", spacing: { after: 80 } }),
         ],
       },
     ],
@@ -575,25 +626,22 @@ export const generateReportWordBlob = async (
   // Return blob
   return await Packer.toBlob(doc);
 };
-
 /**
  * Download Word report directly (for preview/download button)
  */
 export const generateReportWord = async (data: ReportData): Promise<void> => {
   const blob = await generateReportWordBlob(data);
-  const fileName = `Report_${data.refNumber}_${formatDate(data.date).replace(
-    /\//g,
-    "-"
-  )}.docx`;
+  const formatDate = (dateStr: string): string => {
+    if (!dateStr) return "غير_محدد";
+    const date = new Date(dateStr);
+    return date
+      .toLocaleDateString("ar-EG", {
+        day: "2-digit",
+        month: "2-digit",
+        year: "numeric",
+      })
+      .replace(/\//g, "-");
+  };
+  const fileName = `تقرير_${data.refNumber}_${formatDate(data.date)}.docx`;
   saveAs(blob, fileName);
 };
-
-function formatDate(dateStr: string): string {
-  if (!dateStr) return "N/A";
-  const date = new Date(dateStr);
-  return date.toLocaleDateString("en-GB", {
-    day: "2-digit",
-    month: "2-digit",
-    year: "numeric",
-  });
-}

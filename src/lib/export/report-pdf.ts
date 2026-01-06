@@ -1,297 +1,429 @@
 import jsPDF from "jspdf";
-import autoTable from "jspdf-autotable";
+import html2canvas from "html2canvas";
 import { ReportData } from "@/types/report";
 
-
-export const generateReportPDFBlob = async (
-  data: ReportData
-): Promise<Blob> => {
-  const doc = new jsPDF();
-
-  const blackColor: [number, number, number] = [0, 0, 0];
-  const grayColor: [number, number, number] = [128, 128, 128]; // Gray for contrast
-
-  const formatDate = (dateStr: string): string => {
-    if (!dateStr) return "N/A";
-    const date = new Date(dateStr);
-    return date
-      .toLocaleDateString("en-GB", {
-        day: "2-digit",
-        month: "2-digit",
-        year: "numeric",
-      })
-      .replace(/\//g, "-");
-  };
-
-  // Header - Black and white only
-  doc.setFillColor(0, 0, 0);
-  doc.rect(0, 0, 210, 25, "F");
-
-  doc.setTextColor(255, 255, 255);
-  doc.setFontSize(18);
-  doc.setFont("helvetica", "bold");
-  doc.text("LABORATORY REPORT", 105, 12, { align: "center" });
-
-  doc.setFontSize(9);
-  doc.setFont("helvetica", "normal");
-  doc.text(`Report Number: ${data.reportNumber || "In System"}`, 105, 18, {
-    align: "center",
+const formatDate = (dateStr: string): string => {
+  if (!dateStr) return "";
+  const date = new Date(dateStr);
+  return date.toLocaleDateString("ar-EG", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
   });
+};
 
-  // Reference header info - Improved layout
-  doc.setFillColor(240, 240, 240);
-  doc.rect(10, 30, 190, 10, "F");
+export const generateReportPDF = async (data: ReportData): Promise<void> => {
+  const pdf = new jsPDF("p", "mm", "a4");
 
-  doc.setTextColor(0, 0, 0);
-  doc.setFontSize(9);
-  doc.setFont("helvetica", "bold");
-  
-  // Use consistent spacing for better alignment
-  const refText = `Ref. n: ${data.refNumber || "------"}`;
-  const employeeName = data.employee?.name || "N/A";
-  const dateText = `date: ${formatDate(data.date)}`;
-  
-  // Left aligned ref number
-  doc.text(refText, 15, 36);
-  
-  // Center aligned employee name
-  doc.text(employeeName, 105, 36, { align: "center" });
-  
-  // Right aligned date
-  doc.text(dateText, 195, 36, { align: "right" });
+  const container = document.createElement("div");
+  container.style.width = "210mm";
+  container.style.padding = "15mm";
+  container.style.backgroundColor = "#fff";
+  container.style.fontFamily = "Arial, sans-serif";
+  container.style.direction = "rtl";
+  container.style.position = "absolute";
+  container.style.left = "-99999px";
 
-  let yPos = 50;
-
-  // Introduction Section
-  doc.setFontSize(11);
-  doc.setFont("helvetica", "bold");
-  doc.text("Introduction:", 15, yPos);
-  yPos += 7;
-
-  doc.setFontSize(9);
-  doc.setFont("helvetica", "normal");
-  doc.text(`Produced on date: ${formatDate(data.producedDate)}`, 15, yPos);
-  yPos += 5;
-  doc.text(`Expired on: ${formatDate(data.expiredDate)}`, 15, yPos);
-  yPos += 5;
-  doc.text("We received everything it was in a good conditions.", 15, yPos);
-  yPos += 10;
-
-  // External containers section
-  doc.setFontSize(11);
-  doc.setFont("helvetica", "bold");
-  doc.text("How it looks out side:", 15, yPos);
-  yPos += 7;
-
-  doc.setFontSize(9);
-  doc.setFont("helvetica", "normal");
-
-  const externalSummary = (data.externalContainers || [])
-    .filter((c) => c.type && c.quantity)
-    .map((c) => `(${c.quantity}) ${c.type}`)
-    .join(" ");
-
-  const containerText = `We received ${
-    externalSummary || "containers"
-  } like the one used for ${
-    data.senderShop || "shop"
-  }.`;
-  const splitText = doc.splitTextToSize(containerText, 180);
-  splitText.forEach((line: string) => {
-    doc.text(line, 15, yPos);
-    yPos += 5;
-  });
-
-  doc.text(
-    `Received by ${
-      data.employee?.name || "employee name"
-    }, on date ${formatDate(data.date)}.`,
-    15,
-    yPos
-  );
-  yPos += 10;
-
-  // Storage section
-  doc.setFontSize(11);
-  doc.setFont("helvetica", "bold");
-  doc.text("Insure its in good storage:", 15, yPos);
-  yPos += 7;
-
-  doc.setFontSize(9);
-  doc.setFont("helvetica", "normal");
-  const storageText = [
-    ...new Set((data.samples || []).map((s) => s.storageLocation || "storage")),
-  ].join(" or ");
-  doc.text(`We put the samples in store or ${storageText}.`, 15, yPos);
-  yPos += 10;
-
-  // Internal containers section
-  doc.setFontSize(11);
-  doc.setFont("helvetica", "bold");
-  doc.text("What was inside:", 15, yPos);
-  yPos += 7;
-
-  doc.setFontSize(9);
-  doc.setFont("helvetica", "normal");
-  doc.text("We open samples it contain food and drinks.", 15, yPos);
-  yPos += 5;
-
-  // List internal containers if any
-  if (data.internalContainers && data.internalContainers.length > 0) {
-    const internalList = data.internalContainers
-      .filter((c) => c.type && c.quantity)
-      .map((c) => `- ${c.quantity}x ${c.type}`)
-      .join("\n");
-    if (internalList) {
-      yPos += 5;
-      const lines = internalList.split("\n");
-      lines.forEach((line) => {
-        doc.text(line, 15, yPos);
-        yPos += 5;
-      });
-    }
-  }
-  yPos += 5;
-
-  // Samples table - Black and white theme
-  const tableData = (data.samples || []).map((sample) => {
-    // Format internal containers display - simplified for PDF
-    const internalContainersText = (sample.internalContainers || [])
-      .filter((c) => c.type && c.quantity)
-      .map((c) => `(${c.quantity})`)
-      .join(" + ") || "(1)";
+  container.innerHTML = `
+    <style>
+      * { box-sizing: border-box; margin:0; padding:0; }
+    </style>
     
-    const containerDetails = (sample.internalContainers || [])
-      .filter((c) => c.type && c.quantity)
-      .map((c) => `${c.quantity}x ${c.type}`)
-      .join(" + ") || "container";
+    <!-- Header -->
+    <table style="width:100%; border-collapse:collapse; margin-bottom:8px; font-size:9px">
+      <tr>
+        <td style="width:30%; text-align:right; padding:4px">
+          <div style="font-weight:bold">المرجع رقم: ${
+            data.refNumber || "789962"
+          }</div>
+        </td>
+        <td style="width:40%; text-align:center; padding:4px">
+          <div style="font-weight:bold; font-size:11px">رقم التقرير في النظام</div>
+          <div style="font-size:8px">In System</div>
+        </td>
+        <td style="width:30%; text-align:left; padding:4px">
+          <div style="font-weight:bold">التاريخ: ${formatDate(data.date)}</div>
+        </td>
+      </tr>
+    </table>
+    
+    <hr style="border:none; border-top:1px solid #000; margin:8px 0" />
+    
+    <!-- Introduction Section -->
+    <div style="margin-bottom:12px">
+      <div style="font-weight:bold; font-size:10px; margin-bottom:6px; text-align:right">:المقدمة</div>
+      <div style="font-size:9px; text-align:right; line-height:1.6">
+        <div>تاريخ الإنتاج: ${formatDate(data.producedDate) || "غير محدد"}</div>
+        <div>تاريخ انتهاء الصلاحية: ${
+          formatDate(data.expiredDate) || "غير محدد"
+        }</div>
+        <div style="margin-top:4px">تم استلام كل شيء وكان في حالة جيدة.</div>
+      </div>
+    </div>
+    
+    <hr style="border:none; border-top:1px solid #ccc; margin:8px 0" />
+    
+    <!-- External Appearance -->
+    <div style="margin-bottom:12px">
+      <div style="font-weight:bold; font-size:10px; margin-bottom:6px; text-align:right">:المظهر الخارجي</div>
+      <div style="font-size:9px; text-align:right">
+        تم استلام ${
+          data.externalContainers && data.externalContainers.length > 0
+            ? data.externalContainers
+                .filter((c: any) => c.type && c.quantity)
+                .map((c: any) => `(${c.quantity}) ${c.type}`)
+                .join(" + ")
+            : "حاويات"
+        }
+        ${data.senderShop ? ` في ${data.senderShop}` : ""}
+      </div>
+    </div>
+    
+    <hr style="border:none; border-top:1px solid #ccc; margin:8px 0" />
+    
+    <!-- Storage -->
+    <div style="margin-bottom:12px">
+      <div style="font-weight:bold; font-size:10px; margin-bottom:6px; text-align:right">:التخزين</div>
+      <div style="font-size:9px; text-align:right">
+        تم وضع العينات في ${data.samples?.[0]?.storageLocation || "التخزين"}
+      </div>
+    </div>
+    
+    <hr style="border:none; border-top:1px solid #ccc; margin:8px 0" />
+    
+    <!-- Contents -->
+    <div style="margin-bottom:12px">
+      <div style="font-weight:bold; font-size:10px; margin-bottom:6px; text-align:right">:ما كان بالداخل</div>
+      <div style="font-size:9px; text-align:right">
+        تم فتح العينات وتحتوي على أطعمة ومشروبات.
+      </div>
+    </div>
+    
+    <hr style="border:none; border-top:1px solid #000; margin:8px 0" />
+    
+    <!-- Samples Table -->
+    <div style="font-weight:bold; font-size:10px; margin:10px 0 6px 0; text-align:right">:جدول العينات</div>
+    <table style="width:100%; border-collapse:collapse; font-size:8px">
+      <thead>
+        <tr style="background:#333; color:#fff">
+          <th style="border:1px solid #666; padding:6px; text-align:center; font-weight:bold">الحاوية الخارجية</th>
+          <th style="border:1px solid #666; padding:6px; text-align:center; font-weight:bold">رقم العينة</th>
+          <th style="border:1px solid #666; padding:6px; text-align:center; font-weight:bold">شكل العينة</th>
+          <th style="border:1px solid #666; padding:6px; text-align:center; font-weight:bold">الوزن</th>
+          <th style="border:1px solid #666; padding:6px; text-align:center; font-weight:bold">المستخدم</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${
+          data.samples && data.samples.length > 0
+            ? data.samples
+                .map(
+                  (sample: any, idx: number) => `
+          <tr style="background:${idx % 2 === 0 ? "#fff" : "#f5f5f5"}">
+            <td style="border:1px solid #ccc; padding:5px; text-align:center">
+              ${
+                sample.internalContainers &&
+                sample.internalContainers.length > 0
+                  ? sample.internalContainers
+                      .map((c: any) => `(${c.quantity}) ${c.type}`)
+                      .join(" ")
+                  : "(1) حاوية"
+              }
+            </td>
+            <td style="border:1px solid #ccc; padding:5px; text-align:center">${
+              sample.sampleNumber || "S1"
+            }</td>
+            <td style="border:1px solid #ccc; padding:5px; text-align:center">
+              ${sample.sampleName || "طعام"}
+              ${
+                sample.systemCaseNumber
+                  ? `<div style="font-size:7px; color:#666">${sample.systemCaseNumber}</div>`
+                  : ""
+              }
+            </td>
+            <td style="border:1px solid #ccc; padding:5px; text-align:center">
+              ${sample.netWeight || 0} ${
+                    sample.weightUnit === "kg" ? "كجم" : "جرام"
+                  }
+              <div style="font-size:7px; color:#666">(${
+                sample.pureOrTotal === "pure"
+                  ? "الوزن الصافي"
+                  : "الوزن الإجمالي"
+              })</div>
+            </td>
+            <td style="border:1px solid #ccc; padding:5px; text-align:center">${
+              sample.weightUsed || 0
+            } جرام</td>
+          </tr>
+        `
+                )
+                .join("")
+            : '<tr><td colspan="5" style="border:1px solid #ccc; padding:8px; text-align:center">لا توجد عينات</td></tr>'
+        }
+      </tbody>
+    </table>
+    
+    <!-- Signature -->
+    <div style="margin-top:20px; border:1px solid #000; padding:12px">
+      <div style="text-align:right; font-size:10px; font-weight:bold; margin-bottom:8px">:التوقيع</div>
+      ${
+        data.employee?.signature
+          ? `
+        <div style="text-align:right">
+          <img src="${
+            data.employee.signature
+          }" style="height:50px; border:1px solid #ccc; padding:3px; background:#fff" />
+          <div style="margin-top:8px; font-size:8px; line-height:1.6">
+            <div>الاسم: ${data.employee.name || ""}</div>
+            <div>المنصب: ${data.employee.roles?.name || "Expert"}</div>
+            <div>التاريخ: ${formatDate(data.date)}</div>
+          </div>
+        </div>
+      `
+          : `<div style="border-bottom:1px solid #000; width:150px; height:40px"></div>`
+      }
+    </div>
+  `;
 
-    return [
-      internalContainersText,
-      sample.sampleNumber || "",
-      `${sample.sampleName || "Food"} in ${containerDetails}`,
-      `${sample.netWeight || 0} ${sample.weightUnit === "kg" ? "kg" : "gram"} (${
-        (sample.pureOrTotal || "pure") === "pure" ? "Net weight" : "Total weight"
-      })`,
-      `${sample.weightUsed || 0} gram`,
-    ];
+  document.body.appendChild(container);
+
+  const canvas = await html2canvas(container, {
+    scale: 3,
+    useCORS: true,
+    backgroundColor: "#ffffff",
+    logging: false,
+    allowTaint: true,
   });
 
-  autoTable(doc, {
-    startY: yPos,
-    head: [
-      [
-        "Outer container",
-        "Sample number",
-        "How sample looks like",
-        "How it weight",
-        "used",
-      ],
-    ],
-    body: tableData,
-    theme: "plain",
-    headStyles: {
-      fillColor: [230, 230, 230],
-      textColor: [0, 0, 0],
-      fontStyle: "bold",
-      fontSize: 8,
-      halign: "left",
-      lineColor: [0, 0, 0],
-      lineWidth: 0.3,
-    },
-    bodyStyles: {
-      fontSize: 7,
-      textColor: [0, 0, 0],
-      halign: "left",
-      lineColor: [0, 0, 0],
-      lineWidth: 0.1,
-    },
-    alternateRowStyles: {
-      fillColor: [250, 250, 250],
-    },
-    columnStyles: {
-      0: { cellWidth: 25 },
-      1: { cellWidth: 25 },
-      2: { cellWidth: 60 },
-      3: { cellWidth: 45 },
-      4: { cellWidth: 25 },
-    },
-    margin: { left: 15, right: 15 },
-    styles: {
-      cellPadding: 3,
-      overflow: "linebreak",
-    },
-  });
+  document.body.removeChild(container);
 
-  const finalY = (doc as any).lastAutoTable.finalY + 15;
+  const imgData = canvas.toDataURL("image/png");
+  const imgWidth = 210;
+  const imgHeight = (canvas.height * imgWidth) / canvas.width;
 
-  // Signature section
-  doc.setFontSize(10);
-  doc.setFont("helvetica", "bold");
-  doc.text("Signature:", 15, finalY);
-
-  if (data.employee?.signature) {
-    try {
-      // Add signature image
-      doc.addImage(
-        data.employee.signature,
-        "PNG",
-        15,
-        finalY + 5,
-        50,
-        20,
-        undefined,
-        "FAST"
-      );
-
-      // Add employee details below signature
-      doc.setFontSize(8);
-      doc.setFont("helvetica", "normal");
-      doc.text(`Name: ${data.employee.name || "N/A"}`, 15, finalY + 30);
-      doc.text(`Position: ${data.employee.roles?.name || "analyst"}`, 15, finalY + 35);
-      doc.text(`Date: ${formatDate(data.date)}`, 15, finalY + 40);
-    } catch (error) {
-      console.error("Error adding signature:", error);
-      doc.line(15, finalY + 20, 65, finalY + 20);
-    }
+  // Check if content fits on one page (297mm height)
+  if (imgHeight <= 297) {
+    // Single page
+    pdf.addImage(imgData, "PNG", 0, 0, imgWidth, imgHeight);
   } else {
-    doc.line(15, finalY + 20, 65, finalY + 20);
-    doc.setFontSize(8);
-    doc.setFont("helvetica", "italic");
-    doc.text("[Signature not provided]", 15, finalY + 25);
+    // Split across two pages
+    const pageHeight = 297;
+    pdf.addImage(imgData, "PNG", 0, 0, imgWidth, pageHeight);
+    pdf.addPage();
+    pdf.addImage(imgData, "PNG", 0, -pageHeight, imgWidth, imgHeight);
   }
 
-  // Return blob for upload
-  return doc.output("blob");
+  const fileName = `تقرير_${data.refNumber || "report"}_${formatDate(
+    data.date
+  ).replace(/\//g, "-")}.pdf`;
+  pdf.save(fileName);
 };
 
 /**
- * Download PDF report directly (for preview/download button)
+ * Generate PDF as Blob for upload
  */
-export const generateReportPDF = async (data: ReportData): Promise<void> => {
-  const blob = await generateReportPDFBlob(data);
-  const fileName = `Report_${data.refNumber}_${formatDate(data.date).replace(
-    /\//g,
-    "-"
-  )}.pdf`;
+export const generateReportPDFBlob = async (
+  data: ReportData
+): Promise<Blob> => {
+  const pdf = new jsPDF("p", "mm", "a4");
 
-  // Create download link
-  const url = URL.createObjectURL(blob);
-  const link = document.createElement("a");
-  link.href = url;
-  link.download = fileName;
-  link.click();
-  URL.revokeObjectURL(url);
+  const container = document.createElement("div");
+  container.style.width = "210mm";
+  container.style.padding = "15mm";
+  container.style.backgroundColor = "#fff";
+  container.style.fontFamily = "Arial, sans-serif";
+  container.style.direction = "rtl";
+  container.style.position = "absolute";
+  container.style.left = "-99999px";
+
+  container.innerHTML = `
+    <style>
+      * { box-sizing: border-box; margin:0; padding:0; }
+    </style>
+    
+    <!-- Header -->
+    <table style="width:100%; border-collapse:collapse; margin-bottom:8px; font-size:9px">
+      <tr>
+        <td style="width:30%; text-align:right; padding:4px">
+          <div style="font-weight:bold">المرجع رقم: ${
+            data.refNumber || "789962"
+          }</div>
+        </td>
+        <td style="width:40%; text-align:center; padding:4px">
+          <div style="font-weight:bold; font-size:11px">رقم التقرير في النظام</div>
+          <div style="font-size:8px">In System</div>
+        </td>
+        <td style="width:30%; text-align:left; padding:4px">
+          <div style="font-weight:bold">التاريخ: ${formatDate(data.date)}</div>
+        </td>
+      </tr>
+    </table>
+    
+    <hr style="border:none; border-top:1px solid #000; margin:8px 0" />
+    
+    <!-- Introduction Section -->
+    <div style="margin-bottom:12px">
+      <div style="font-weight:bold; font-size:10px; margin-bottom:6px; text-align:right">:المقدمة</div>
+      <div style="font-size:9px; text-align:right; line-height:1.6">
+        <div>تاريخ الإنتاج: ${formatDate(data.producedDate) || "غير محدد"}</div>
+        <div>تاريخ انتهاء الصلاحية: ${
+          formatDate(data.expiredDate) || "غير محدد"
+        }</div>
+        <div style="margin-top:4px">تم استلام كل شيء وكان في حالة جيدة.</div>
+      </div>
+    </div>
+    
+    <hr style="border:none; border-top:1px solid #ccc; margin:8px 0" />
+    
+    <!-- External Appearance -->
+    <div style="margin-bottom:12px">
+      <div style="font-weight:bold; font-size:10px; margin-bottom:6px; text-align:right">:المظهر الخارجي</div>
+      <div style="font-size:9px; text-align:right">
+        تم استلام ${
+          data.externalContainers && data.externalContainers.length > 0
+            ? data.externalContainers
+                .filter((c: any) => c.type && c.quantity)
+                .map((c: any) => `(${c.quantity}) ${c.type}`)
+                .join(" + ")
+            : "حاويات"
+        }
+        ${data.senderShop ? ` في ${data.senderShop}` : ""}
+      </div>
+    </div>
+    
+    <hr style="border:none; border-top:1px solid #ccc; margin:8px 0" />
+    
+    <!-- Storage -->
+    <div style="margin-bottom:12px">
+      <div style="font-weight:bold; font-size:10px; margin-bottom:6px; text-align:right">:التخزين</div>
+      <div style="font-size:9px; text-align:right">
+        تم وضع العينات في ${data.samples?.[0]?.storageLocation || "التخزين"}
+      </div>
+    </div>
+    
+    <hr style="border:none; border-top:1px solid #ccc; margin:8px 0" />
+    
+    <!-- Contents -->
+    <div style="margin-bottom:12px">
+      <div style="font-weight:bold; font-size:10px; margin-bottom:6px; text-align:right">:ما كان بالداخل</div>
+      <div style="font-size:9px; text-align:right">
+        تم فتح العينات وتحتوي على أطعمة ومشروبات.
+      </div>
+    </div>
+    
+    <hr style="border:none; border-top:1px solid #000; margin:8px 0" />
+    
+    <!-- Samples Table -->
+    <div style="font-weight:bold; font-size:10px; margin:10px 0 6px 0; text-align:right">:جدول العينات</div>
+    <table style="width:100%; border-collapse:collapse; font-size:8px">
+      <thead>
+        <tr style="background:#333; color:#fff">
+          <th style="border:1px solid #666; padding:6px; text-align:center; font-weight:bold">الحاوية الخارجية</th>
+          <th style="border:1px solid #666; padding:6px; text-align:center; font-weight:bold">رقم العينة</th>
+          <th style="border:1px solid #666; padding:6px; text-align:center; font-weight:bold">شكل العينة</th>
+          <th style="border:1px solid #666; padding:6px; text-align:center; font-weight:bold">الوزن</th>
+          <th style="border:1px solid #666; padding:6px; text-align:center; font-weight:bold">المستخدم</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${
+          data.samples && data.samples.length > 0
+            ? data.samples
+                .map(
+                  (sample: any, idx: number) => `
+          <tr style="background:${idx % 2 === 0 ? "#fff" : "#f5f5f5"}">
+            <td style="border:1px solid #ccc; padding:5px; text-align:center">
+              ${
+                sample.internalContainers &&
+                sample.internalContainers.length > 0
+                  ? sample.internalContainers
+                      .map((c: any) => `(${c.quantity}) ${c.type}`)
+                      .join(" ")
+                  : "(1) حاوية"
+              }
+            </td>
+            <td style="border:1px solid #ccc; padding:5px; text-align:center">${
+              sample.sampleNumber || "S1"
+            }</td>
+            <td style="border:1px solid #ccc; padding:5px; text-align:center">
+              ${sample.sampleName || "طعام"}
+              ${
+                sample.systemCaseNumber
+                  ? `<div style="font-size:7px; color:#666">${sample.systemCaseNumber}</div>`
+                  : ""
+              }
+            </td>
+            <td style="border:1px solid #ccc; padding:5px; text-align:center">
+              ${sample.netWeight || 0} ${
+                    sample.weightUnit === "kg" ? "كجم" : "جرام"
+                  }
+              <div style="font-size:7px; color:#666">(${
+                sample.pureOrTotal === "pure"
+                  ? "الوزن الصافي"
+                  : "الوزن الإجمالي"
+              })</div>
+            </td>
+            <td style="border:1px solid #ccc; padding:5px; text-align:center">${
+              sample.weightUsed || 0
+            } جرام</td>
+          </tr>
+        `
+                )
+                .join("")
+            : '<tr><td colspan="5" style="border:1px solid #ccc; padding:8px; text-align:center">لا توجد عينات</td></tr>'
+        }
+      </tbody>
+    </table>
+    
+    <!-- Signature -->
+    <div style="margin-top:20px; border:1px solid #000; padding:12px">
+      <div style="text-align:right; font-size:10px; font-weight:bold; margin-bottom:8px">:التوقيع</div>
+      ${
+        data.employee?.signature
+          ? `
+        <div style="text-align:right">
+          <img src="${
+            data.employee.signature
+          }" style="height:50px; border:1px solid #ccc; padding:3px; background:#fff" />
+          <div style="margin-top:8px; font-size:8px; line-height:1.6">
+            <div>الاسم: ${data.employee.name || ""}</div>
+            <div>المنصب: ${data.employee.roles?.name || "Expert"}</div>
+            <div>التاريخ: ${formatDate(data.date)}</div>
+          </div>
+        </div>
+      `
+          : `<div style="border-bottom:1px solid #000; width:150px; height:40px"></div>`
+      }
+    </div>
+  `;
+
+  document.body.appendChild(container);
+
+  const canvas = await html2canvas(container, {
+    scale: 3,
+    useCORS: true,
+    backgroundColor: "#ffffff",
+    logging: false,
+    allowTaint: true,
+  });
+
+  document.body.removeChild(container);
+
+  const imgData = canvas.toDataURL("image/png");
+  const imgWidth = 210;
+  const imgHeight = (canvas.height * imgWidth) / canvas.width;
+
+  // Check if content fits on one page (297mm height)
+  if (imgHeight <= 297) {
+    // Single page
+    pdf.addImage(imgData, "PNG", 0, 0, imgWidth, imgHeight);
+  } else {
+    // Split across two pages
+    const pageHeight = 297;
+    pdf.addImage(imgData, "PNG", 0, 0, imgWidth, pageHeight);
+    pdf.addPage();
+    pdf.addImage(imgData, "PNG", 0, -pageHeight, imgWidth, imgHeight);
+  }
+
+  return pdf.output("blob");
 };
-
-function formatDate(dateStr: string): string {
-  if (!dateStr) return "N/A";
-  const date = new Date(dateStr);
-  return date
-    .toLocaleDateString("en-GB", {
-      day: "2-digit",
-      month: "2-digit",
-      year: "numeric",
-    })
-    .replace(/\//g, "-");
-}

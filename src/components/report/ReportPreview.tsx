@@ -1,4 +1,4 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { FileDown, FileText } from "lucide-react";
@@ -15,20 +15,18 @@ export function ReportPreview({ data }: ReportPreviewProps) {
   const formatDate = (dateStr: string) => {
     if (!dateStr) return "";
     const date = new Date(dateStr);
-    return date
-      .toLocaleDateString("en-GB", {
-        day: "2-digit",
-        month: "2-digit",
-        year: "numeric",
-      })
-      .replace(/\//g, "-");
+    return date.toLocaleDateString("ar-EG", {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+    });
   };
 
   const getExternalContainersSummary = () => {
     if (!data.externalContainers) return "";
     return data.externalContainers
       .filter((c) => c.type && c.quantity)
-      .map((c) => `(${c.quantity}) ${c.type.toLowerCase()}`)
+      .map((c) => `(${c.quantity}) ${c.type}`)
       .join(" + ");
   };
 
@@ -37,21 +35,21 @@ export function ReportPreview({ data }: ReportPreviewProps) {
     return data.internalContainers
       .filter((c) => c.type && c.quantity)
       .map((c) => `${c.type}${c.quantity > 1 ? ` ${c.quantity}` : ""}`)
-      .join(", ");
+      .join(" و ");
   };
 
   const handleDownloadPDF = () => {
     try {
       generateReportPDF(data);
       toast({
-        title: "Success",
-        description: "PDF report generated successfully!",
+        title: "نجح",
+        description: "تم إنشاء تقرير PDF بنجاح!",
       });
     } catch (error) {
       console.error("PDF generation error:", error);
       toast({
-        title: "Error",
-        description: "Failed to generate PDF report.",
+        title: "خطأ",
+        description: "فشل في إنشاء تقرير PDF.",
         variant: "destructive",
       });
     }
@@ -61,24 +59,24 @@ export function ReportPreview({ data }: ReportPreviewProps) {
     try {
       await generateReportWord(data);
       toast({
-        title: "Success",
-        description: "Word report downloaded successfully!",
+        title: "نجح",
+        description: "تم تنزيل تقرير Word بنجاح!",
       });
     } catch (error) {
       toast({
-        title: "Error",
-        description: "Failed to generate Word report.",
+        title: "خطأ",
+        description: "فشل في إنشاء تقرير Word.",
         variant: "destructive",
       });
     }
   };
 
   return (
-    <div className="max-w-4xl mx-auto space-y-6">
+    <div className="max-w-5xl mx-auto space-y-6">
       <div className="flex gap-3 justify-end no-print">
         <Button
           onClick={handleDownloadPDF}
-          className="bg-gray-800 text-white hover:opacity-90 gap-2"
+          className="bg-red-600 text-white hover:bg-red-700 gap-2"
         >
           <FileDown className="w-4 h-4" />
           Download PDF
@@ -86,7 +84,7 @@ export function ReportPreview({ data }: ReportPreviewProps) {
         <Button
           variant="outline"
           onClick={handleDownloadWord}
-          className="gap-2 bg-gray-800 text-white"
+          className="gap-2 bg-blue-600 text-white hover:bg-blue-700"
         >
           <FileText className="w-4 h-4" />
           Download Word
@@ -94,190 +92,230 @@ export function ReportPreview({ data }: ReportPreviewProps) {
       </div>
 
       <Card className="shadow-lg print:shadow-none">
-        <CardContent className="p-8">
-          <div className="flex justify-between items-start mb-6">
-            <div className="text-sm">
-              <span className="font-semibold bg-primary text-primary-foreground px-2 py-0.5 rounded">
-                Ref. n:
-              </span>
-              <span className="ml-2 font-medium">
-                {data.refNumber || "-----"}
-              </span>
+        <CardContent className="p-8" dir="rtl">
+          {/* Header */}
+          <div className="flex justify-between items-start mb-6 text-sm">
+            <div>
+              <span className="font-bold">المرجع رقم: </span>
+              <span className="font-semibold">{data.refNumber || "-----"}</span>
             </div>
             <div className="text-center">
+              <span className="font-bold text-lg">رقم التقرير في النظام</span>
+            </div>
+            <div>
+              <span className="font-bold">التاريخ: </span>
+              <span>{formatDate(data.date)}</span>
+            </div>
+          </div>
+
+          <Separator className="my-4" />
+
+          {/* Introduction Section */}
+          <section className="mb-6">
+            <h3 className="font-bold text-lg mb-3">المقدمة:</h3>
+            <div className="space-y-2 text-sm pr-4">
+              <p>
+                <span className="font-semibold">تاريخ الإنتاج: </span>
+                {formatDate(data.producedDate) || "غير محدد"}
+              </p>
+              <p>
+                <span className="font-semibold">تاريخ انتهاء الصلاحية: </span>
+                {formatDate(data.expiredDate) || "غير محدد"}
+              </p>
+              <p className="mt-3">تم استلام كل شيء وكان في حالة جيدة.</p>
+            </div>
+          </section>
+
+          <Separator className="my-4" />
+
+          {/* External Appearance Section */}
+          <section className="mb-6">
+            <h3 className="font-bold text-lg mb-3">المظهر الخارجي:</h3>
+            <div className="space-y-2 text-sm pr-4">
+              <p>
+                تم استلام{" "}
+                {data.externalContainers &&
+                data.externalContainers.length > 0 ? (
+                  <span className="font-semibold">
+                    {data.externalContainers
+                      .filter((c) => c.type && c.quantity)
+                      .map((c) => `(${c.quantity}) ${c.type}`)
+                      .join(" + ")}
+                  </span>
+                ) : (
+                  "حاويات"
+                )}{" "}
+                {data.senderShop && (
+                  <>
+                    مثل تلك المستخدمة في{" "}
+                    <span className="font-semibold">{data.senderShop}</span>
+                  </>
+                )}
+                {data.barcodeNumber && (
+                  <>، رقم الباركود ({data.barcodeNumber})</>
+                )}
+                .
+              </p>
+              <p>
+                تم الاستلام بواسطة{" "}
+                <span className="font-semibold">
+                  {data.employee?.name || "اسم الموظف"}
+                </span>
+                ، بتاريخ{" "}
+                <span className="font-semibold">{formatDate(data.date)}</span>.
+              </p>
+            </div>
+          </section>
+
+          <Separator className="my-4" />
+
+          {/* Storage Section */}
+          <section className="mb-6">
+            <h3 className="font-bold text-lg mb-3">التأكد من التخزين الجيد:</h3>
+            <p className="text-sm pr-4">
+              تم وضع العينات في{" "}
               <span className="font-semibold">
-                {data.employee?.name || "Employee Name"}
-              </span>
-            </div>
-            <div className="text-sm">
-              <span className="font-semibold bg-warning text-warning-foreground px-2 py-0.5 rounded">
-                date a
-              </span>
-              <span className="ml-2">{formatDate(data.date)}</span>
-            </div>
-          </div>
-
-          <div className="text-center mb-6">
-            <h2 className="text-lg font-semibold underline">
-              Report number: {data.reportNumber}
-            </h2>
-          </div>
-
-          <Separator className="my-6" />
-
-          <section className="mb-6">
-            <h3 className="font-bold mb-2">Introduction:</h3>
-            <p className="text-sm text-muted-foreground">
-              Produced on date: {formatDate(data.producedDate) || "N/A"}
-            </p>
-            <p className="text-sm text-muted-foreground">
-              Expired on: {formatDate(data.expiredDate) || "N/A"}
-            </p>
-            <p className="text-sm mt-2">
-              We received everything it was in a good conditions.
-            </p>
-          </section>
-
-          <section className="mb-6">
-            <h3 className="font-bold mb-2">How it looks out side:</h3>
-            <p className="text-sm">
-              We received{" "}
-              <span className="bg-accent/20 px-1 rounded">
-                {getExternalContainersSummary() || "containers"}
-              </span>{" "}
-              like the one used for{" "}
-              <span className="bg-warning/20 px-1 rounded">
-                {data.senderShop?.toLowerCase() || "shop"}
-              </span>
-              , it has{" "}
-              <span className="text-muted-foreground">
-                ({data.barcodeNumber || "barcode number"})
-              </span>
-              .
-            </p>
-            <p className="text-sm mt-1">
-              Received by{" "}
-              <span className="bg-accent/20 px-1 rounded">
-                {data.employee?.name || "employee name"}
-              </span>
-              , on date{" "}
-              <span className="bg-warning/20 px-1 rounded">
-                {formatDate(data.date)}
-              </span>
-              .
-            </p>
-          </section>
-
-          <section className="mb-6">
-            <h3 className="font-bold mb-2">Insure its in good storage:</h3>
-            <p className="text-sm">
-              We put the samples in{" "}
-              <span className="bg-success/20 px-1 rounded">
                 {data.samples && data.samples.length > 0
                   ? [
-                      ...new Set(data.samples.map((s) => s.storageLocation)),
-                    ].join(" or ")
-                  : "store or fridge"}
+                      ...new Set(
+                        data.samples.map((s) => s.storageLocation || "المخزن")
+                      ),
+                    ].join(" أو ")
+                  : "المخزن أو الثلاجة"}
               </span>
               .
             </p>
           </section>
 
+          <Separator className="my-4" />
+
+          {/* Contents Section */}
           <section className="mb-6">
-            <h3 className="font-bold mb-3">What was inside:</h3>
-            <p className="text-sm mb-4">
-              We open samples it contain food and drinks.
+            <h3 className="font-bold text-lg mb-3">ما كان بالداخل:</h3>
+            <p className="text-sm pr-4 mb-4">
+              تم فتح العينات وتحتوي على أطعمة ومشروبات.
             </p>
 
+            {/* Internal Containers */}
             {data.internalContainers &&
               data.internalContainers.filter((c) => c.type).length > 0 && (
-                <div className="mb-4">
-                  <p className="text-sm font-semibold mb-2">Internal Containers:</p>
-                  {data.internalContainers
-                    .filter((c) => c.type)
-                    .map((container, idx) => (
-                      <p key={idx} className="text-sm">
-                        - {container.type}{" "}
-                        {container.quantity > 1
-                          ? `(Quantity: ${container.quantity})`
-                          : ""}
-                      </p>
-                    ))}
+                <div className="mb-4 pr-4">
+                  <p className="text-sm font-semibold mb-2">
+                    الحاويات الداخلية:
+                  </p>
+                  <div className="space-y-1">
+                    {data.internalContainers
+                      .filter((c) => c.type)
+                      .map((container, idx) => (
+                        <p key={idx} className="text-sm pr-4">
+                          • {container.type}
+                          {container.quantity > 1 &&
+                            ` (الكمية: ${container.quantity})`}
+                        </p>
+                      ))}
+                  </div>
                 </div>
               )}
 
-            <div className="overflow-x-auto">
-              <table className="w-full border-collapse text-sm">
+            {/* Samples Table */}
+            <div className="overflow-x-auto mt-4">
+              <table className="w-full border-collapse text-sm" dir="rtl">
                 <thead>
-                  <tr className="bg-accent/10">
-                    <th className="border border-border px-3 py-2 text-left font-semibold">
-                      Outer container
+                  <tr className="bg-gray-100 dark:bg-gray-800">
+                    <th className="border border-gray-300 dark:border-gray-700 px-3 py-2 text-right font-bold">
+                      الحاوية الخارجية
                     </th>
-                    <th className="border border-border px-3 py-2 text-left font-semibold">
-                      Sample number
+                    <th className="border border-gray-300 dark:border-gray-700 px-3 py-2 text-right font-bold">
+                      رقم العينة
                     </th>
-                    <th className="border border-border px-3 py-2 text-left font-semibold">
-                      How sample looks like
+                    <th className="border border-gray-300 dark:border-gray-700 px-3 py-2 text-right font-bold">
+                      شكل العينة
                     </th>
-                    <th className="border border-border px-3 py-2 text-left font-semibold">
-                      How it weight
+                    <th className="border border-gray-300 dark:border-gray-700 px-3 py-2 text-right font-bold">
+                      الوزن
                     </th>
-                    <th className="border border-border px-3 py-2 text-left font-semibold">
-                      used
+                    <th className="border border-gray-300 dark:border-gray-700 px-3 py-2 text-right font-bold">
+                      المستخدم
                     </th>
                   </tr>
                 </thead>
                 <tbody>
                   {data.samples &&
                     data.samples.map((sample, index) => (
-                      <tr key={sample.id} className="hover:bg-muted/30">
-                        <td className="border border-border px-3 py-2">
-                          {sample.internalContainers && sample.internalContainers.length > 0 ? (
+                      <tr
+                        key={sample.id}
+                        className={
+                          index % 2 === 0
+                            ? "bg-white dark:bg-gray-900"
+                            : "bg-gray-50 dark:bg-gray-800/50"
+                        }
+                      >
+                        <td className="border border-gray-300 dark:border-gray-700 px-3 py-3">
+                          {sample.internalContainers &&
+                          sample.internalContainers.length > 0 ? (
                             <div className="space-y-1">
-                              {sample.internalContainers.map((container, idx) => (
-                                <div key={idx} className="text-xs text-muted-foreground">
-                                  ({container.quantity}) {container.type}
-                                </div>
-                              ))}
+                              {sample.internalContainers.map(
+                                (container, idx) => (
+                                  <div key={idx} className="text-xs">
+                                    ({container.quantity}) {container.type}
+                                  </div>
+                                )
+                              )}
                             </div>
                           ) : (
-                            <span className="text-xs text-muted-foreground">
-                              (1) container
-                            </span>
+                            <span className="text-xs">(1) حاوية</span>
                           )}
                         </td>
-                        <td className="border border-border px-3 py-2">
-                          <span className="px-2 py-0.5 rounded bg-gray-800 text-white font-medium text-xs">
+                        <td className="border border-gray-300 dark:border-gray-700 px-3 py-3">
+                          <span className="inline-block px-2 py-1 rounded bg-blue-600 text-white font-medium text-xs">
                             {sample.sampleNumber}
                           </span>
                         </td>
-                        <td className="border border-border px-3 py-2">
+                        <td className="border border-gray-300 dark:border-gray-700 px-3 py-3">
                           <div className="space-y-1">
-                            <span className="px-2 py-0.5 rounded bg-gray-700 text-white text-xs">
-                              {sample.sampleName || "Food"}
-                            </span>
-                            {sample.systemCaseNumber && (
-                              <span className="px-2 py-0.5 rounded bg-gray-500 text-white text-xs block mt-1">
-                                {sample.systemCaseNumber}
+                            <div>
+                              <span className="inline-block px-2 py-1 rounded bg-green-600 text-white text-xs">
+                                {sample.sampleName || "طعام"}
                               </span>
+                            </div>
+                            {sample.systemCaseNumber && (
+                              <div>
+                                <span className="inline-block px-2 py-1 rounded bg-gray-600 text-white text-xs">
+                                  {sample.systemCaseNumber}
+                                </span>
+                              </div>
                             )}
+                            {sample.internalContainers &&
+                              sample.internalContainers.length > 0 && (
+                                <div className="text-xs text-gray-600 dark:text-gray-400">
+                                  في{" "}
+                                  {sample.internalContainers
+                                    .map((c) => c.type)
+                                    .join(" و ")}
+                                </div>
+                              )}
                           </div>
                         </td>
-                        <td className="border border-border px-3 py-2">
-                          <span className="px-2 py-0.5 rounded bg-gray-700 text-white text-xs">
-                            {sample.netWeight || 0}{" "}
-                            {sample.weightUnit === "kg" ? "kg" : "gram"}
-                            {sample.pureOrTotal === "pure"
-                              ? " (Net weight)"
-                              : " (total weight)"}
-                          </span>{" "}
-                          <span className="px-2 py-0.5 rounded bg-gray-600 text-white text-xs">
-                            {sample.pureOrTotal}
-                          </span>
+                        <td className="border border-gray-300 dark:border-gray-700 px-3 py-3">
+                          <div className="space-y-1">
+                            <div>
+                              <span className="inline-block px-2 py-1 rounded bg-purple-600 text-white text-xs">
+                                {sample.netWeight || 0}{" "}
+                                {sample.weightUnit === "kg" ? "كجم" : "جرام"}
+                              </span>
+                            </div>
+                            <div className="text-xs text-gray-600 dark:text-gray-400">
+                              (
+                              {sample.pureOrTotal === "pure"
+                                ? "الوزن الصافي"
+                                : "الوزن الإجمالي"}
+                              )
+                            </div>
+                          </div>
                         </td>
-                        <td className="border border-border px-3 py-2">
-                          <span className="px-2 py-0.5 rounded bg-gray-700 text-white text-xs">
-                            {sample.weightUsed || 0} gram
+                        <td className="border border-gray-300 dark:border-gray-700 px-3 py-3">
+                          <span className="inline-block px-2 py-1 rounded bg-orange-600 text-white text-xs">
+                            {sample.weightUsed || 0} جرام
                           </span>
                         </td>
                       </tr>
@@ -287,25 +325,38 @@ export function ReportPreview({ data }: ReportPreviewProps) {
             </div>
           </section>
 
+          <Separator className="my-6" />
+
+          {/* Signature Section */}
           <section className="mt-8">
+            <h3 className="font-bold text-lg mb-4">التوقيع:</h3>
             {data.employee?.signature ? (
-              <div className="space-y-2">
+              <div className="space-y-3 pr-4">
                 <img
                   src={data.employee.signature}
-                  alt="Employee Signature"
-                  className="h-20 w-auto max-w-50 border border-border rounded p-2 bg-white object-contain"
+                  alt="توقيع الموظف"
+                  className="h-24 w-auto max-w-xs border border-gray-300 rounded p-2 bg-white object-contain"
                 />
-                <div className="text-sm text-muted-foreground space-y-1">
-                  <p>Name: {data.employee.name || "N/A"}</p>
-                  <p>Position: {data.employee.roles?.name || "analyst"}</p>
-                  <p>Date: {formatDate(data.date)}</p>
+                <div className="text-sm space-y-1">
+                  <p>
+                    <span className="font-semibold">الاسم: </span>
+                    {data.employee.name || "غير محدد"}
+                  </p>
+                  <p>
+                    <span className="font-semibold">المنصب: </span>
+                    {data.employee.roles?.name || "محلل"}
+                  </p>
+                  <p>
+                    <span className="font-semibold">التاريخ: </span>
+                    {formatDate(data.date)}
+                  </p>
                 </div>
               </div>
             ) : (
-              <div>
-                <div className="mt-2 h-16 border-b-2 border-dashed border-border w-64"></div>
-                <p className="text-sm text-muted-foreground italic mt-2">
-                  [Signature not provided]
+              <div className="pr-4">
+                <div className="mt-2 h-16 border-b-2 border-dashed border-gray-400 w-64"></div>
+                <p className="text-sm text-gray-500 italic mt-2">
+                  [التوقيع غير متوفر]
                 </p>
               </div>
             )}

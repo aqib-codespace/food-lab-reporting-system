@@ -1,5 +1,6 @@
 import Employees from "@/pages/Employees";
 import { Metadata } from "next";
+import { AdminOnly } from "@/components/AdminOnly";
 
 export const metadata: Metadata = {
   title: "Employees | Master Data",
@@ -8,5 +9,9 @@ export const metadata: Metadata = {
 };
 
 export default function EmployeesPage() {
-  return <Employees />;
+  return (
+    <AdminOnly>
+      <Employees />
+    </AdminOnly>
+  );
 }

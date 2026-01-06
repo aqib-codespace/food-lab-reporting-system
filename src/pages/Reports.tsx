@@ -32,10 +32,24 @@ export default function Reports() {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [reportToDelete, setReportToDelete] = useState<string | null>(null);
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
 
   const filteredReports = allReports.filter((report) =>
     report.ref_number?.toLowerCase().includes(searchQuery.toLowerCase())
   );
+
+  // Pagination calculations
+  const totalPages = Math.ceil(filteredReports.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const paginatedReports = filteredReports.slice(startIndex, endIndex);
+
+  // Reset to page 1 when search changes
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchQuery(e.target.value);
+    setCurrentPage(1);
+  };
 
   const handleViewReport = (id: string) => {
     router.push(`/routes/examination-team/${id}`);
@@ -84,7 +98,7 @@ export default function Reports() {
             <Input
               placeholder="Search reports..."
               value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
+              onChange={handleSearchChange}
               className="w-full h-11 border-gray-200 dark:border-gray-800 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
             />
           </div>
@@ -96,11 +110,11 @@ export default function Reports() {
         </div>
       </div>
 
-      <Card className="border-0 overflow-hidden flex flex-col min-h-[calc(100vh-280px)]">
-        <CardContent className="p-0 flex-1 flex flex-col">
-          <div className="overflow-x-auto flex-1">
+      <Card className="border-0 overflow-hidden flex flex-col">
+        <CardContent className="p-0 flex flex-col">
+          <div className="overflow-x-auto overflow-y-auto min-h-[400px] max-h-[calc(100vh-350px)]">
             <table className="w-full min-w-200">
-              <thead className="bg-linear-to-r from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-950">
+              <thead className="bg-gradient-to-r from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-950">
                 <tr className="border-b border-gray-200 dark:border-gray-800">
                   <th className="text-left py-3 px-4 sm:py-4 sm:px-6 font-semibold text-gray-900 dark:text-white text-xs sm:text-sm w-[100px] sm:w-auto">
                     Ref Number
@@ -126,7 +140,7 @@ export default function Reports() {
                 </tr>
               </thead>
               <tbody className="bg-white dark:bg-gray-900">
-                {filteredReports.length === 0 ? (
+                {paginatedReports.length === 0 ? (
                   <tr>
                     <td colSpan={8} className="py-12">
                       <div className="text-center">
@@ -148,7 +162,7 @@ export default function Reports() {
                     </td>
                   </tr>
                 ) : (
-                  filteredReports.map((report, index) => (
+                  paginatedReports.map((report, index) => (
                     <tr
                       key={report.id}
                       className={cn(
@@ -208,6 +222,7 @@ export default function Reports() {
                               );
                             }}
                             className="text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 p-2 rounded-lg transition-all"
+                            id={`dropdown-btn-${report.id}`}
                           >
                             <MoreVertical className="w-4 h-4" />
                           </Button>
@@ -217,7 +232,26 @@ export default function Reports() {
                                 className="fixed inset-0 z-10"
                                 onClick={() => setOpenDropdown(null)}
                               />
-                              <div className="absolute right-0 top-8 z-20 w-48 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 py-1">
+                              <div
+                                className="fixed z-20 w-48 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 py-1"
+                                style={{
+                                  top: `${
+                                    document
+                                      .getElementById(
+                                        `dropdown-btn-${report.id}`
+                                      )
+                                      ?.getBoundingClientRect().bottom ?? 0
+                                  }px`,
+                                  right: `${
+                                    window.innerWidth -
+                                    (document
+                                      .getElementById(
+                                        `dropdown-btn-${report.id}`
+                                      )
+                                      ?.getBoundingClientRect().right ?? 0)
+                                  }px`,
+                                }}
+                              >
                                 <button
                                   onClick={(e) => {
                                     e.stopPropagation();
@@ -265,17 +299,82 @@ export default function Reports() {
             </table>
           </div>
 
-          <div className="flex items-center justify-between px-3 sm:px-6 py-3 sm:py-4 border-t border-gray-200 dark:border-gray-800 bg-gradient-to-r from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-950 mt-auto">
+          <div className="flex items-center justify-between px-3 sm:px-6 py-3 sm:py-4 border-t border-gray-200 dark:border-gray-800 bg-gradient-to-r from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-950">
             <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 font-medium">
-              Showing {filteredReports.length} of {allReports.length}
+              Showing {startIndex + 1}-
+              {Math.min(endIndex, filteredReports.length)} of{" "}
+              {filteredReports.length}
             </p>
-            {filteredReports.length > 0 && (
+            {totalPages > 1 && (
               <div className="flex items-center gap-2">
                 <Button
                   size="sm"
-                  className="bg-gray-800 p-2 rounded-lg text-white border-0 shadow-lg hover:shadow-xl transition-all"
+                  onClick={() =>
+                    setCurrentPage((prev) => Math.max(1, prev - 1))
+                  }
+                  disabled={currentPage === 1}
+                  className={cn(
+                    "p-2 rounded-lg border-0 shadow-lg hover:shadow-xl transition-all",
+                    currentPage === 1
+                      ? "bg-gray-300 dark:bg-gray-700 cursor-not-allowed"
+                      : "bg-gray-800 text-white"
+                  )}
                 >
-                  1
+                  <ChevronLeft className="w-4 h-4" />
+                </Button>
+
+                {/* Page numbers */}
+                <div className="hidden sm:flex items-center gap-1">
+                  {Array.from({ length: totalPages }, (_, i) => i + 1)
+                    .filter((page) => {
+                      // Show first page, last page, current page, and pages around current
+                      return (
+                        page === 1 ||
+                        page === totalPages ||
+                        (page >= currentPage - 1 && page <= currentPage + 1)
+                      );
+                    })
+                    .map((page, index, array) => (
+                      <div key={page} className="flex items-center gap-1">
+                        {/* Add ellipsis if there's a gap */}
+                        {index > 0 && array[index - 1] !== page - 1 && (
+                          <span className="text-gray-400 px-1">...</span>
+                        )}
+                        <Button
+                          size="sm"
+                          onClick={() => setCurrentPage(page)}
+                          className={cn(
+                            "px-3 py-2 rounded-lg border-0 transition-all min-w-[36px]",
+                            currentPage === page
+                              ? "bg-blue-600 text-white shadow-lg"
+                              : "bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600"
+                          )}
+                        >
+                          {page}
+                        </Button>
+                      </div>
+                    ))}
+                </div>
+
+                {/* Mobile page indicator */}
+                <div className="sm:hidden text-xs font-medium text-gray-600 dark:text-gray-400">
+                  Page {currentPage} / {totalPages}
+                </div>
+
+                <Button
+                  size="sm"
+                  onClick={() =>
+                    setCurrentPage((prev) => Math.min(totalPages, prev + 1))
+                  }
+                  disabled={currentPage === totalPages}
+                  className={cn(
+                    "p-2 rounded-lg border-0 shadow-lg hover:shadow-xl transition-all",
+                    currentPage === totalPages
+                      ? "bg-gray-300 dark:bg-gray-700 cursor-not-allowed"
+                      : "bg-gray-800 text-white"
+                  )}
+                >
+                  <ChevronRight className="w-4 h-4" />
                 </Button>
               </div>
             )}

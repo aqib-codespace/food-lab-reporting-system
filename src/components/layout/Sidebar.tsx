@@ -21,7 +21,8 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { LogoutButton } from "@/components/LogoutButton";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { clientAuth } from "@/lib/auth";
 
 interface SidebarProps {
   isOpen: boolean;
@@ -31,6 +32,12 @@ interface SidebarProps {
 export function Sidebar({ isOpen, onClose }: SidebarProps) {
   const pathname = usePathname();
   const [isMasterDataOpen, setIsMasterDataOpen] = useState(true);
+  const [userRole, setUserRole] = useState<string | null>(null);
+
+  useEffect(() => {
+    const user = clientAuth.getUser();
+    setUserRole(user?.role || null);
+  }, []);
 
   const navigation = [
     { name: "Dashboard", href: "/", icon: LayoutDashboard },
@@ -103,7 +110,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
         </div>
 
         <nav className="flex flex-col h-[calc(100vh-5rem)] p-4">
-          <div className="space-y-2 flex-1">
+          <div className="space-y-2 flex-1 overflow-y-auto pr-2">
             <p className="px-3 py-2 text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider">
               Main Menu
             </p>
@@ -140,65 +147,66 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
               );
             })}
 
-            {/* Master Data Dropdown */}
-            <div>
-              <button
-                onClick={() => setIsMasterDataOpen(!isMasterDataOpen)}
-                className={cn(
-                  "group flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200 w-full",
-                  "hover:translate-x-1",
-                  isMasterDataActive
-                    ? "bg-gray-800 text-white shadow-lg"
-                    : "text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800"
-                )}
-              >
-                <Database
+            {userRole === "admin" && (
+              <div>
+                <button
+                  onClick={() => setIsMasterDataOpen(!isMasterDataOpen)}
                   className={cn(
-                    "w-5 h-5 transition-transform duration-200",
+                    "group flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200 w-full",
+                    "hover:translate-x-1",
                     isMasterDataActive
-                      ? "text-white"
-                      : "text-gray-600 dark:text-gray-400 group-hover:text-gray-600 dark:group-hover:text-gray-400 group-hover:scale-110"
+                      ? "bg-gray-800 text-white shadow-lg"
+                      : "text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800"
                   )}
-                />
-                Master Data
-                {isMasterDataOpen ? (
-                  <ChevronDown className="w-4 h-4 ml-auto" />
-                ) : (
-                  <ChevronRight className="w-4 h-4 ml-auto" />
-                )}
-              </button>
+                >
+                  <Database
+                    className={cn(
+                      "w-5 h-5 transition-transform duration-200",
+                      isMasterDataActive
+                        ? "text-white"
+                        : "text-gray-600 dark:text-gray-400 group-hover:text-gray-600 dark:group-hover:text-gray-400 group-hover:scale-110"
+                    )}
+                  />
+                  Master Data
+                  {isMasterDataOpen ? (
+                    <ChevronDown className="w-4 h-4 ml-auto" />
+                  ) : (
+                    <ChevronRight className="w-4 h-4 ml-auto" />
+                  )}
+                </button>
 
-              {/* Master Data Sub-items */}
-              {isMasterDataOpen && (
-                <div className="ml-4 mt-1 space-y-1">
-                  {masterDataItems.map((item) => {
-                    const isActive =
-                      pathname === item.href ||
-                      pathname === item.href.replace("/master-data", "");
-                    return (
-                      <Link
-                        key={item.name}
-                        href={item.href}
-                        className={cn(
-                          "group flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-medium transition-all duration-200",
-                          "hover:translate-x-1",
-                          isActive
-                            ? "bg-gray-700 text-white"
-                            : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800"
-                        )}
-                        onClick={onClose}
-                      >
-                        <item.icon className="w-4 h-4" />
-                        {item.name}
-                        {isActive && (
-                          <div className="ml-auto w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
-                        )}
-                      </Link>
-                    );
-                  })}
-                </div>
-              )}
-            </div>
+                {/* Master Data Sub-items */}
+                {isMasterDataOpen && (
+                  <div className="ml-4 mt-1 space-y-1">
+                    {masterDataItems.map((item) => {
+                      const isActive =
+                        pathname === item.href ||
+                        pathname === item.href.replace("/master-data", "");
+                      return (
+                        <Link
+                          key={item.name}
+                          href={item.href}
+                          className={cn(
+                            "group flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-medium transition-all duration-200",
+                            "hover:translate-x-1",
+                            isActive
+                              ? "bg-gray-700 text-white"
+                              : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800"
+                          )}
+                          onClick={onClose}
+                        >
+                          <item.icon className="w-4 h-4" />
+                          {item.name}
+                          {isActive && (
+                            <div className="ml-auto w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
+                          )}
+                        </Link>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            )}
 
             {bottomNavigation.map((item) => {
               const isActive =
@@ -234,12 +242,12 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
             })}
           </div>
 
-          <div className="pt-4 mt-4 border-t border-gray-200 dark:border-gray-800">
+          <div className="pt-4 mt-4 border-t border-gray-200 dark:border-gray-800 flex-shrink-0">
             <LogoutButton
               variant="text"
               className={cn(
-                "group flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium  w-full justify-start",
-                "text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 hover:bg-red-50 dark:hover:bg-red-900/20"
+                "group flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium w-full justify-start",
+                "text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 hover:bg-red-50 dark:bg-gray-800 dark:hover:bg-red-900/20 transition-all duration-200"
               )}
             />
           </div>

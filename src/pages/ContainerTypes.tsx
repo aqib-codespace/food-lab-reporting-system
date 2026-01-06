@@ -692,9 +692,9 @@ export default function ContainerTypes() {
           {/* Add/Edit Modal */}
           {isModalOpen && (
             <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-              <div className="bg-white dark:bg-gray-900 rounded-xl shadow-2xl w-full max-w-lg">
-                <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-800">
-                  <h2 className="text-xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
+              <div className="bg-white dark:bg-gray-900 rounded-xl shadow-2xl w-full max-w-2xl max-h-[90vh] flex flex-col">
+                <div className="flex items-center justify-between p-4 sm:p-6 border-b border-gray-200 dark:border-gray-800 shrink-0">
+                  <h2 className="text-lg sm:text-xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
                     <Package className="w-5 h-5 text-blue-600" />
                     {editingContainer
                       ? "Edit Container Type"
@@ -708,7 +708,7 @@ export default function ContainerTypes() {
                   </button>
                 </div>
 
-                <div className="p-6 space-y-4">
+                <div className="p-4 sm:p-6 space-y-4 overflow-y-auto flex-1">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
                       Name <span className="text-red-500">*</span>
@@ -824,7 +824,7 @@ export default function ContainerTypes() {
                   </div>
                 </div>
 
-                <div className="flex items-center rounded-b-xl justify-end gap-3 p-6 border-t border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/50">
+                <div className="flex items-center rounded-b-xl justify-end gap-3 p-4 sm:p-6 border-t border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/50 shrink-0">
                   <Button
                     onClick={() => setIsModalOpen(false)}
                     variant="outline"
@@ -846,7 +846,7 @@ export default function ContainerTypes() {
           {/* Delete Modal */}
           {isDeleteModalOpen && (
             <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-              <div className="bg-white dark:bg-gray-900 rounded-xl shadow-2xl w-full max-w-md">
+              <div className="bg-white dark:bg-gray-900 rounded-xl shadow-2xl w-full max-w-md max-h-[90vh] flex flex-col">
                 <div className="p-6 border-b border-gray-200 dark:border-gray-800">
                   <div className="flex items-center gap-3">
                     <div className="w-12 h-12 rounded-full bg-red-100 dark:bg-red-900/20 flex items-center justify-center">
@@ -893,9 +893,9 @@ export default function ContainerTypes() {
           {/* Color Add/Edit Modal */}
           {isColorModalOpen && (
             <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-              <div className="bg-white dark:bg-gray-900 rounded-xl shadow-2xl w-full max-w-lg">
-                <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-800">
-                  <h2 className="text-xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
+              <div className="bg-white dark:bg-gray-900 rounded-xl shadow-2xl w-full max-w-lg max-h-[90vh] flex flex-col">
+                <div className="flex items-center justify-between p-4 sm:p-6 border-b border-gray-200 dark:border-gray-800 flex-shrink-0">
+                  <h2 className="text-lg sm:text-xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
                     <Palette className="w-5 h-5 text-indigo-600" />
                     {editingColor ? "Edit Color" : "Add Color"}
                   </h2>
@@ -907,7 +907,7 @@ export default function ContainerTypes() {
                   </button>
                 </div>
 
-                <div className="p-6 space-y-4">
+                <div className="p-4 sm:p-6 space-y-4 overflow-y-auto flex-1">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
                       Color Name <span className="text-red-500">*</span>
@@ -988,7 +988,7 @@ export default function ContainerTypes() {
           {/* Color Delete Modal */}
           {isColorDeleteModalOpen && (
             <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-              <div className="bg-white dark:bg-gray-900 rounded-xl shadow-2xl w-full max-w-md">
+              <div className="bg-white dark:bg-gray-900 rounded-xl shadow-2xl w-full max-w-md max-h-[90vh] flex flex-col">
                 <div className="p-6 border-b border-gray-200 dark:border-gray-800">
                   <div className="flex items-center gap-3">
                     <div className="w-12 h-12 rounded-full bg-red-100 dark:bg-red-900/20 flex items-center justify-center">

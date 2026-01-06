@@ -1,7 +1,10 @@
 "use client";
 import { useState, useMemo, useEffect } from "react";
 import { useDropzone } from "react-dropzone";
-import { uploadSampleImage, deleteSampleImage } from "@/lib/supabase/employee-storage";
+import {
+  uploadSampleImage,
+  deleteSampleImage,
+} from "@/lib/supabase/employee-storage";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -135,7 +138,8 @@ export default function SampleNames() {
       let imageUrl: string | null = editingSample?.image ?? null;
 
       if (selectedFile) {
-        const identifier = editingSample?.id ?? `${formData.name}-${Date.now()}`;
+        const identifier =
+          editingSample?.id ?? `${formData.name}-${Date.now()}`;
         const uploadResult = await uploadSampleImage(selectedFile, identifier);
         if (!uploadResult.success) {
           toast({
@@ -318,15 +322,14 @@ export default function SampleNames() {
                         <div className="w-20 h-20 rounded-lg bg-blue-100 dark:bg-blue-900/20 flex items-center justify-center shrink-0">
                           <TestTube2 className="w-6 h-6 text-blue-600" />
                         </div>
-                      )} 
+                      )}
                       <div className="flex-1 min-w-0">
                         <h3 className="font-semibold text-gray-900 dark:text-white truncate">
                           {sample.name}
                         </h3>
-                      <p className="text-xs  text-gray-700 mt-2 max-w-[150px] dark:text-gray-300  ">
-                        {sample.description || "No description available."}
+                        <p className="text-xs  text-gray-700 mt-2 max-w-[150px] dark:text-gray-300  ">
+                          {sample.description || "No description available."}
                         </p>
-
                       </div>
                     </div>
                     <div className="flex items-center">
@@ -355,7 +358,6 @@ export default function SampleNames() {
                       </DropdownMenu.Root>
                     </div>
                   </div>
-
                 </CardContent>
               </Card>
             ))}
@@ -375,9 +377,9 @@ export default function SampleNames() {
           {/* Add/Edit Modal */}
           {isModalOpen && (
             <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-              <div className="bg-white dark:bg-gray-900 rounded-xl shadow-2xl w-full max-w-lg">
-                <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-800">
-                  <h2 className="text-xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
+              <div className="bg-white dark:bg-gray-900 rounded-xl shadow-2xl w-full max-w-2xl max-h-[90vh] flex flex-col">
+                <div className="flex items-center justify-between p-4 sm:p-6 border-b border-gray-200 dark:border-gray-800 flex-shrink-0">
+                  <h2 className="text-lg sm:text-xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
                     <TestTube2 className="w-5 h-5 text-teal-600" />
                     {editingSample ? "Edit Sample Name" : "Add Sample Name"}
                   </h2>
@@ -389,7 +391,7 @@ export default function SampleNames() {
                   </button>
                 </div>
 
-                <div className="p-6 space-y-4">
+                <div className="p-4 sm:p-6 space-y-4 overflow-y-auto flex-1">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
                       Sample Name <span className="text-red-500">*</span>
@@ -425,7 +427,11 @@ export default function SampleNames() {
                       </label>
 
                       {previewUrl ? (
-                        <div onClick={() => open()} role="button" className="relative w-full h-48 md:h-56 rounded-lg overflow-hidden border bg-gray-50 dark:bg-gray-800 cursor-pointer">
+                        <div
+                          onClick={() => open()}
+                          role="button"
+                          className="relative w-full h-48 md:h-56 rounded-lg overflow-hidden border bg-gray-50 dark:bg-gray-800 cursor-pointer"
+                        >
                           <img
                             src={previewUrl}
                             alt="Preview"
@@ -440,24 +446,47 @@ export default function SampleNames() {
                               if (selectedFile) {
                                 setSelectedFile(null);
                                 setPreviewUrl(null);
-                                setValidationErrors((s) => ({ ...s, image: undefined }));
+                                setValidationErrors((s) => ({
+                                  ...s,
+                                  image: undefined,
+                                }));
                                 return;
                               }
 
                               // otherwise, delete from storage when editing
                               if (editingSample && editingSample.image) {
                                 try {
-                                  const del = await deleteSampleImage(editingSample.id || editingSample.name);
+                                  const del = await deleteSampleImage(
+                                    editingSample.id || editingSample.name
+                                  );
                                   if (del.success) {
-                                    toast({ title: "Success", description: "Image deleted from storage" });
+                                    toast({
+                                      title: "Success",
+                                      description: "Image deleted from storage",
+                                    });
                                     setPreviewUrl(null);
-                                    setEditingSample({ ...editingSample, image: null });
-                                    setValidationErrors((s) => ({ ...s, image: 'Image is required' }));
+                                    setEditingSample({
+                                      ...editingSample,
+                                      image: null,
+                                    });
+                                    setValidationErrors((s) => ({
+                                      ...s,
+                                      image: "Image is required",
+                                    }));
                                   } else {
-                                    toast({ title: "Error", description: del.error || "Could not delete image", variant: "destructive" });
+                                    toast({
+                                      title: "Error",
+                                      description:
+                                        del.error || "Could not delete image",
+                                      variant: "destructive",
+                                    });
                                   }
                                 } catch (err) {
-                                  toast({ title: "Error", description: "Failed to delete image", variant: "destructive" });
+                                  toast({
+                                    title: "Error",
+                                    description: "Failed to delete image",
+                                    variant: "destructive",
+                                  });
                                 }
                               }
                             }}
@@ -467,26 +496,39 @@ export default function SampleNames() {
                           </button>
 
                           <div className="absolute bottom-2 left-2">
-                            <button type="button" onClick={(e) => { e.stopPropagation(); open(); }} className="text-xs bg-white/80 dark:bg-gray-700 px-2 py-1 rounded">Replace</button>
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                open();
+                              }}
+                              className="text-xs bg-white/80 dark:bg-gray-700 px-2 py-1 rounded"
+                            >
+                              Replace
+                            </button>
                           </div>
 
                           {validationErrors.image && (
-                            <p className="absolute bottom-2 right-2 text-xs text-red-600">{validationErrors.image}</p>
+                            <p className="absolute bottom-2 right-2 text-xs text-red-600">
+                              {validationErrors.image}
+                            </p>
                           )}
                         </div>
                       ) : (
                         <div
                           {...getRootProps()}
-                          className={`w-full h-48 md:h-56 flex items-center justify-center px-4 bg-white dark:bg-gray-800 border border-dashed rounded-lg cursor-pointer text-center border-gray-300 dark:border-gray-700 ${validationErrors.image ? 'border-red-500' : ''}`}
+                          className={`w-full h-48 md:h-56 flex items-center justify-center px-4 bg-white dark:bg-gray-800 border border-dashed rounded-lg cursor-pointer text-center border-gray-300 dark:border-gray-700 ${
+                            validationErrors.image ? "border-red-500" : ""
+                          }`}
                         >
                           <input {...getInputProps()} />
                           <div className="flex flex-col items-center justify-center">
-                          <Upload className="h-8 w-8 text-center mb-2  dark:text-gray-100 text-gray-800"/>
-                          <p className="text-sm text-gray-500 dark:text-gray-400">
-                            {isDragActive
-                              ? "Drop the image here..."
-                              : "Drag 'n' drop an image here, or click to select one"}
-                          </p>
+                            <Upload className="h-8 w-8 text-center mb-2  dark:text-gray-100 text-gray-800" />
+                            <p className="text-sm text-gray-500 dark:text-gray-400">
+                              {isDragActive
+                                ? "Drop the image here..."
+                                : "Drag 'n' drop an image here, or click to select one"}
+                            </p>
                           </div>
                         </div>
                       )}
@@ -508,10 +550,10 @@ export default function SampleNames() {
                         className="w-full h-full px-4 dark:text-gray-300 dark:placeholder:text-gray-400 py-2.5 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500/20"
                       />
                     </div>
-                  </div> 
+                  </div>
                 </div>
 
-                <div className="flex rounded-b-xl items-center justify-end gap-3 p-6 border-t border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/50">
+                <div className="flex rounded-b-xl items-center justify-end gap-3 p-4 sm:p-6 border-t border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/50 flex-shrink-0">
                   <Button
                     onClick={() => setIsModalOpen(false)}
                     variant="outline"
@@ -522,7 +564,11 @@ export default function SampleNames() {
                   <Button
                     onClick={handleSaveSample}
                     disabled={isSubmitting || modalImageMissing}
-                    className={`rounded-lg text-white ${isSubmitting || modalImageMissing ? 'opacity-50 cursor-not-allowed bg-gray-500 dark:bg-blue-900' : 'bg-gray-800 dark:bg-blue-700'}`}
+                    className={`rounded-lg text-white ${
+                      isSubmitting || modalImageMissing
+                        ? "opacity-50 cursor-not-allowed bg-gray-500 dark:bg-blue-900"
+                        : "bg-gray-800 dark:bg-blue-700"
+                    }`}
                   >
                     {editingSample ? "Update" : "Add"} Sample Name
                   </Button>
@@ -534,7 +580,7 @@ export default function SampleNames() {
           {/* Delete Modal */}
           {isDeleteModalOpen && (
             <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-              <div className="bg-white dark:bg-gray-900 rounded-xl shadow-2xl w-full max-w-md">
+              <div className="bg-white dark:bg-gray-900 rounded-xl shadow-2xl w-full max-w-md max-h-[90vh] flex flex-col">
                 <div className="p-6 border-b border-gray-200 dark:border-gray-800">
                   <div className="flex items-center gap-3">
                     <div className="w-12 h-12 rounded-full bg-red-100 dark:bg-red-900/20 flex items-center justify-center">

@@ -80,7 +80,7 @@ export default function Dashboard() {
     <DashboardLayout>
       <div className="flex flex-col md:flex-row justify-between gap-4 mb-6">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-bold bg-linear-to-r from-gray-900 to-gray-600 dark:from-white dark:to-gray-300 bg-clip-text text-transparent">
+          <h1 className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-gray-900 to-gray-600 dark:from-white dark:to-gray-300 bg-clip-text text-transparent">
             Dashboard
           </h1>
           <p className="text-gray-600 dark:text-gray-400 mt-1 sm:mt-2 text-sm sm:text-base">
@@ -108,7 +108,7 @@ export default function Dashboard() {
             >
               <div
                 className={cn(
-                  "absolute top-0 right-0 w-32 h-32 bg-linear-to-br opacity-10",
+                  "absolute top-0 right-0 w-32 h-32 bg-gradient-to-br opacity-10",
                   stat.color
                 )}
                 style={{ borderRadius: "0 0 0 100%" }}
@@ -117,7 +117,7 @@ export default function Dashboard() {
                 <div className="flex items-center justify-between mb-3 sm:mb-4">
                   <div
                     className={cn(
-                      "p-3 rounded-xl bg-linear-to-br shadow-lg",
+                      "p-3 rounded-xl bg-gradient-to-br shadow-lg",
                       stat.color
                     )}
                   >

@@ -1,47 +1,67 @@
 import { NextRequest, NextResponse } from "next/server";
+import { verifyToken } from "@/lib/auth";
 
 export async function middleware(req: NextRequest) {
-  // Public routes that don't require authentication
-  const isLoginPage = req.nextUrl.pathname === "/login";
-  const isApiRoute = req.nextUrl.pathname.startsWith("/api");
+  const pathname = req.nextUrl.pathname;
 
-  // Allow API routes to handle their own auth
+  const publicRoutes = ["/login"];
+  const isPublicRoute = publicRoutes.includes(pathname);
+  const isApiRoute = pathname.startsWith("/api");
+
   if (isApiRoute) {
     return NextResponse.next();
   }
 
-  // Check for authentication token in cookies
+  if (isPublicRoute) {
+    return NextResponse.next();
+  }
+
   const authToken = req.cookies.get("foodlab_auth_token");
 
-  let isAuthenticated = false;
-
-  if (authToken?.value) {
-    // Simple check - token exists and is not empty
-    isAuthenticated = authToken.value.length > 20;
+  if (!authToken?.value) {
+    const loginUrl = new URL("/login", req.url);
+    loginUrl.searchParams.set("redirect", pathname);
+    return NextResponse.redirect(loginUrl);
   }
 
-  // If not authenticated and trying to access protected route
-  if (!isAuthenticated && !isLoginPage) {
-    return NextResponse.redirect(new URL("/login", req.url));
-  }
+  try {
+    const verification = await verifyToken(authToken.value);
 
-  // If authenticated and trying to access login page, redirect to home
-  if (isAuthenticated && isLoginPage) {
-    return NextResponse.redirect(new URL("/", req.url));
-  }
+    if (!verification.valid || !verification.payload) {
+      const loginUrl = new URL("/login", req.url);
+      loginUrl.searchParams.set("redirect", pathname);
+      return NextResponse.redirect(loginUrl);
+    }
 
-  return NextResponse.next();
+    // Check if user is trying to access master-data routes
+    if (pathname.startsWith("/routes/master-data")) {
+      const userRole = verification.payload.role;
+      if (userRole !== "admin") {
+        // Redirect non-admin users to dashboard
+        return NextResponse.redirect(new URL("/", req.url));
+      }
+    }
+
+    const requestHeaders = new Headers(req.headers);
+    requestHeaders.set("x-user-id", verification.payload.userId.toString());
+    requestHeaders.set("x-user-email", verification.payload.email);
+    requestHeaders.set("x-user-role", verification.payload.role);
+
+    return NextResponse.next({
+      request: {
+        headers: requestHeaders,
+      },
+    });
+  } catch (error) {
+    console.error("Token verification error:", error);
+    const loginUrl = new URL("/login", req.url);
+    loginUrl.searchParams.set("redirect", pathname);
+    return NextResponse.redirect(loginUrl);
+  }
 }
 
 export const config = {
   matcher: [
-    /*
-     * Match all request paths except:
-     * - _next/static (static files)
-     * - _next/image (image optimization files)
-     * - favicon.ico (favicon file)
-     * - public folder assets
-     */
     "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
   ],
 };

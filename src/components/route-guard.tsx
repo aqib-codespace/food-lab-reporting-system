@@ -4,6 +4,8 @@ import { useEffect, useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { clientAuth } from "@/lib/auth";
 
+const PUBLIC_ROUTES = ["/login"];
+
 export function RouteGuard({ children }: { children: React.ReactNode }) {
   const [isChecking, setIsChecking] = useState(true);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -17,13 +19,13 @@ export function RouteGuard({ children }: { children: React.ReactNode }) {
       setIsAuthenticated(authenticated);
       setIsChecking(false);
 
-      // If not authenticated and not on login page, redirect to login
-      if (!authenticated && pathname !== "/login") {
+      const isPublicRoute = pathname ? PUBLIC_ROUTES.includes(pathname) : false;
+
+      if (!authenticated && !isPublicRoute) {
         router.push("/login");
       }
 
-      // If authenticated and on login page, redirect to home
-      if (authenticated && pathname === "/login") {
+      if (authenticated && isPublicRoute) {
         router.push("/");
       }
     };
@@ -31,7 +33,6 @@ export function RouteGuard({ children }: { children: React.ReactNode }) {
     checkAuth();
   }, [pathname, router]);
 
-  // Show loading state while checking auth
   if (isChecking) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-950">
@@ -43,8 +44,9 @@ export function RouteGuard({ children }: { children: React.ReactNode }) {
     );
   }
 
-  // If on protected route and not authenticated, show loading (redirect will happen)
-  if (!isAuthenticated && pathname !== "/login") {
+  const isPublicRoute = pathname ? PUBLIC_ROUTES.includes(pathname) : false;
+
+  if (!isAuthenticated && !isPublicRoute) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-950">
         <div className="text-center space-y-4">

@@ -1,5 +1,6 @@
 import ContainerTypes from "@/pages/ContainerTypes";
 import { Metadata } from "next";
+import { AdminOnly } from "@/components/AdminOnly";
 
 export const metadata: Metadata = {
   title: "Container Types | Master Data",
@@ -8,5 +9,9 @@ export const metadata: Metadata = {
 };
 
 export default function ContainerTypesPage() {
-  return <ContainerTypes />;
+  return (
+    <AdminOnly>
+      <ContainerTypes />
+    </AdminOnly>
+  );
 }

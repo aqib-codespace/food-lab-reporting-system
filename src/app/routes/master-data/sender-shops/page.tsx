@@ -1,6 +1,7 @@
 "use client";
 import { useState, useMemo } from "react";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
+import { AdminOnly } from "@/components/AdminOnly";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import {
@@ -23,7 +24,7 @@ import type { Database } from "@/types/supabase";
 
 type SenderShop = Database["public"]["Tables"]["sender_shops"]["Row"];
 
-export default function SenderShopsPage() {
+function SenderShops() {
   const {
     data: senderShops,
     loading,
@@ -323,9 +324,9 @@ export default function SenderShopsPage() {
             {/* Add/Edit Modal */}
             {isModalOpen && (
               <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-                <div className="bg-white dark:bg-gray-900 rounded-xl shadow-2xl w-full max-w-lg">
-                  <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-800">
-                    <h2 className="text-xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
+                <div className="bg-white dark:bg-gray-900 rounded-xl shadow-2xl w-full max-w-lg max-h-[90vh] flex flex-col">
+                  <div className="flex items-center justify-between p-4 sm:p-6 border-b border-gray-200 dark:border-gray-800 shrink-0">
+                    <h2 className="text-lg sm:text-xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
                       <Store className="w-5 h-5 text-blue-600" />
                       {editingShop ? "Edit Sender Shop" : "Add Sender Shop"}
                     </h2>
@@ -337,7 +338,7 @@ export default function SenderShopsPage() {
                     </button>
                   </div>
 
-                  <div className="p-6 space-y-4">
+                  <div className="p-4 sm:p-6 space-y-4 overflow-y-auto flex-1">
                     <div>
                       <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
                         Shop Name <span className="text-red-500">*</span>
@@ -424,7 +425,7 @@ export default function SenderShopsPage() {
                     </div>
                   </div>
 
-                  <div className="flex items-center justify-end gap-3 p-6 border-t border-gray-200 dark:border-gray-800">
+                  <div className="flex items-center justify-end gap-3 p-4 sm:p-6 border-t border-gray-200 dark:border-gray-800 shrink-0">
                     <button
                       onClick={() => setIsModalOpen(false)}
                       disabled={isSubmitting}
@@ -507,5 +508,13 @@ export default function SenderShopsPage() {
         )}
       </div>
     </DashboardLayout>
+  );
+}
+
+export default function SenderShopsPage() {
+  return (
+    <AdminOnly>
+      <SenderShops />
+    </AdminOnly>
   );
 }

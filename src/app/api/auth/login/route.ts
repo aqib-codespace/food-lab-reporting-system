@@ -13,7 +13,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Verify credentials using environment variables
+    // Verify credentials against database
     const result = await verifyCredentials(email, password);
 
     if (!result.success || !result.user) {
@@ -23,10 +23,24 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    return NextResponse.json({
+    // Set secure cookie with JWT token
+    const response = NextResponse.json({
       success: true,
       user: result.user,
     });
+
+    // Set HTTP-only cookie for better security
+    response.cookies.set({
+      name: "foodlab_auth_token",
+      value: result.user.token,
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "strict",
+      maxAge: 60 * 60 * 24, // 24 hours
+      path: "/",
+    });
+
+    return response;
   } catch (error) {
     console.error("Login error:", error);
     return NextResponse.json(

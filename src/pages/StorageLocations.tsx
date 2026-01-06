@@ -383,9 +383,9 @@ export default function StorageLocations() {
           {/* Add/Edit Modal */}
           {isModalOpen && (
             <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-              <div className="bg-white dark:bg-gray-900 rounded-xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
-                <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-800 sticky top-0 bg-white dark:bg-gray-900 z-10">
-                  <h2 className="text-xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
+              <div className="bg-white dark:bg-gray-900 rounded-xl shadow-2xl w-full max-w-2xl max-h-[90vh] flex flex-col">
+                <div className="flex items-center justify-between p-4 sm:p-6 border-b border-gray-200 dark:border-gray-800 flex-shrink-0 bg-white dark:bg-gray-900">
+                  <h2 className="text-lg sm:text-xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
                     <MapPin className="w-5 h-5 text-blue-600" />
                     {editingLocation
                       ? "Edit Storage Location"
@@ -399,7 +399,7 @@ export default function StorageLocations() {
                   </button>
                 </div>
 
-                <div className="p-6 space-y-4">
+                <div className="p-4 sm:p-6 space-y-4 overflow-y-auto flex-1">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
                       Location Name <span className="text-red-500">*</span>
@@ -437,7 +437,11 @@ export default function StorageLocations() {
                       onChange={(e) =>
                         setFormData((prev) => ({
                           ...prev,
-                          type: e.target.value as "store" | "fridge" | "freezer" | "room",
+                          type: e.target.value as
+                            | "store"
+                            | "fridge"
+                            | "freezer"
+                            | "room",
                         }))
                       }
                       className={`w-full px-4 py-2.5 bg-white dark:bg-gray-800 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 ${
@@ -534,7 +538,7 @@ export default function StorageLocations() {
                   </div>
                 </div>
 
-                <div className="flex items-center justify-end gap-3 p-6 border-t border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/50">
+                <div className="flex items-center justify-end gap-3 p-4 sm:p-6 border-t border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/50 flex-shrink-0">
                   <Button
                     onClick={() => setIsModalOpen(false)}
                     variant="outline"
@@ -556,7 +560,7 @@ export default function StorageLocations() {
           {/* Delete Modal */}
           {isDeleteModalOpen && (
             <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-              <div className="bg-white dark:bg-gray-900 rounded-xl shadow-2xl w-full max-w-md">
+              <div className="bg-white dark:bg-gray-900 rounded-xl shadow-2xl w-full max-w-md max-h-[90vh] flex flex-col">
                 <div className="p-6 border-b border-gray-200 dark:border-gray-800">
                   <div className="flex items-center gap-3">
                     <div className="w-12 h-12 rounded-full bg-red-100 dark:bg-red-900/20 flex items-center justify-center">
@@ -580,7 +584,7 @@ export default function StorageLocations() {
                   </p>
                 </div>
 
-                <div className="flex items-center justify-end gap-3 p-6 border-t border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/50">
+                <div className="flex items-center justify-end gap-3 p-4 sm:p-6 border-t border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/50 flex-shrink-0">
                   <Button
                     onClick={() => setIsDeleteModalOpen(false)}
                     variant="outline"
@@ -604,4 +608,3 @@ export default function StorageLocations() {
     </DashboardLayout>
   );
 }
-

@@ -630,7 +630,7 @@ export default function Employees() {
                             className="w-16 h-16 rounded-full object-cover border-2 border-blue-200 dark:border-blue-700"
                           />
                         ) : (
-                          <div className="w-16 h-16 rounded-full flex items-center justify-center text-lg font-bold bg-linear-to-br from-blue-500 to-purple-600 text-white shrink-0">
+                          <div className="w-16 h-16 rounded-full flex items-center justify-center text-lg font-bold bg-gradient-to-br from-blue-500 to-purple-600 text-white shrink-0">
                             {employee.initials}
                           </div>
                         )}
@@ -733,7 +733,7 @@ export default function Employees() {
                     <CardContent className="p-4">
                       <div className="flex justify-between items-start mb-3">
                         <div className="flex items-center gap-2">
-                          <div className="w-10 h-10 rounded-lg bg-linear-to-br from-gray-500 to-black flex items-center justify-center text-white font-bold">
+                          <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-gray-500 to-black flex items-center justify-center text-white font-bold">
                             {role.name.substring(0, 2).toUpperCase()}
                           </div>
                           <div className="flex-1">
@@ -805,8 +805,8 @@ export default function Employees() {
           {/* Employee Modal */}
           {isEmployeeModalOpen && (
             <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-              <div className="bg-white dark:bg-gray-900 rounded-xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-                <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-800 sticky top-0 bg-white dark:bg-gray-900 z-10">
+              <div className="bg-white dark:bg-gray-900 rounded-xl shadow-2xl w-full max-w-2xl max-h-[90vh] flex flex-col">
+                <div className="flex items-center justify-between p-4 sm:p-6 border-b border-gray-200 dark:border-gray-800 flex-shrink-0 bg-white dark:bg-gray-900">
                   <h2 className="text-xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
                     <User className="w-5 h-5 text-blue-600" />
                     {editingEmployee ? "Edit Employee" : "Add Employee"}
@@ -819,7 +819,7 @@ export default function Employees() {
                   </button>
                 </div>
 
-                <div className="p-6 space-y-5">
+                <div className="p-4 sm:p-6 space-y-5 overflow-y-auto flex-1">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                       <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
@@ -1113,7 +1113,7 @@ export default function Employees() {
 
           {isDeleteEmployeeModalOpen && (
             <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-              <div className="bg-white dark:bg-gray-900 rounded-xl shadow-2xl w-full max-w-md">
+              <div className="bg-white dark:bg-gray-900 rounded-xl shadow-2xl w-full max-w-md max-h-[90vh] flex flex-col">
                 <div className="p-6 border-b border-gray-200 dark:border-gray-800">
                   <div className="flex items-center gap-3">
                     <div className="w-12 h-12 rounded-full bg-red-100 dark:bg-red-900/20 flex items-center justify-center">
@@ -1170,7 +1170,7 @@ export default function Employees() {
           {/* Delete Role Modal */}
           {isDeleteRoleModalOpen && (
             <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-              <div className="bg-white dark:bg-gray-900 rounded-xl shadow-2xl w-full max-w-md">
+              <div className="bg-white dark:bg-gray-900 rounded-xl shadow-2xl w-full max-w-md max-h-[90vh] flex flex-col">
                 <div className="p-6 border-b border-gray-200 dark:border-gray-800">
                   <div className="flex items-center gap-3">
                     <div className="w-12 h-12 rounded-full bg-red-100 dark:bg-red-900/20 flex items-center justify-center">

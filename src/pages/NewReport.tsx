@@ -20,6 +20,7 @@ import {
   FileDown,
   Info,
   Search,
+  Calculator,
 } from "lucide-react";
 import {
   ReportData,
@@ -39,7 +40,6 @@ import { supabase } from "@/lib/supabase/client";
 import { ReportPreview } from "@/components/report/ReportPreview";
 import { toast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
-import { reportSchema } from "@/lib/validations/report.schema";
 import { generateReportPDFBlob } from "@/lib/export/report-pdf";
 import { generateReportWordBlob } from "@/lib/export/report-word";
 import {
@@ -78,6 +78,21 @@ export default function NewReport() {
   const [isLoadingReport, setIsLoadingReport] = useState(false);
   const [reportCreatedSuccessfully, setReportCreatedSuccessfully] =
     useState(false);
+  const [showAdvancedCalc, setShowAdvancedCalc] = useState(false);
+  const [currentCalcSampleId, setCurrentCalcSampleId] = useState<string | null>(
+    null
+  );
+  const [calcType, setCalcType] = useState<"net-weight" | "piece-count">(
+    "net-weight"
+  );
+
+  // Advanced calculation states
+  const [grossWeight, setGrossWeight] = useState<number>(0);
+  const [emptyContainerWeight, setEmptyContainerWeight] = useState<number>(0);
+  const [containerCount, setContainerCount] = useState<number>(1);
+  const [piecesPerBox, setPiecesPerBox] = useState<number>(0);
+  const [boxCount, setBoxCount] = useState<number>(0);
+  const [singlePieceWeight, setSinglePieceWeight] = useState<number>(0);
 
   // Search states
   const [employeeSearch, setEmployeeSearch] = useState("");
@@ -329,12 +344,13 @@ export default function NewReport() {
         sampleName:
           sampleNames.find((sn) => sn.id === sample.sampleName)?.name ||
           sample.sampleName,
-        internalContainers: sample.internalContainers?.map((container) => ({
-          ...container,
-          type:
-            containerTypes.find((ct) => ct.id === container.type)?.name ||
-            container.type,
-        })) || [],
+        internalContainers:
+          sample.internalContainers?.map((container) => ({
+            ...container,
+            type:
+              containerTypes.find((ct) => ct.id === container.type)?.name ||
+              container.type,
+          })) || [],
       })),
     };
   };
@@ -639,12 +655,13 @@ export default function NewReport() {
         sampleName:
           sampleNames.find((sn) => sn.id === sample.sampleName)?.name ||
           sample.sampleName,
-        internalContainers: sample.internalContainers?.map((container) => ({
-          ...container,
-          type:
-            containerTypes.find((ct) => ct.id === container.type)?.name ||
-            container.type,
-        })) || [],
+        internalContainers:
+          sample.internalContainers?.map((container) => ({
+            ...container,
+            type:
+              containerTypes.find((ct) => ct.id === container.type)?.name ||
+              container.type,
+          })) || [],
       })),
     };
 
@@ -815,7 +832,7 @@ export default function NewReport() {
                       placeholder="Search employees..."
                       value={employeeSearch}
                       onChange={(e) => setEmployeeSearch(e.target.value)}
-                      className="pl-9 h-9 text-sm mb-2 bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-700"
+                      className="h-9 text-sm bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-700"
                     />
                   </div>
                 </div>
@@ -845,7 +862,7 @@ export default function NewReport() {
                             key={emp.id}
                             type="button"
                             onClick={() => updateField("employee", emp)}
-                            className={`shrink-0 w-44 flex flex-col items-center gap-2 p-3 rounded-lg border-2 transition-all relative ${
+                            className={`shrink-0 w-32 flex flex-col items-center gap-2 p-2 rounded-lg border-2 transition-all relative ${
                               isSelected
                                 ? "border-accent dark:border-green-600 bg-accent/5"
                                 : fieldErrors.employee
@@ -853,7 +870,7 @@ export default function NewReport() {
                                 : "border-border hover:border-accent/50"
                             }`}
                           >
-                            <div className="w-24 h-24 rounded-lg overflow-hidden bg-accent/10 flex items-center justify-center">
+                            <div className="w-20 h-20 rounded-lg overflow-hidden bg-accent/10 flex items-center justify-center">
                               {emp.photo ? (
                                 <img
                                   src={emp.photo}
@@ -861,23 +878,23 @@ export default function NewReport() {
                                   className="w-full h-full object-cover"
                                 />
                               ) : (
-                                <span className="text-lg font-semibold text-accent">
+                                <span className="text-sm font-semibold text-accent">
                                   {emp.initials}
                                 </span>
                               )}
                             </div>
                             <div className="flex flex-col items-center w-full">
-                              <span className="text-xs dark:text-white text-muted-foreground truncate w-full text-center font-medium">
+                              <span className="text-[10px] dark:text-white text-muted-foreground truncate w-full text-center font-medium">
                                 {emp.name.split(" ")[0]}
                               </span>
                               {roleName && (
-                                <span className="text-[10px] text-blue-600 dark:text-blue-400 truncate w-full text-center mt-0.5">
+                                <span className="text-[9px] text-blue-600 dark:text-blue-400 truncate w-full text-center mt-0.5">
                                   {roleName}
                                 </span>
                               )}
                             </div>
                             {isSelected && (
-                              <CheckCircle className="w-5 h-5 text-blue-500 dark:text-green-500 absolute top-2 right-2 bg-white dark:bg-gray-900 rounded-full" />
+                              <CheckCircle className="w-4 h-4 text-blue-500 dark:text-green-500 absolute top-1.5 right-1.5 bg-white dark:bg-gray-900 rounded-full" />
                             )}
                           </button>
                         );
@@ -969,7 +986,7 @@ export default function NewReport() {
                       placeholder="Search sender shops..."
                       value={senderShopSearch}
                       onChange={(e) => setSenderShopSearch(e.target.value)}
-                      className="pl-9 h-9 mb-2 text-sm bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-700"
+                      className="h-9 text-sm bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-700"
                     />
                   </div>
                 </div>
@@ -995,13 +1012,13 @@ export default function NewReport() {
                             key={shop.id}
                             type="button"
                             onClick={() => updateField("senderShop", shop.name)}
-                            className={`shrink-0 w-44 flex flex-col items-center gap-2 p-3 rounded-lg border-2 transition-all relative ${
+                            className={`shrink-0 w-32 flex flex-col items-center gap-2 p-2 rounded-lg border-2 transition-all relative ${
                               isSelected
                                 ? "border-blue-500 dark:border-blue-600 bg-blue-50 dark:bg-blue-900/20"
                                 : "border-border hover:border-blue-300 dark:hover:border-blue-700"
                             }`}
                           >
-                            <div className="w-24 h-24 rounded-lg overflow-hidden bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
+                            <div className="w-20 h-20 rounded-lg overflow-hidden bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
                               {shop.image ? (
                                 <img
                                   src={shop.image}
@@ -1009,14 +1026,14 @@ export default function NewReport() {
                                   className="w-full h-full object-cover"
                                 />
                               ) : (
-                                <Package className="w-8 h-8 text-blue-600 dark:text-blue-400" />
+                                <Package className="w-6 h-6 text-blue-600 dark:text-blue-400" />
                               )}
                             </div>
-                            <span className="text-xs dark:text-white text-gray-700 truncate w-full text-center font-medium">
+                            <span className="text-[10px] dark:text-white text-gray-700 truncate w-full text-center font-medium">
                               {shop.name}
                             </span>
                             {isSelected && (
-                              <CheckCircle className="w-5 h-5 text-blue-500 dark:text-blue-400 absolute top-2 right-2 bg-white dark:bg-gray-900 rounded-full" />
+                              <CheckCircle className="w-4 h-4 text-blue-500 dark:text-blue-400 absolute top-1.5 right-1.5 bg-white dark:bg-gray-900 rounded-full" />
                             )}
                           </button>
                         );
@@ -1086,8 +1103,7 @@ export default function NewReport() {
                         className="input-focus h-10"
                       />
                     </div>
-                    <div className=" sm:w-65 e">
-                    
+                    <div className="flex-1 max-w-xs">
                       <div className="relative">
                         <Input
                           placeholder="Search container types..."
@@ -1095,7 +1111,7 @@ export default function NewReport() {
                           onChange={(e) =>
                             setExternalContainerSearch(e.target.value)
                           }
-                          className="h-10 text-sm bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600"
+                          className="h-9 text-sm bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-700"
                         />
                       </div>
                     </div>
@@ -1103,7 +1119,7 @@ export default function NewReport() {
 
                   <div>
                     {filteredExternalContainerTypes.length > 0 && (
-                      <div className="flex gap-3 overflow-x-auto pb-2 -mx-1 px-1">
+                      <div className="flex gap-2 overflow-x-auto pb-2 -mx-1 px-1 scrollbar-thin-light">
                         {filteredExternalContainerTypes.map((type) => {
                           const isSelected = container.type === type.id;
                           return (
@@ -1115,13 +1131,13 @@ export default function NewReport() {
                                 })
                               }
                               className={cn(
-                                "shrink-0 relative rounded-lg border-2 transition-all duration-200 p-3 w-44",
+                                "shrink-0 relative rounded-lg border-2 transition-all duration-200 p-2 w-32",
                                 isSelected
                                   ? "border-blue-500 bg-blue-50 dark:bg-blue-900/30 shadow-lg"
                                   : "border-gray-200 dark:border-gray-600 hover:border-blue-300 hover:shadow-md"
                               )}
                             >
-                              <div className="w-24 h-24 mx-auto rounded-lg overflow-hidden bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
+                              <div className="w-20 h-20 mx-auto rounded-lg overflow-hidden bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
                                 {type.image ? (
                                   <img
                                     src={type.image}
@@ -1129,16 +1145,16 @@ export default function NewReport() {
                                     className="w-full h-full object-cover"
                                   />
                                 ) : (
-                                  <Package className="w-8 h-8 text-gray-400" />
+                                  <Package className="w-6 h-6 text-gray-400" />
                                 )}
                               </div>
-                              <div className="mt-2 text-center">
-                                <p className="text-xs font-medium text-gray-900 dark:text-gray-100 line-clamp-2">
+                              <div className="mt-1.5 text-center">
+                                <p className="text-[10px] font-medium text-gray-900 dark:text-gray-100 line-clamp-2">
                                   {type.name}
                                 </p>
                               </div>
                               {isSelected && (
-                                <CheckCircle className="w-5 h-5 text-blue-500 absolute top-2 right-2 bg-white dark:bg-blue-900 rounded-full" />
+                                <CheckCircle className="w-4 h-4 text-blue-500 absolute top-1.5 right-1.5 bg-white dark:bg-blue-900 rounded-full" />
                               )}
                             </button>
                           );
@@ -1184,7 +1200,7 @@ export default function NewReport() {
               {reportData.samples.map((sample, index) => (
                 <div
                   key={sample.id}
-                  className="p-3 sm:p-4 rounded-xl border-2 border-gray-200 dark:border-gray-700 bg-linear-to-br from-white to-gray-50 dark:from-gray-900 dark:to-gray-800 hover:border-blue-300 dark:hover:border-blue-700 hover:shadow-lg transition-all space-y-3 sm:space-y-4 animate-fade-in"
+                  className="p-3 sm:p-4 rounded-xl border-2 border-gray-200 dark:border-gray-700 bg-gradient-to-br from-white to-gray-50 dark:from-gray-900 dark:to-gray-800 hover:border-blue-300 dark:hover:border-blue-700 hover:shadow-lg transition-all space-y-3 sm:space-y-4 animate-fade-in"
                 >
                   <div className="flex items-center justify-between">
                     <Badge
@@ -1217,7 +1233,7 @@ export default function NewReport() {
                         <Label className="text-xs sm:text-sm font-medium">
                           Sample Name
                         </Label>
-                        <div className="relative flex-1 max-w-75">
+                        <div className="relative flex-1 max-w-xs">
                           <Input
                             placeholder="Search samples..."
                             value={sampleSearches[sample.id] || ""}
@@ -1227,7 +1243,7 @@ export default function NewReport() {
                                 [sample.id]: e.target.value,
                               }))
                             }
-                            className="pl-7 h-5 mb-4 text-xs bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-700"
+                            className="h-9 text-sm bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-700"
                           />
                         </div>
                       </div>
@@ -1244,7 +1260,7 @@ export default function NewReport() {
                           No samples match your search.
                         </div>
                       ) : (
-                        <div className="flex gap-3 overflow-x-auto py-2 -mx-2 px-2 scrollbar-thin-light">
+                        <div className="flex gap-2 overflow-x-auto py-2 -mx-2 px-2 scrollbar-thin-light">
                           {getFilteredSampleNames(sample.id).map((sn) => {
                             const isSelected = sample.sampleName === sn.id;
                             return (
@@ -1257,7 +1273,7 @@ export default function NewReport() {
                                   })
                                 }
                                 className={cn(
-                                  "relative shrink-0 w-44 flex flex-col items-center p-3 rounded-lg border-2 transition-all bg-white dark:bg-gray-900",
+                                  "relative shrink-0 w-32 flex flex-col items-center p-2 rounded-lg border-2 transition-all bg-white dark:bg-gray-900",
                                   isSelected
                                     ? "border-blue-500 bg-blue-50 dark:bg-blue-900/30 shadow-lg"
                                     : "border-gray-200 dark:border-gray-700 hover:border-blue-300 hover:shadow-md"
@@ -1265,7 +1281,7 @@ export default function NewReport() {
                                 aria-pressed={isSelected}
                                 aria-label={`Select ${sn.name}`}
                               >
-                                <div className="w-24 h-24 rounded-lg overflow-hidden bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
+                                <div className="w-20 h-20 rounded-lg overflow-hidden bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
                                   {sn.image ? (
                                     <img
                                       src={sn.image}
@@ -1273,18 +1289,18 @@ export default function NewReport() {
                                       className="w-full h-full object-cover"
                                     />
                                   ) : (
-                                    <Package className="w-8 h-8 text-gray-400" />
+                                    <Package className="w-6 h-6 text-gray-400" />
                                   )}
                                 </div>
 
-                                <div className="mt-2 w-full text-center">
-                                  <p className="text-xs font-medium text-gray-900 dark:text-gray-100 line-clamp-2">
+                                <div className="mt-1.5 w-full text-center">
+                                  <p className="text-[10px] font-medium text-gray-900 dark:text-gray-100 line-clamp-2">
                                     {sn.name}
                                   </p>
                                 </div>
 
                                 {isSelected && (
-                                  <CheckCircle className="w-5 h-5 text-blue-500 absolute top-2 right-2 bg-white dark:bg-blue-900 rounded-full" />
+                                  <CheckCircle className="w-4 h-4 text-blue-500 absolute top-1.5 right-1.5 bg-white dark:bg-blue-900 rounded-full" />
                                 )}
                               </button>
                             );
@@ -1319,70 +1335,142 @@ export default function NewReport() {
                           Add
                         </Button>
                       </div>
-                      <div className="space-y-2">
+                      <div className="space-y-3">
                         {(sample.internalContainers || []).map(
                           (container, containerIdx) => (
                             <div
                               key={container.id}
-                              className="flex gap-2 p-2 rounded "
+                              className="space-y-3 p-3 rounded-xl bg-gray-50 dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700"
                             >
-                              <Input
-                                type="number"
-                                min="1"
-                                value={container.quantity || ""}
-                                onChange={(e) => {
-                                  const updated = [
-                                    ...(sample.internalContainers || []),
-                                  ];
-                                  updated[containerIdx] = {
-                                    ...container,
-                                    quantity: parseInt(e.target.value) || 0,
-                                  };
-                                  updateSample(sample.id, {
-                                    internalContainers: updated,
-                                  });
-                                }}
-                                className="input-focus h-9 w-16"
-                                placeholder="Qty"
-                              />
-                              <Select
-                                value={container.type}
-                                onChange={(value) => {
-                                  const updated = [
-                                    ...(sample.internalContainers || []),
-                                  ];
-                                  updated[containerIdx] = {
-                                    ...container,
-                                    type: value as string,
-                                  };
-                                  updateSample(sample.id, {
-                                    internalContainers: updated,
-                                  });
-                                }}
-                                options={internalContainerTypes.map((type) => ({
-                                  label: type.name,
-                                  value: type.id,
-                                }))}
-                                placeholder="Select type"
-                                className="input-focus h-9 flex-1"
-                              />
-                              {(sample.internalContainers || []).length > 1 && (
-                                <Button
-                                  variant="text"
-                                  size="sm"
-                                  onClick={() => {
-                                    const updated = (
-                                      sample.internalContainers || []
-                                    ).filter((_, idx) => idx !== containerIdx);
-                                    updateSample(sample.id, {
-                                      internalContainers: updated,
-                                    });
-                                  }}
-                                  className="text-red-500 border border-red-500 py-2 px-2 rounded-lg hover:bg-red-50"
-                                >
-                                  <Trash2 className="w-4 h-4" />
-                                </Button>
-                              )}
+                              <div className="flex items-center justify-between">
+                                <Label className="text-xs font-medium text-gray-900 dark:text-gray-100">
+                                  Container {containerIdx + 1}
+                                </Label>
+                                {(sample.internalContainers || []).length >
+                                  1 && (
+                                  <Button
+                                    variant="text"
+                                    size="sm"
+                                    onClick={() => {
+                                      const updated = (
+                                        sample.internalContainers || []
+                                      ).filter(
+                                        (_, idx) => idx !== containerIdx
+                                      );
+                                      updateSample(sample.id, {
+                                        internalContainers: updated,
+                                      });
+                                    }}
+                                    className="text-red-500 border border-red-500 h-7 px-2 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20"
+                                  >
+                                    <Trash2 className="w-3 h-3" />
+                                  </Button>
+                                )}
+                              </div>
+
+                              <div className="flex justify-between items-end gap-3">
+                                <div className="shrink-0 w-20">
+                                  <Label className="text-xs font-medium mb-1.5 block text-gray-700 dark:text-gray-300">
+                                    Quantity
+                                  </Label>
+                                  <Input
+                                    type="number"
+                                    min="1"
+                                    value={container.quantity || ""}
+                                    onChange={(e) => {
+                                      const updated = [
+                                        ...(sample.internalContainers || []),
+                                      ];
+                                      updated[containerIdx] = {
+                                        ...container,
+                                        quantity: parseInt(e.target.value) || 0,
+                                      };
+                                      updateSample(sample.id, {
+                                        internalContainers: updated,
+                                      });
+                                    }}
+                                    className="input-focus h-9"
+                                    placeholder="Qty"
+                                  />
+                                </div>
+                                <div className="flex-1 max-w-xs">
+                                  <div className="relative">
+                                    <Input
+                                      placeholder="Search container types..."
+                                      value={internalContainerSearch}
+                                      onChange={(e) =>
+                                        setInternalContainerSearch(
+                                          e.target.value
+                                        )
+                                      }
+                                      className="h-9 text-sm bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-700"
+                                    />
+                                  </div>
+                                </div>
+                              </div>
+
+                              <div>
+                                {filteredInternalContainerTypes.length > 0 ? (
+                                  <div className="flex gap-2 overflow-x-auto pb-2 -mx-1 px-1 scrollbar-thin-light">
+                                    {filteredInternalContainerTypes.map(
+                                      (type) => {
+                                        const isSelected =
+                                          container.type === type.id;
+                                        return (
+                                          <button
+                                            key={type.id}
+                                            onClick={() => {
+                                              const updated = [
+                                                ...(sample.internalContainers ||
+                                                  []),
+                                              ];
+                                              updated[containerIdx] = {
+                                                ...container,
+                                                type: type.id,
+                                              };
+                                              updateSample(sample.id, {
+                                                internalContainers: updated,
+                                              });
+                                            }}
+                                            className={cn(
+                                              "shrink-0 relative rounded-lg border-2 transition-all duration-200 p-2 w-32",
+                                              isSelected
+                                                ? "border-blue-500 bg-blue-50 dark:bg-blue-900/30 shadow-lg"
+                                                : "border-gray-200 dark:border-gray-600 hover:border-blue-300 hover:shadow-md"
+                                            )}
+                                          >
+                                            <div className="w-20 h-20 mx-auto rounded-lg overflow-hidden bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
+                                              {type.image ? (
+                                                <img
+                                                  src={type.image}
+                                                  alt={type.name}
+                                                  className="w-full h-full object-cover"
+                                                />
+                                              ) : (
+                                                <Package className="w-6 h-6 text-gray-400" />
+                                              )}
+                                            </div>
+                                            <div className="mt-1.5 text-center">
+                                              <p className="text-[10px] font-medium text-gray-900 dark:text-gray-100 line-clamp-2">
+                                                {type.name}
+                                              </p>
+                                            </div>
+                                            {isSelected && (
+                                              <CheckCircle className="w-4 h-4 text-blue-500 absolute top-1.5 right-1.5 bg-white dark:bg-blue-900 rounded-full" />
+                                            )}
+                                          </button>
+                                        );
+                                      }
+                                    )}
+                                  </div>
+                                ) : (
+                                  <div className="text-center py-4 text-xs text-gray-500">
+                                    {internalContainerSearch
+                                      ? "No container types match your search."
+                                      : "No internal container types available."}
+                                  </div>
+                                )}
+                              </div>
                             </div>
                           )
                         )}
@@ -1408,6 +1496,25 @@ export default function NewReport() {
                           className="input-focus h-10 flex-1"
                           placeholder="0.00"
                         />
+                        <Button
+                          type="button"
+                          onClick={() => {
+                            setCurrentCalcSampleId(sample.id);
+                            setShowAdvancedCalc(true);
+                            // Reset calculation states
+                            setGrossWeight(0);
+                            setEmptyContainerWeight(0);
+                            setContainerCount(1);
+                            setPiecesPerBox(0);
+                            setBoxCount(0);
+                            setSinglePieceWeight(0);
+                            setCalcType("net-weight");
+                          }}
+                          className="h-10 px-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg border-0"
+                          title="Advanced Calculation"
+                        >
+                          <Calculator className="w-4 h-4" />
+                        </Button>
                         <Select
                           value={sample.weightUnit}
                           onChange={(value) =>
@@ -1563,6 +1670,305 @@ export default function NewReport() {
           </div>
         </div>
       </div>
+
+      {showAdvancedCalc && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div
+            className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+            onClick={() => setShowAdvancedCalc(false)}
+          />
+
+          <div className="relative bg-white dark:bg-gray-900 rounded-xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto border border-gray-200 dark:border-gray-800">
+            <div className="sticky top-0 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 p-6 z-10">
+              <button
+                onClick={() => setShowAdvancedCalc(false)}
+                className="absolute right-4 top-4 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 rounded-full bg-blue-100 dark:bg-blue-950 flex items-center justify-center">
+                  <Calculator className="w-6 h-6 text-blue-600 dark:text-blue-400" />
+                </div>
+                <div>
+                  <h3 className="text-xl font-bold text-gray-900 dark:text-white">
+                    Advanced Weight Calculator
+                  </h3>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">
+                    Calculate net weight from complex scenarios
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div className="p-6 space-y-6">
+              <div>
+                <Label className="text-sm font-semibold mb-3 block">
+                  Calculation Type
+                </Label>
+                <div className="grid grid-cols-2 gap-3">
+                  <button
+                    onClick={() => setCalcType("net-weight")}
+                    className={cn(
+                      "p-4 rounded-lg border-2 transition-all text-left",
+                      calcType === "net-weight"
+                        ? "border-blue-500 bg-blue-50 dark:bg-blue-950"
+                        : "border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600"
+                    )}
+                  >
+                    <div className="font-semibold text-gray-900 dark:text-white mb-1">
+                      Net Weight Calculation
+                    </div>
+                    <div className="text-xs text-gray-500 dark:text-gray-400">
+                      Calculate from gross weight minus empty containers
+                    </div>
+                  </button>
+                  <button
+                    onClick={() => setCalcType("piece-count")}
+                    className={cn(
+                      "p-4 rounded-lg border-2 transition-all text-left",
+                      calcType === "piece-count"
+                        ? "border-blue-500 bg-blue-50 dark:bg-blue-950"
+                        : "border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600"
+                    )}
+                  >
+                    <div className="font-semibold text-gray-900 dark:text-white mb-1">
+                      Piece Count Calculation
+                    </div>
+                    <div className="text-xs text-gray-500 dark:text-gray-400">
+                      Calculate from number of pieces × piece weight
+                    </div>
+                  </button>
+                </div>
+              </div>
+
+              {calcType === "net-weight" && (
+                <div className="space-y-4">
+               
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <Label className="text-sm font-medium mb-2 block">
+                        Gross Weight (g)
+                      </Label>
+                      <Input
+                        type="number"
+                        step="0.01"
+                        value={grossWeight || ""}
+                        onChange={(e) =>
+                          setGrossWeight(parseFloat(e.target.value) || 0)
+                        }
+                        className="h-10"
+                        placeholder="Total weight with containers"
+                      />
+                    </div>
+                    <div>
+                      <Label className="text-sm font-medium mb-2 block">
+                        Empty Container Weight (g)
+                      </Label>
+                      <Input
+                        type="number"
+                        step="0.01"
+                        value={emptyContainerWeight || ""}
+                        onChange={(e) =>
+                          setEmptyContainerWeight(
+                            parseFloat(e.target.value) || 0
+                          )
+                        }
+                        className="h-10"
+                        placeholder="Weight of one empty container"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <Label className="text-sm font-medium mb-2 block">
+                      Number of Containers
+                    </Label>
+                    <Input
+                      type="number"
+                      min="1"
+                      value={containerCount || ""}
+                      onChange={(e) =>
+                        setContainerCount(parseInt(e.target.value) || 1)
+                      }
+                      className="h-10"
+                      placeholder="Total container count"
+                    />
+                  </div>
+
+                  <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg space-y-2">
+                    <div className="flex justify-between text-sm">
+                      <span className="text-gray-600 dark:text-gray-400">
+                        Gross Weight:
+                      </span>
+                      <span className="font-semibold text-gray-900 dark:text-white">
+                        {grossWeight.toFixed(2)} g
+                      </span>
+                    </div>
+                    <div className="flex justify-between text-sm">
+                      <span className="text-gray-600 dark:text-gray-400">
+                        Total Container Weight:
+                      </span>
+                      <span className="font-semibold text-gray-900 dark:text-white">
+                        {(emptyContainerWeight * containerCount).toFixed(2)} g
+                      </span>
+                    </div>
+                    <div className="border-t border-gray-300 dark:border-gray-600 pt-2 mt-2">
+                      <div className="flex justify-between">
+                        <span className="font-bold text-gray-900 dark:text-white">
+                          Net Weight:
+                        </span>
+                        <span className="font-bold text-lg text-blue-600 dark:text-blue-400">
+                          {(
+                            grossWeight -
+                            emptyContainerWeight * containerCount
+                          ).toFixed(2)}{" "}
+                          g
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {calcType === "piece-count" && (
+                <div className="space-y-4">
+              
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <Label className="text-sm font-medium mb-2 block">
+                        Pieces per Box/Bag
+                      </Label>
+                      <Input
+                        type="number"
+                        min="1"
+                        value={piecesPerBox || ""}
+                        onChange={(e) =>
+                          setPiecesPerBox(parseInt(e.target.value) || 0)
+                        }
+                        className="h-10"
+                        placeholder="Count in one container"
+                      />
+                    </div>
+                    <div>
+                      <Label className="text-sm font-medium mb-2 block">
+                        Number of Boxes/Bags
+                      </Label>
+                      <Input
+                        type="number"
+                        min="1"
+                        value={boxCount || ""}
+                        onChange={(e) =>
+                          setBoxCount(parseInt(e.target.value) || 0)
+                        }
+                        className="h-10"
+                        placeholder="Total containers"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <Label className="text-sm font-medium mb-2 block">
+                      Single Piece Weight (g)
+                    </Label>
+                    <Input
+                      type="number"
+                      step="0.01"
+                      value={singlePieceWeight || ""}
+                      onChange={(e) =>
+                        setSinglePieceWeight(parseFloat(e.target.value) || 0)
+                      }
+                      className="h-10"
+                      placeholder="Weight of one piece"
+                    />
+                  </div>
+
+                  <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg space-y-2">
+                    <div className="flex justify-between text-sm">
+                      <span className="text-gray-600 dark:text-gray-400">
+                        Pieces per Container:
+                      </span>
+                      <span className="font-semibold text-gray-900 dark:text-white">
+                        {piecesPerBox}
+                      </span>
+                    </div>
+                    <div className="flex justify-between text-sm">
+                      <span className="text-gray-600 dark:text-gray-400">
+                        Total Containers:
+                      </span>
+                      <span className="font-semibold text-gray-900 dark:text-white">
+                        {boxCount}
+                      </span>
+                    </div>
+                    <div className="flex justify-between text-sm">
+                      <span className="text-gray-600 dark:text-gray-400">
+                        Total Pieces:
+                      </span>
+                      <span className="font-semibold text-gray-900 dark:text-white">
+                        {piecesPerBox * boxCount}
+                      </span>
+                    </div>
+                    <div className="border-t border-gray-300 dark:border-gray-600 pt-2 mt-2">
+                      <div className="flex justify-between">
+                        <span className="font-bold text-gray-900 dark:text-white">
+                          Net Weight:
+                        </span>
+                        <span className="font-bold text-lg text-blue-600 dark:text-blue-400">
+                          {(
+                            piecesPerBox *
+                            boxCount *
+                            singlePieceWeight
+                          ).toFixed(2)}{" "}
+                          g
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              <div className="flex items-center gap-3 pt-4">
+                <Button
+                  onClick={() => setShowAdvancedCalc(false)}
+                  variant="outline"
+                  className="flex-1 dark:text-white border-gray-300 rounded-lg border dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-800"
+                >
+                  Cancel
+                </Button>
+                <Button
+                  onClick={() => {
+                    if (currentCalcSampleId) {
+                      const calculatedWeight =
+                        calcType === "net-weight"
+                          ? grossWeight - emptyContainerWeight * containerCount
+                          : piecesPerBox * boxCount * singlePieceWeight;
+
+                      updateSample(currentCalcSampleId, {
+                        netWeight: parseFloat(calculatedWeight.toFixed(2)),
+                      });
+
+                      toast({
+                        title: "Weight Calculated",
+                        description: `Net weight set to ${calculatedWeight.toFixed(
+                          2
+                        )}g`,
+                      });
+
+                      setShowAdvancedCalc(false);
+                    }
+                  }}
+                  className="flex-1 bg-blue-600 rounded-lg hover:bg-blue-700 text-white border-0"
+                >
+                  Apply Calculation
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </DashboardLayout>
   );
 }
