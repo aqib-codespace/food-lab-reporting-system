@@ -112,9 +112,9 @@ export default function LoginPage() {
     <div className="min-h-screen flex">
       <div className="flex-1 flex items-center justify-center p-8 bg-white dark:bg-gray-950">
         <div className="w-full max-w-md space-y-8">
-          <div className="flex justify-center">
-            <Logo />
-          </div>
+          <Link href="/" className="flex justify-center">
+       <img src="/logo.png" alt="FoodLab Logo" className="h-16 " />
+          </Link>
 
           <div className="text-center space-y-2">
             <h1 className="text-3xl font-bold tracking-tight text-gray-900 dark:text-white">

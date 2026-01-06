@@ -30,16 +30,7 @@ export function Logo({ collapsed = false, className }: LogoProps) {
         />
       </div>
 
-      {!collapsed && (
-        <div className="flex flex-col">
-          <span className="text-xl font-bold text-gray-900 dark:text-white leading-tight">
-            FoodLab
-          </span>
-          <span className="text-[10px] font-medium text-gray-600 dark:text-gray-400 uppercase tracking-wider">
-            Reporting System
-          </span>
-        </div>
-      )}
+  
     </div>
   );
 }
