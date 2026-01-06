@@ -20,9 +20,6 @@ import { format } from "date-fns";
 import { useReports } from "@/hooks/useReports";
 import { useEmployees } from "@/hooks/useSupabaseData";
 
-
-
-
 export default function Dashboard() {
   const route = useRouter();
   const { reports, loading } = useReports();
@@ -36,6 +33,20 @@ export default function Dashboard() {
     0
   );
   const totalEmployees = employees?.length || 0;
+
+  // Calculate completed and pending cases
+  const completedCases = reports.filter(
+    (report) => report.status === "completed"
+  ).length;
+  const pendingCases = reports.filter(
+    (report) => report.status === "pending"
+  ).length;
+
+  // Calculate percentage changes (comparing to previous period - can be customized)
+  const completedPercentage =
+    totalReports > 0 ? ((completedCases / totalReports) * 100).toFixed(1) : "0";
+  const pendingPercentage =
+    totalReports > 0 ? ((pendingCases / totalReports) * 100).toFixed(1) : "0";
 
   const stats = [
     {
@@ -57,22 +68,23 @@ export default function Dashboard() {
       color: "from-emerald-500 to-emerald-600",
     },
     {
-      title: "Avg. Processing",
-      value: "1.4 min",
-      change: "-15%",
-      trend: "down" as const,
-      icon: Clock,
-      description: "Per Report",
-      color: "from-amber-500 to-amber-600",
+      title: "Completed Cases",
+      value: completedCases.toString(),
+      change: `${completedPercentage}%`,
+      trend: "up" as const,
+      icon: Package,
+      description: "Successfully Processed",
+      color: "from-green-500 to-green-600",
     },
     {
-      title: "Efficiency",
-      value: "95.2%",
-      change: "+3.1%",
-      trend: "up" as const,
-      icon: TrendingUp,
-      description: "Completion Rate",
-      color: "from-purple-500 to-purple-600",
+      title: "Pending Cases",
+      value: pendingCases.toString(),
+      change: `${pendingPercentage}%`,
+      trend:
+        pendingCases > completedCases ? ("up" as const) : ("down" as const),
+      icon: Clock,
+      description: "Awaiting Processing",
+      color: "from-amber-500 to-amber-600",
     },
   ];
 
@@ -197,7 +209,9 @@ export default function Dashboard() {
                 <div
                   key={report.id}
                   className="flex items-center justify-between p-3 sm:p-4 rounded-xl bg-gray-50 dark:bg-gray-800/50 hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-200 cursor-pointer group"
-                  onClick={() => route.push(`/routes/examination-team/${report.id}`)}
+                  onClick={() =>
+                    route.push(`/routes/examination-team/${report.id}`)
+                  }
                 >
                   <div className="flex items-center gap-3 sm:gap-4 flex-1 min-w-0">
                     <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-gray-800 flex items-center justify-center shadow-lg group-hover:scale-105 transition-transform shrink-0">
