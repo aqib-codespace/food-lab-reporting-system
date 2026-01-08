@@ -111,7 +111,11 @@ export function ReportPreview({ data }: ReportPreviewProps) {
           <Separator className="my-4" />
 
           {/* Additional Information Section */}
-          {(data.bagNumber || data.dispatchNumber || data.barcodeNumber || data.dateReceivedByDepartment || data.systemRegistrationDate) && (
+          {(data.bagNumber ||
+            data.dispatchNumber ||
+            data.barcodeNumber ||
+            data.dateReceivedByDepartment ||
+            data.systemRegistrationDate) && (
             <section className="mb-6">
               <h3 className="font-bold text-lg mb-3">معلومات إضافية:</h3>
               <div className="space-y-2 text-sm pr-4">
@@ -135,13 +139,17 @@ export function ReportPreview({ data }: ReportPreviewProps) {
                 )}
                 {data.dateReceivedByDepartment && (
                   <p>
-                    <span className="font-semibold">تاريخ الاستلام بالقسم: </span>
+                    <span className="font-semibold">
+                      تاريخ الاستلام بالقسم:{" "}
+                    </span>
                     {formatDate(data.dateReceivedByDepartment)}
                   </p>
                 )}
                 {data.systemRegistrationDate && (
                   <p>
-                    <span className="font-semibold">تاريخ التسجيل في النظام: </span>
+                    <span className="font-semibold">
+                      تاريخ التسجيل في النظام:{" "}
+                    </span>
                     {formatDate(data.systemRegistrationDate)}
                   </p>
                 )}
