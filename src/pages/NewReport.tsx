@@ -61,6 +61,8 @@ const getDefaultSample = (index: number, defaultColor?: string): Sample => ({
   weightUsed: 0,
   colorCode: defaultColor || "#ef4444",
   storageLocation: "",
+  weightNotes: "",
+  isSwabOnly: false,
 });
 
 const getDefaultContainer = (): ContainerEntry => ({
@@ -93,6 +95,10 @@ export default function NewReport() {
   const [piecesPerBox, setPiecesPerBox] = useState<number>(0);
   const [boxCount, setBoxCount] = useState<number>(0);
   const [singlePieceWeight, setSinglePieceWeight] = useState<number>(0);
+
+  // New flexible piece calculation states
+  const [stripsPerBox, setStripsPerBox] = useState<number>(0);
+  const [piecesPerStrip, setPiecesPerStrip] = useState<number>(0);
 
   // Search states
   const [employeeSearch, setEmployeeSearch] = useState("");
@@ -164,8 +170,12 @@ export default function NewReport() {
     internalContainers: [getDefaultContainer()],
     samples: [getDefaultSample(0, defaultColorCode)],
     barcodeNumber: "",
-    producedDate: "",
-    expiredDate: "",
+    bagNumber: "",
+    dispatchNumber: "",
+    dateReceivedByDepartment: "",
+    systemRegistrationDate: "",
+    consumerNotes: "",
+    unexaminedItems: "",
     reportNumber: "In System",
   });
 
@@ -269,10 +279,17 @@ export default function NewReport() {
                 weightUsed: s.weight_used || 0,
                 colorCode: s.color_code || defaultColorCode,
                 storageLocation: s.storage_location || "",
+                weightNotes: s.weight_notes || "",
+                isSwabOnly: s.is_swab_only || false,
               })) || [getDefaultSample(0, defaultColorCode)],
               barcodeNumber: report.barcode_number || "",
-              producedDate: report.produced_date || "",
-              expiredDate: report.expired_date || "",
+              bagNumber: report.bag_number || "",
+              dispatchNumber: report.dispatch_number || "",
+              dateReceivedByDepartment:
+                report.date_received_by_department || "",
+              systemRegistrationDate: report.system_registration_date || "",
+              consumerNotes: report.consumer_notes || "",
+              unexaminedItems: report.unexamined_items || "",
               reportNumber: report.report_number || "In System",
               status: report.status,
             });
@@ -314,8 +331,12 @@ export default function NewReport() {
       internalContainers: [getDefaultContainer()],
       samples: [getDefaultSample(0, defaultColor)],
       barcodeNumber: "",
-      producedDate: "",
-      expiredDate: "",
+      bagNumber: "",
+      dispatchNumber: "",
+      dateReceivedByDepartment: "",
+      systemRegistrationDate: "",
+      consumerNotes: "",
+      unexaminedItems: "",
       reportNumber: "In System",
     });
     setFieldErrors({});
@@ -476,8 +497,13 @@ export default function NewReport() {
             report_date: reportData.date,
             sender_shop: reportData.senderShop || null,
             barcode_number: reportData.barcodeNumber || null,
-            produced_date: reportData.producedDate || null,
-            expired_date: reportData.expiredDate || null,
+            bag_number: reportData.bagNumber || null,
+            dispatch_number: reportData.dispatchNumber || null,
+            date_received_by_department:
+              reportData.dateReceivedByDepartment || null,
+            system_registration_date: reportData.systemRegistrationDate || null,
+            consumer_notes: reportData.consumerNotes || null,
+            unexamined_items: reportData.unexaminedItems || null,
             report_number: reportData.reportNumber || "In System",
           })
           .eq("id", reportData.id);
@@ -506,8 +532,13 @@ export default function NewReport() {
               reportData.date || new Date().toISOString().split("T")[0],
             sender_shop: reportData.senderShop || null,
             barcode_number: reportData.barcodeNumber || null,
-            produced_date: reportData.producedDate || null,
-            expired_date: reportData.expiredDate || null,
+            bag_number: reportData.bagNumber || null,
+            dispatch_number: reportData.dispatchNumber || null,
+            date_received_by_department:
+              reportData.dateReceivedByDepartment || null,
+            system_registration_date: reportData.systemRegistrationDate || null,
+            consumer_notes: reportData.consumerNotes || null,
+            unexamined_items: reportData.unexaminedItems || null,
             report_number: reportData.reportNumber || "In System",
             status: "pending" as const,
           },
@@ -532,6 +563,8 @@ export default function NewReport() {
           weight_used: sample.weightUsed || null,
           color_code: sample.colorCode || null,
           storage_location: sample.storageLocation || null,
+          weight_notes: sample.weightNotes || null,
+          is_swab_only: sample.isSwabOnly || false,
         }));
 
         const { error: samplesError } = await (supabase as any)
@@ -731,22 +764,30 @@ export default function NewReport() {
           <CardContent className="space-y-3 sm:space-y-4 px-4 sm:px-6">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
               <div className="space-y-2">
-                <Label htmlFor="producedDate">Produced Date</Label>
+                <Label htmlFor="dateReceivedByDepartment">
+                  Date Received by Department
+                </Label>
                 <Input
-                  id="producedDate"
+                  id="dateReceivedByDepartment"
                   type="date"
-                  value={reportData.producedDate}
-                  onChange={(e) => updateField("producedDate", e.target.value)}
+                  value={reportData.dateReceivedByDepartment || ""}
+                  onChange={(e) =>
+                    updateField("dateReceivedByDepartment", e.target.value)
+                  }
                   className="input-focus"
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="expiredDate">Expired Date</Label>
+                <Label htmlFor="systemRegistrationDate">
+                  System Registration Date
+                </Label>
                 <Input
-                  id="expiredDate"
+                  id="systemRegistrationDate"
                   type="date"
-                  value={reportData.expiredDate}
-                  onChange={(e) => updateField("expiredDate", e.target.value)}
+                  value={reportData.systemRegistrationDate || ""}
+                  onChange={(e) =>
+                    updateField("systemRegistrationDate", e.target.value)
+                  }
                   className="input-focus"
                 />
               </div>
@@ -759,6 +800,28 @@ export default function NewReport() {
                 value={reportData.barcodeNumber}
                 onChange={(e) => updateField("barcodeNumber", e.target.value)}
                 className="input-focus"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="consumerNotes">Consumer Notes</Label>
+              <textarea
+                id="consumerNotes"
+                placeholder="Enter consumer information or notes"
+                value={reportData.consumerNotes || ""}
+                onChange={(e) => updateField("consumerNotes", e.target.value)}
+                className="w-full dark:text-gray-100 dark:placeholder:text-gray-400 px-3 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 resize-none"
+                rows={3}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="unexaminedItems">Unexamined Items</Label>
+              <textarea
+                id="unexaminedItems"
+                placeholder="List any items that were not examined"
+                value={reportData.unexaminedItems || ""}
+                onChange={(e) => updateField("unexaminedItems", e.target.value)}
+                className="w-full dark:text-gray-100 dark:placeholder:text-gray-400 px-3 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 resize-none"
+                rows={3}
               />
             </div>
           </CardContent>
@@ -821,6 +884,38 @@ export default function NewReport() {
                       {fieldErrors.date}
                     </p>
                   )}
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+                <div className="space-y-2">
+                  <Label className="dark:text-gray-100" htmlFor="bagNumber">
+                    Bag Number
+                  </Label>
+                  <Input
+                    id="bagNumber"
+                    placeholder="Enter bag number"
+                    value={reportData.bagNumber || ""}
+                    onChange={(e) => updateField("bagNumber", e.target.value)}
+                    className="input-focus"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label
+                    className="dark:text-gray-100"
+                    htmlFor="dispatchNumber"
+                  >
+                    Dispatch Number
+                  </Label>
+                  <Input
+                    id="dispatchNumber"
+                    placeholder="Enter dispatch number"
+                    value={reportData.dispatchNumber || ""}
+                    onChange={(e) =>
+                      updateField("dispatchNumber", e.target.value)
+                    }
+                    className="input-focus"
+                  />
                 </div>
               </div>
 
@@ -1478,150 +1573,213 @@ export default function NewReport() {
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                    <div>
-                      <Label className="text-xs sm:text-sm font-medium mb-1.5 block">
-                        Net Weight
-                      </Label>
-                      <div className="flex gap-2">
-                        <Input
-                          type="number"
-                          step="0.01"
-                          value={sample.netWeight || ""}
-                          onChange={(e) =>
-                            updateSample(sample.id, {
-                              netWeight: parseFloat(e.target.value) || 0,
-                            })
-                          }
-                          className="input-focus h-10 flex-1"
-                          placeholder="0.00"
-                        />
-                        <Button
-                          type="button"
-                          onClick={() => {
-                            setCurrentCalcSampleId(sample.id);
-                            setShowAdvancedCalc(true);
-                            // Reset calculation states
-                            setGrossWeight(0);
-                            setEmptyContainerWeight(0);
-                            setContainerCount(1);
-                            setPiecesPerBox(0);
-                            setBoxCount(0);
-                            setSinglePieceWeight(0);
-                            setCalcType("net-weight");
-                          }}
-                          className="h-10 px-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg border-0"
-                          title="Advanced Calculation"
-                        >
-                          <Calculator className="w-4 h-4" />
-                        </Button>
+                  {/* Swab-Only Sample Checkbox */}
+                  <div className="mb-3">
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={sample.isSwabOnly || false}
+                        onChange={(e) =>
+                          updateSample(sample.id, {
+                            isSwabOnly: e.target.checked,
+                            // Reset weight fields when switching to swab-only
+                            ...(e.target.checked && {
+                              netWeight: 0,
+                              weightUsed: 0,
+                            }),
+                          })
+                        }
+                        className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                      />
+                      <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                        Swab-Only Sample (No Weight)
+                      </span>
+                    </label>
+                  </div>
+
+                  {!sample.isSwabOnly && (
+                    <>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                        <div>
+                          <Label className="text-xs sm:text-sm font-medium mb-1.5 block">
+                            Net Weight
+                          </Label>
+                          <div className="flex gap-2">
+                            <Input
+                              type="text"
+                              value={sample.netWeight || ""}
+                              onChange={(e) => {
+                                const value = e.target.value;
+                                // Allow empty, numbers, and decimal point
+                                if (value === "" || /^\d*\.?\d*$/.test(value)) {
+                                  updateSample(sample.id, {
+                                    netWeight:
+                                      value === "" ? 0 : parseFloat(value) || 0,
+                                  });
+                                }
+                              }}
+                              className="input-focus h-10 flex-1"
+                              placeholder="0.01, 0.005, etc."
+                            />
+                            <Button
+                              type="button"
+                              onClick={() => {
+                                setCurrentCalcSampleId(sample.id);
+                                setShowAdvancedCalc(true);
+                                // Reset calculation states
+                                setGrossWeight(0);
+                                setEmptyContainerWeight(0);
+                                setContainerCount(1);
+                                setPiecesPerBox(0);
+                                setBoxCount(0);
+                                setSinglePieceWeight(0);
+                                setStripsPerBox(0);
+                                setPiecesPerStrip(0);
+                                setCalcType("net-weight");
+                              }}
+                              className="h-10 px-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg border-0"
+                              title="Advanced Calculation"
+                            >
+                              <Calculator className="w-4 h-4" />
+                            </Button>
+                            <Select
+                              value={sample.weightUnit}
+                              onChange={(value) =>
+                                updateSample(sample.id, {
+                                  weightUnit: value as "gram" | "kg",
+                                })
+                              }
+                              options={[
+                                { label: "G", value: "gram" },
+                                { label: "Kg", value: "kg" },
+                              ]}
+                              className="input-focus h-10 w-20"
+                            />
+                          </div>
+                        </div>
+                        <div>
+                          <Label className="text-xs sm:text-sm font-medium mb-1.5 block">
+                            Storage Location
+                          </Label>
+                          <Select
+                            value={sample.storageLocation}
+                            onChange={(value) =>
+                              updateSample(sample.id, {
+                                storageLocation: String(value),
+                              })
+                            }
+                            options={STORAGE_LOCATION_OPTIONS}
+                            className="input-focus h-10"
+                          />
+                        </div>
+                      </div>
+                    </>
+                  )}
+
+                  {!sample.isSwabOnly && (
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                      <div>
+                        <Label className="text-xs sm:text-sm font-medium mb-1.5 block">
+                          Pure or Total
+                        </Label>
                         <Select
-                          value={sample.weightUnit}
+                          value={sample.pureOrTotal}
                           onChange={(value) =>
                             updateSample(sample.id, {
-                              weightUnit: value as "gram" | "kg",
+                              pureOrTotal: value as "pure" | "total",
                             })
                           }
                           options={[
-                            { label: "G", value: "gram" },
-                            { label: "Kg", value: "kg" },
+                            { label: "Pure", value: "pure" },
+                            { label: "Total", value: "total" },
                           ]}
-                          className="input-focus h-10 w-20"
+                          className="input-focus h-10"
                         />
                       </div>
-                    </div>
-                    <div>
-                      <Label className="text-xs sm:text-sm font-medium mb-1.5 block">
-                        Storage Location
-                      </Label>
-                      <Select
-                        value={sample.storageLocation}
-                        onChange={(value) =>
-                          updateSample(sample.id, {
-                            storageLocation: String(value),
-                          })
-                        }
-                        options={STORAGE_LOCATION_OPTIONS}
-                        className="input-focus h-10"
-                      />
-                    </div>
-                  </div>
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                    <div>
-                      <Label className="text-xs sm:text-sm font-medium mb-1.5 block">
-                        Pure or Total
-                      </Label>
-                      <Select
-                        value={sample.pureOrTotal}
-                        onChange={(value) =>
-                          updateSample(sample.id, {
-                            pureOrTotal: value as "pure" | "total",
-                          })
-                        }
-                        options={[
-                          { label: "Pure", value: "pure" },
-                          { label: "Total", value: "total" },
-                        ]}
-                        className="input-focus h-10"
-                      />
-                    </div>
-                    <div>
-                      <Label className="text-xs sm:text-sm font-medium mb-1.5 block">
-                        Weight Used (g)
-                      </Label>
-                      <Input
-                        type="number"
-                        step="0.01"
-                        value={sample.weightUsed || ""}
-                        onChange={(e) =>
-                          updateSample(sample.id, {
-                            weightUsed: parseFloat(e.target.value) || 0,
-                          })
-                        }
-                        className="input-focus h-10"
-                        placeholder="0.00"
-                      />
-                    </div>
-                    <div>
-                      <Label className="text-xs font-medium mb-1.5 block">
-                        Color Code
-                      </Label>
-                      {colorsLoading ? (
-                        <p className="text-xs text-gray-500">
-                          Loading colors...
-                        </p>
-                      ) : activeColors.length > 0 ? (
-                        <div className="relative">
-                          <select
-                            value={sample.colorCode}
-                            onChange={(e) =>
+                      <div>
+                        <Label className="text-xs sm:text-sm font-medium mb-1.5 block">
+                          Weight Used (g)
+                        </Label>
+                        <Input
+                          type="text"
+                          value={sample.weightUsed || ""}
+                          onChange={(e) => {
+                            const value = e.target.value;
+                            // Allow empty, numbers, and decimal point
+                            if (value === "" || /^\d*\.?\d*$/.test(value)) {
                               updateSample(sample.id, {
-                                colorCode: e.target.value,
-                              })
+                                weightUsed:
+                                  value === "" ? 0 : parseFloat(value) || 0,
+                              });
                             }
-                            className="w-full dark:text-gray-100 dark:placeholder:text-gray-200 px-3 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20"
-                          >
-                            <option value="">Select a color</option>
-                            {activeColors.map((color: any) => (
-                              <option key={color.id} value={color.hex_code}>
-                                {color.name}
-                              </option>
-                            ))}
-                          </select>
-                          {sample.colorCode && (
-                            <div
-                              className="absolute right-9 top-1/2 -translate-y-1/2 w-6 h-6 rounded border-2 border-gray-300 dark:border-gray-600 pointer-events-none"
-                              style={{ backgroundColor: sample.colorCode }}
-                              title="Selected Color"
-                            />
-                          )}
-                        </div>
-                      ) : (
-                        <p className="text-xs text-gray-500">
-                          No colors available. Please add colors in Master Data.
-                        </p>
-                      )}
+                          }}
+                          className="input-focus h-10"
+                          placeholder="0.01, 0.005, etc."
+                        />
+                      </div>
+                      <div>
+                        <Label className="text-xs font-medium mb-1.5 block">
+                          Color Code
+                        </Label>
+                        {colorsLoading ? (
+                          <p className="text-xs text-gray-500">
+                            Loading colors...
+                          </p>
+                        ) : activeColors.length > 0 ? (
+                          <div className="relative">
+                            <select
+                              value={sample.colorCode}
+                              onChange={(e) =>
+                                updateSample(sample.id, {
+                                  colorCode: e.target.value,
+                                })
+                              }
+                              className="w-full dark:text-gray-100 dark:placeholder:text-gray-200 px-3 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                            >
+                              <option value="">Select a color</option>
+                              {activeColors.map((color: any) => (
+                                <option key={color.id} value={color.hex_code}>
+                                  {color.name}
+                                </option>
+                              ))}
+                            </select>
+                            {sample.colorCode && (
+                              <div
+                                className="absolute right-9 top-1/2 -translate-y-1/2 w-6 h-6 rounded border-2 border-gray-300 dark:border-gray-600 pointer-events-none"
+                                style={{ backgroundColor: sample.colorCode }}
+                                title="Selected Color"
+                              />
+                            )}
+                          </div>
+                        ) : (
+                          <p className="text-xs text-gray-500">
+                            No colors available. Please add colors in Master
+                            Data.
+                          </p>
+                        )}
+                      </div>
                     </div>
+                  )}
+
+                  {/* Weight Notes */}
+                  <div className="mt-3">
+                    <Label className="text-xs sm:text-sm font-medium mb-1.5 block">
+                      Weight Notes{" "}
+                      <span className="text-gray-500 font-normal">
+                        (Optional - e.g., "3 pieces", "swabs only")
+                      </span>
+                    </Label>
+                    <textarea
+                      value={sample.weightNotes || ""}
+                      onChange={(e) =>
+                        updateSample(sample.id, {
+                          weightNotes: e.target.value,
+                        })
+                      }
+                      className="w-full dark:text-gray-100 dark:placeholder:text-gray-400 px-3 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 resize-none"
+                      rows={2}
+                      placeholder="Enter any notes about weight, quantity by count, or special information..."
+                    />
                   </div>
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3"></div>
@@ -1745,8 +1903,6 @@ export default function NewReport() {
 
               {calcType === "net-weight" && (
                 <div className="space-y-4">
-               
-
                   <div className="grid grid-cols-2 gap-4">
                     <div>
                       <Label className="text-sm font-medium mb-2 block">
@@ -1835,72 +1991,128 @@ export default function NewReport() {
 
               {calcType === "piece-count" && (
                 <div className="space-y-4">
-              
-
                   <div className="grid grid-cols-2 gap-4">
                     <div>
                       <Label className="text-sm font-medium mb-2 block">
-                        Pieces per Box/Bag
+                        Number of Boxes (Optional)
                       </Label>
                       <Input
                         type="number"
-                        min="1"
-                        value={piecesPerBox || ""}
-                        onChange={(e) =>
-                          setPiecesPerBox(parseInt(e.target.value) || 0)
-                        }
-                        className="h-10"
-                        placeholder="Count in one container"
-                      />
-                    </div>
-                    <div>
-                      <Label className="text-sm font-medium mb-2 block">
-                        Number of Boxes/Bags
-                      </Label>
-                      <Input
-                        type="number"
-                        min="1"
+                        min="0"
                         value={boxCount || ""}
                         onChange={(e) =>
                           setBoxCount(parseInt(e.target.value) || 0)
                         }
                         className="h-10"
-                        placeholder="Total containers"
+                        placeholder="0 if no boxes"
+                      />
+                      <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                        Leave empty or 0 for loose samples
+                      </p>
+                    </div>
+                    <div>
+                      <Label className="text-sm font-medium mb-2 block">
+                        Strips per Box
+                      </Label>
+                      <Input
+                        type="number"
+                        min="0"
+                        value={stripsPerBox || ""}
+                        onChange={(e) =>
+                          setStripsPerBox(parseInt(e.target.value) || 0)
+                        }
+                        className="h-10"
+                        placeholder="Number of strips"
                       />
                     </div>
                   </div>
 
-                  <div>
-                    <Label className="text-sm font-medium mb-2 block">
-                      Single Piece Weight (g)
-                    </Label>
-                    <Input
-                      type="number"
-                      step="0.01"
-                      value={singlePieceWeight || ""}
-                      onChange={(e) =>
-                        setSinglePieceWeight(parseFloat(e.target.value) || 0)
-                      }
-                      className="h-10"
-                      placeholder="Weight of one piece"
-                    />
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <Label className="text-sm font-medium mb-2 block">
+                        Pieces per Strip
+                      </Label>
+                      <Input
+                        type="number"
+                        min="1"
+                        value={piecesPerStrip || ""}
+                        onChange={(e) =>
+                          setPiecesPerStrip(parseInt(e.target.value) || 0)
+                        }
+                        className="h-10"
+                        placeholder="Count per strip"
+                      />
+                    </div>
+                    <div>
+                      <Label className="text-sm font-medium mb-2 block">
+                        Single Piece Weight (g)
+                      </Label>
+                      <Input
+                        type="number"
+                        step="0.01"
+                        value={singlePieceWeight || ""}
+                        onChange={(e) =>
+                          setSinglePieceWeight(parseFloat(e.target.value) || 0)
+                        }
+                        className="h-10"
+                        placeholder="Weight of one piece"
+                      />
+                    </div>
                   </div>
 
                   <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg space-y-2">
                     <div className="flex justify-between text-sm">
                       <span className="text-gray-600 dark:text-gray-400">
-                        Pieces per Container:
+                        Calculation Mode:
                       </span>
                       <span className="font-semibold text-gray-900 dark:text-white">
-                        {piecesPerBox}
+                        {boxCount > 0 ? "With Boxes" : "Loose/Strips Only"}
                       </span>
                     </div>
+                    {boxCount > 0 && (
+                      <>
+                        <div className="flex justify-between text-sm">
+                          <span className="text-gray-600 dark:text-gray-400">
+                            Number of Boxes:
+                          </span>
+                          <span className="font-semibold text-gray-900 dark:text-white">
+                            {boxCount}
+                          </span>
+                        </div>
+                        <div className="flex justify-between text-sm">
+                          <span className="text-gray-600 dark:text-gray-400">
+                            Strips per Box:
+                          </span>
+                          <span className="font-semibold text-gray-900 dark:text-white">
+                            {stripsPerBox}
+                          </span>
+                        </div>
+                        <div className="flex justify-between text-sm">
+                          <span className="text-gray-600 dark:text-gray-400">
+                            Total Strips:
+                          </span>
+                          <span className="font-semibold text-gray-900 dark:text-white">
+                            {boxCount * stripsPerBox}
+                          </span>
+                        </div>
+                      </>
+                    )}
+                    {boxCount === 0 && stripsPerBox > 0 && (
+                      <div className="flex justify-between text-sm">
+                        <span className="text-gray-600 dark:text-gray-400">
+                          Number of Strips:
+                        </span>
+                        <span className="font-semibold text-gray-900 dark:text-white">
+                          {stripsPerBox}
+                        </span>
+                      </div>
+                    )}
                     <div className="flex justify-between text-sm">
                       <span className="text-gray-600 dark:text-gray-400">
-                        Total Containers:
+                        Pieces per Strip:
                       </span>
                       <span className="font-semibold text-gray-900 dark:text-white">
-                        {boxCount}
+                        {piecesPerStrip}
                       </span>
                     </div>
                     <div className="flex justify-between text-sm">
@@ -1908,24 +2120,41 @@ export default function NewReport() {
                         Total Pieces:
                       </span>
                       <span className="font-semibold text-gray-900 dark:text-white">
-                        {piecesPerBox * boxCount}
+                        {boxCount > 0
+                          ? boxCount * stripsPerBox * piecesPerStrip
+                          : stripsPerBox * piecesPerStrip}
+                      </span>
+                    </div>
+                    <div className="flex justify-between text-sm">
+                      <span className="text-gray-600 dark:text-gray-400">
+                        Weight per Piece:
+                      </span>
+                      <span className="font-semibold text-gray-900 dark:text-white">
+                        {singlePieceWeight.toFixed(2)} g
                       </span>
                     </div>
                     <div className="border-t border-gray-300 dark:border-gray-600 pt-2 mt-2">
                       <div className="flex justify-between">
                         <span className="font-bold text-gray-900 dark:text-white">
-                          Net Weight:
+                          Total Net Weight:
                         </span>
                         <span className="font-bold text-lg text-blue-600 dark:text-blue-400">
-                          {(
-                            piecesPerBox *
-                            boxCount *
-                            singlePieceWeight
+                          {(boxCount > 0
+                            ? boxCount *
+                              stripsPerBox *
+                              piecesPerStrip *
+                              singlePieceWeight
+                            : stripsPerBox * piecesPerStrip * singlePieceWeight
                           ).toFixed(2)}{" "}
                           g
                         </span>
                       </div>
                     </div>
+                    {boxCount === 0 && stripsPerBox > 0 && (
+                      <div className="text-xs text-amber-600 dark:text-amber-400 mt-2">
+                        ℹ️ Calculating without boxes - using strips directly
+                      </div>
+                    )}
                   </div>
                 </div>
               )}
@@ -1944,7 +2173,12 @@ export default function NewReport() {
                       const calculatedWeight =
                         calcType === "net-weight"
                           ? grossWeight - emptyContainerWeight * containerCount
-                          : piecesPerBox * boxCount * singlePieceWeight;
+                          : boxCount > 0
+                          ? boxCount *
+                            stripsPerBox *
+                            piecesPerStrip *
+                            singlePieceWeight
+                          : stripsPerBox * piecesPerStrip * singlePieceWeight;
 
                       updateSample(currentCalcSampleId, {
                         netWeight: parseFloat(calculatedWeight.toFixed(2)),

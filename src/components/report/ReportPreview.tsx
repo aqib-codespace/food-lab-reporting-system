@@ -110,21 +110,50 @@ export function ReportPreview({ data }: ReportPreviewProps) {
 
           <Separator className="my-4" />
 
-          {/* Introduction Section */}
-          <section className="mb-6">
-            <h3 className="font-bold text-lg mb-3">المقدمة:</h3>
-            <div className="space-y-2 text-sm pr-4">
-              <p>
-                <span className="font-semibold">تاريخ الإنتاج: </span>
-                {formatDate(data.producedDate) || "غير محدد"}
-              </p>
-              <p>
-                <span className="font-semibold">تاريخ انتهاء الصلاحية: </span>
-                {formatDate(data.expiredDate) || "غير محدد"}
-              </p>
-              <p className="mt-3">تم استلام كل شيء وكان في حالة جيدة.</p>
-            </div>
-          </section>
+          {/* Additional Information Section */}
+          {(data.bagNumber || data.dispatchNumber || data.barcodeNumber || data.dateReceivedByDepartment || data.systemRegistrationDate) && (
+            <section className="mb-6">
+              <h3 className="font-bold text-lg mb-3">معلومات إضافية:</h3>
+              <div className="space-y-2 text-sm pr-4">
+                {data.bagNumber && (
+                  <p>
+                    <span className="font-semibold">رقم الحقيبة: </span>
+                    {data.bagNumber}
+                  </p>
+                )}
+                {data.dispatchNumber && (
+                  <p>
+                    <span className="font-semibold">رقم الإرسال: </span>
+                    {data.dispatchNumber}
+                  </p>
+                )}
+                {data.barcodeNumber && (
+                  <p>
+                    <span className="font-semibold">رقم الباركود: </span>
+                    {data.barcodeNumber}
+                  </p>
+                )}
+                {data.dateReceivedByDepartment && (
+                  <p>
+                    <span className="font-semibold">تاريخ الاستلام بالقسم: </span>
+                    {formatDate(data.dateReceivedByDepartment)}
+                  </p>
+                )}
+                {data.systemRegistrationDate && (
+                  <p>
+                    <span className="font-semibold">تاريخ التسجيل في النظام: </span>
+                    {formatDate(data.systemRegistrationDate)}
+                  </p>
+                )}
+                {data.consumerNotes && (
+                  <p>
+                    <span className="font-semibold">ملاحظات المستهلك: </span>
+                    {data.consumerNotes}
+                  </p>
+                )}
+              </div>
+            </section>
+          )}
 
           <Separator className="my-4" />
 
@@ -153,6 +182,10 @@ export function ReportPreview({ data }: ReportPreviewProps) {
                 )}
                 {data.barcodeNumber && (
                   <>، رقم الباركود ({data.barcodeNumber})</>
+                )}
+                {data.bagNumber && <>، رقم الحقيبة ({data.bagNumber})</>}
+                {data.dispatchNumber && (
+                  <>، رقم الإرسال ({data.dispatchNumber})</>
                 )}
                 .
               </p>
@@ -237,6 +270,9 @@ export function ReportPreview({ data }: ReportPreviewProps) {
                     <th className="border border-gray-300 dark:border-gray-700 px-3 py-2 text-right font-bold">
                       المستخدم
                     </th>
+                    <th className="border border-gray-300 dark:border-gray-700 px-3 py-2 text-right font-bold">
+                      ملاحظات
+                    </th>
                   </tr>
                 </thead>
                 <tbody>
@@ -299,23 +335,40 @@ export function ReportPreview({ data }: ReportPreviewProps) {
                         <td className="border border-gray-300 dark:border-gray-700 px-3 py-3">
                           <div className="space-y-1">
                             <div>
-                              <span className="inline-block px-2 py-1 rounded bg-purple-600 text-white text-xs">
-                                {sample.netWeight || 0}{" "}
-                                {sample.weightUnit === "kg" ? "كجم" : "جرام"}
-                              </span>
+                              {sample.isSwabOnly ? (
+                                <span className="inline-block px-2 py-1 rounded bg-green-600 text-white text-xs">
+                                  مسحة فقط
+                                </span>
+                              ) : (
+                                <span className="inline-block px-2 py-1 rounded bg-purple-600 text-white text-xs">
+                                  {sample.netWeight || 0}{" "}
+                                  {sample.weightUnit === "kg" ? "كجم" : "جرام"}
+                                </span>
+                              )}
                             </div>
-                            <div className="text-xs text-gray-600 dark:text-gray-400">
-                              (
-                              {sample.pureOrTotal === "pure"
-                                ? "الوزن الصافي"
-                                : "الوزن الإجمالي"}
-                              )
-                            </div>
+                            {!sample.isSwabOnly && (
+                              <div className="text-xs text-gray-600 dark:text-gray-400">
+                                (
+                                {sample.pureOrTotal === "pure"
+                                  ? "الوزن الصافي"
+                                  : "الوزن الإجمالي"}
+                                )
+                              </div>
+                            )}
                           </div>
                         </td>
                         <td className="border border-gray-300 dark:border-gray-700 px-3 py-3">
-                          <span className="inline-block px-2 py-1 rounded bg-orange-600 text-white text-xs">
-                            {sample.weightUsed || 0} جرام
+                          {sample.isSwabOnly ? (
+                            <span className="text-xs text-gray-500">-</span>
+                          ) : (
+                            <span className="inline-block px-2 py-1 rounded bg-orange-600 text-white text-xs">
+                              {sample.weightUsed || 0} جرام
+                            </span>
+                          )}
+                        </td>
+                        <td className="border border-gray-300 dark:border-gray-700 px-3 py-3">
+                          <span className="text-xs whitespace-pre-wrap">
+                            {sample.weightNotes || "-"}
                           </span>
                         </td>
                       </tr>
@@ -326,6 +379,21 @@ export function ReportPreview({ data }: ReportPreviewProps) {
           </section>
 
           <Separator className="my-6" />
+
+          {/* Unexamined Items Section - if exists */}
+          {data.unexaminedItems && (
+            <>
+              <section className="mb-6">
+                <h3 className="font-bold text-lg mb-3">
+                  العناصر غير المفحوصة:
+                </h3>
+                <p className="text-sm pr-4 whitespace-pre-wrap">
+                  {data.unexaminedItems}
+                </p>
+              </section>
+              <Separator className="my-6" />
+            </>
+          )}
 
           {/* Signature Section */}
           <section className="mt-8">

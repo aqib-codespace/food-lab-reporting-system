@@ -12,183 +12,188 @@ const formatDate = (dateStr: string): string => {
   });
 };
 
+const buildSampleContent = (data: ReportData): string => {
+  let content = "";
+  const externalContainers = data.externalContainers || [];
+
+  externalContainers.forEach((cont, bagIdx) => {
+    if (cont.type && cont.quantity) {
+      content += `
+        <div style="margin-bottom:20px; text-align:right; line-height:1.8">
+          <div style="font-weight:bold; margin-bottom:8px">الكيس ${
+            bagIdx === 0 ? "الأول" : "الثاني"
+          }: عليه رقم الباركود (${data.barcodeNumber || "000001"})، به:</div>
+      `;
+
+      const samplesForBag =
+        data.samples?.slice(bagIdx * 2, (bagIdx + 1) * 2) || [];
+      samplesForBag.forEach((sample, sIdx) => {
+        const sampleNum = `ع${bagIdx * 2 + sIdx + 1}`;
+        const sampleDesc = sample.sampleName || "سائل";
+        const containerDesc =
+          sample.internalContainers?.map((c) => c.type).join(" و ") || "علبة";
+        const weight = sample.netWeight || 0;
+        const weightUnit = sample.weightUnit === "kg" ? "كجم" : "جرام";
+        const weightType =
+          sample.pureOrTotal === "pure" ? "(صافي)" : "(إجمالي)";
+        const weightUsed = sample.weightUsed ? `${sample.weightUsed} جرام` : "";
+        const notes = sample.weightNotes || "";
+
+        if (sample.isSwabOnly) {
+          content += `<div style="margin:4px 0">${sampleNum}: ${
+            notes || "مسحة عالقة بكيس"
+          }.</div>`;
+        } else {
+          content += `<div style="margin:4px 0">${sampleNum}: ${sampleDesc} بعدد (${
+            sample.internalContainers?.length || 1
+          }) على ${containerDesc}، بوزن: ${weight} ${weightUnit} ${weightType}؛ ${
+            weightUsed ? `م: ${weightUsed}. ` : ""
+          }${notes ? `م: ${notes}.` : "استهلكت العينة."}</div>`;
+        }
+      });
+
+      content += `</div>`;
+    }
+  });
+
+  if (!content) {
+    content = `<div style="margin-bottom:20px; text-align:right; line-height:1.8">
+      <div style="font-weight:bold; margin-bottom:8px">الكيس الأول: عليه رقم الباركود (${
+        data.barcodeNumber || "000001"
+      })، به:</div>`;
+
+    (data.samples || []).forEach((sample, idx) => {
+      const sampleNum = `ع${idx + 1}`;
+      const sampleDesc = sample.sampleName || "سائل";
+      const containerDesc =
+        sample.internalContainers?.map((c) => c.type).join(" و ") || "علبة";
+      const weight = sample.netWeight || 0;
+      const weightUnit = sample.weightUnit === "kg" ? "كجم" : "جرام";
+      const weightType = sample.pureOrTotal === "pure" ? "(صافي)" : "(إجمالي)";
+      const weightUsed = sample.weightUsed ? `${sample.weightUsed} جرام` : "";
+      const notes = sample.weightNotes || "";
+
+      if (sample.isSwabOnly) {
+        content += `<div style="margin:4px 0">${sampleNum}: ${
+          notes || "مسحة عالقة بكيس"
+        }.</div>`;
+      } else {
+        content += `<div style="margin:4px 0">${sampleNum}: ${sampleDesc} بعدد (${
+          sample.internalContainers?.length || 1
+        }) على ${containerDesc}، بوزن: ${weight} ${weightUnit} ${weightType}؛ ${
+          weightUsed ? `م: ${weightUsed}. ` : ""
+        }${notes ? `م: ${notes}.` : "استهلكت العينة."}</div>`;
+      }
+    });
+
+    content += `</div>`;
+  }
+
+  return content;
+};
+
 export const generateReportPDF = async (data: ReportData): Promise<void> => {
   const pdf = new jsPDF("p", "mm", "a4");
 
   const container = document.createElement("div");
   container.style.width = "210mm";
-  container.style.padding = "15mm";
+  container.style.padding = "20mm";
   container.style.backgroundColor = "#fff";
   container.style.fontFamily = "Arial, sans-serif";
   container.style.direction = "rtl";
   container.style.position = "absolute";
   container.style.left = "-99999px";
 
+  const externalContainers = data.externalContainers || [];
+  const unexaminedContent = data.unexaminedItems
+    ? `
+    <div style="margin-top:20px; text-align:right; line-height:1.6">
+      <div style="font-weight:bold; margin-bottom:6px">بالإضافة إلى وجود مواد لا يمكن فحصها مثل شريط لاصق.</div>
+      <div>${data.unexaminedItems}</div>
+    </div>
+  `
+    : "";
+
   container.innerHTML = `
     <style>
       * { box-sizing: border-box; margin:0; padding:0; }
+      body { font-family: 'Arial', sans-serif; }
     </style>
     
-    <!-- Header -->
-    <table style="width:100%; border-collapse:collapse; margin-bottom:8px; font-size:9px">
-      <tr>
-        <td style="width:30%; text-align:right; padding:4px">
-          <div style="font-weight:bold">المرجع رقم: ${
-            data.refNumber || "789962"
-          }</div>
-        </td>
-        <td style="width:40%; text-align:center; padding:4px">
-          <div style="font-weight:bold; font-size:11px">رقم التقرير في النظام</div>
-          <div style="font-size:8px">In System</div>
-        </td>
-        <td style="width:30%; text-align:left; padding:4px">
-          <div style="font-weight:bold">التاريخ: ${formatDate(data.date)}</div>
-        </td>
-      </tr>
-    </table>
-    
-    <hr style="border:none; border-top:1px solid #000; margin:8px 0" />
-    
-    <!-- Introduction Section -->
-    <div style="margin-bottom:12px">
-      <div style="font-weight:bold; font-size:10px; margin-bottom:6px; text-align:right">:المقدمة</div>
-      <div style="font-size:9px; text-align:right; line-height:1.6">
-        <div>تاريخ الإنتاج: ${formatDate(data.producedDate) || "غير محدد"}</div>
-        <div>تاريخ انتهاء الصلاحية: ${
-          formatDate(data.expiredDate) || "غير محدد"
-        }</div>
-        <div style="margin-top:4px">تم استلام كل شيء وكان في حالة جيدة.</div>
-      </div>
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:30px; font-size:16px">
+      <div style="text-align:left; font-weight:bold">${formatDate(
+        data.date
+      )}</div>
+      <div style="text-align:center; font-weight:bold; font-size:18px">${
+        data.employee?.name || "هدى سالم"
+      }</div>
+      <div style="text-align:right; font-weight:bold">القضية رقم:${
+        data.refNumber || "000000"
+      }</div>
     </div>
     
-    <hr style="border:none; border-top:1px solid #ccc; margin:8px 0" />
-    
-    <!-- External Appearance -->
-    <div style="margin-bottom:12px">
-      <div style="font-weight:bold; font-size:10px; margin-bottom:6px; text-align:right">:المظهر الخارجي</div>
-      <div style="font-size:9px; text-align:right">
-        تم استلام ${
-          data.externalContainers && data.externalContainers.length > 0
-            ? data.externalContainers
-                .filter((c: any) => c.type && c.quantity)
-                .map((c: any) => `(${c.quantity}) ${c.type}`)
-                .join(" + ")
-            : "حاويات"
-        }
-        ${data.senderShop ? ` في ${data.senderShop}` : ""}
+    <div style="text-align:right; font-size:14px; line-height:1.8">
+      <div style="margin-bottom:25px">
+        الطرد عبارة عن عدد (${
+          externalContainers.filter((c) => c.type).length || 2
+        }) ${
+    externalContainers[0]?.type || "كيس بلاستيكي"
+  } ابيض اللون من النوع المستخدم في سوق الخضار، بهما:
       </div>
+      
+      ${buildSampleContent(data)}
+      ${unexaminedContent}
     </div>
     
-    <hr style="border:none; border-top:1px solid #ccc; margin:8px 0" />
-    
-    <!-- Storage -->
-    <div style="margin-bottom:12px">
-      <div style="font-weight:bold; font-size:10px; margin-bottom:6px; text-align:right">:التخزين</div>
-      <div style="font-size:9px; text-align:right">
-        تم وضع العينات في ${data.samples?.[0]?.storageLocation || "التخزين"}
-      </div>
-    </div>
-    
-    <hr style="border:none; border-top:1px solid #ccc; margin:8px 0" />
-    
-    <!-- Contents -->
-    <div style="margin-bottom:12px">
-      <div style="font-weight:bold; font-size:10px; margin-bottom:6px; text-align:right">:ما كان بالداخل</div>
-      <div style="font-size:9px; text-align:right">
-        تم فتح العينات وتحتوي على أطعمة ومشروبات.
-      </div>
-    </div>
-    
-    <hr style="border:none; border-top:1px solid #000; margin:8px 0" />
-    
-    <!-- Samples Table -->
-    <div style="font-weight:bold; font-size:10px; margin:10px 0 6px 0; text-align:right">:جدول العينات</div>
-    <table style="width:100%; border-collapse:collapse; font-size:8px">
-      <thead>
-        <tr style="background:#333; color:#fff">
-          <th style="border:1px solid #666; padding:6px; text-align:center; font-weight:bold">الحاوية الخارجية</th>
-          <th style="border:1px solid #666; padding:6px; text-align:center; font-weight:bold">رقم العينة</th>
-          <th style="border:1px solid #666; padding:6px; text-align:center; font-weight:bold">شكل العينة</th>
-          <th style="border:1px solid #666; padding:6px; text-align:center; font-weight:bold">الوزن</th>
-          <th style="border:1px solid #666; padding:6px; text-align:center; font-weight:bold">المستخدم</th>
+    <div style="margin-top:60px; page-break-inside:avoid">
+      <table style="width:100%; border-collapse:collapse; border:1px solid #000">
+        <tr>
+          <td style="border:1px solid #000; padding:15px; width:50%; text-align:center">
+            <div style="font-weight:bold; font-size:16px; margin-bottom:10px">التقدم بالفحص</div>
+            <div style="margin:10px 0; font-size:14px">
+              ${
+                data.employee?.roles?.name || "Senior Expert"
+              } - استشاري و الفاحص المختبر الموقع المعتمد<br/>
+              ${data.employee?.name || ""}
+            </div>
+            ${
+              data.employee?.signature
+                ? `
+              <div style="margin:20px 0">
+                <img src="${data.employee.signature}" style="height:60px; max-width:150px" />
+              </div>
+            `
+                : `<div style="margin:30px 0">_______________________</div>`
+            }
+            <div style="font-size:13px; margin-top:10px">
+              رقم الفحص: ${data.refNumber || data.reportNumber || ""}<br/>
+              التاريخ: ${formatDate(data.date)}
+            </div>
+          </td>
+          <td style="border:1px solid #000; padding:15px; width:50%; text-align:center">
+            <div style="font-weight:bold; font-size:16px; margin-bottom:10px">التقدم بالعرض</div>
+            <div style="margin:10px 0; font-size:14px">
+              خبير مساعد الفاحص الموقع المعتمد
+            </div>
+            <div style="margin:30px 0">_______________________</div>
+            <div style="font-size:13px; margin-top:10px">
+              التاريخ: ${formatDate(data.date)}
+            </div>
+          </td>
         </tr>
-      </thead>
-      <tbody>
-        ${
-          data.samples && data.samples.length > 0
-            ? data.samples
-                .map(
-                  (sample: any, idx: number) => `
-          <tr style="background:${idx % 2 === 0 ? "#fff" : "#f5f5f5"}">
-            <td style="border:1px solid #ccc; padding:5px; text-align:center">
-              ${
-                sample.internalContainers &&
-                sample.internalContainers.length > 0
-                  ? sample.internalContainers
-                      .map((c: any) => `(${c.quantity}) ${c.type}`)
-                      .join(" ")
-                  : "(1) حاوية"
-              }
-            </td>
-            <td style="border:1px solid #ccc; padding:5px; text-align:center">${
-              sample.sampleNumber || "S1"
-            }</td>
-            <td style="border:1px solid #ccc; padding:5px; text-align:center">
-              ${sample.sampleName || "طعام"}
-              ${
-                sample.systemCaseNumber
-                  ? `<div style="font-size:7px; color:#666">${sample.systemCaseNumber}</div>`
-                  : ""
-              }
-            </td>
-            <td style="border:1px solid #ccc; padding:5px; text-align:center">
-              ${sample.netWeight || 0} ${
-                    sample.weightUnit === "kg" ? "كجم" : "جرام"
-                  }
-              <div style="font-size:7px; color:#666">(${
-                sample.pureOrTotal === "pure"
-                  ? "الوزن الصافي"
-                  : "الوزن الإجمالي"
-              })</div>
-            </td>
-            <td style="border:1px solid #ccc; padding:5px; text-align:center">${
-              sample.weightUsed || 0
-            } جرام</td>
-          </tr>
-        `
-                )
-                .join("")
-            : '<tr><td colspan="5" style="border:1px solid #ccc; padding:8px; text-align:center">لا توجد عينات</td></tr>'
-        }
-      </tbody>
-    </table>
-    
-    <!-- Signature -->
-    <div style="margin-top:20px; border:1px solid #000; padding:12px">
-      <div style="text-align:right; font-size:10px; font-weight:bold; margin-bottom:8px">:التوقيع</div>
-      ${
-        data.employee?.signature
-          ? `
-        <div style="text-align:right">
-          <img src="${
-            data.employee.signature
-          }" style="height:50px; border:1px solid #ccc; padding:3px; background:#fff" />
-          <div style="margin-top:8px; font-size:8px; line-height:1.6">
-            <div>الاسم: ${data.employee.name || ""}</div>
-            <div>المنصب: ${data.employee.roles?.name || "Expert"}</div>
-            <div>التاريخ: ${formatDate(data.date)}</div>
-          </div>
-        </div>
-      `
-          : `<div style="border-bottom:1px solid #000; width:150px; height:40px"></div>`
-      }
+      </table>
+      
+      <div style="text-align:center; margin-top:15px; font-size:12px">
+        مركز الفحص المركزي للأغذية<br/>
+        صفحة 1 من 1
+      </div>
     </div>
   `;
 
   document.body.appendChild(container);
 
   const canvas = await html2canvas(container, {
-    scale: 3,
+    scale: 2.5,
     useCORS: true,
     backgroundColor: "#ffffff",
     logging: false,
@@ -201,12 +206,9 @@ export const generateReportPDF = async (data: ReportData): Promise<void> => {
   const imgWidth = 210;
   const imgHeight = (canvas.height * imgWidth) / canvas.width;
 
-  // Check if content fits on one page (297mm height)
   if (imgHeight <= 297) {
-    // Single page
     pdf.addImage(imgData, "PNG", 0, 0, imgWidth, imgHeight);
   } else {
-    // Split across two pages
     const pageHeight = 297;
     pdf.addImage(imgData, "PNG", 0, 0, imgWidth, pageHeight);
     pdf.addPage();
@@ -219,9 +221,6 @@ export const generateReportPDF = async (data: ReportData): Promise<void> => {
   pdf.save(fileName);
 };
 
-/**
- * Generate PDF as Blob for upload
- */
 export const generateReportPDFBlob = async (
   data: ReportData
 ): Promise<Blob> => {
@@ -229,178 +228,103 @@ export const generateReportPDFBlob = async (
 
   const container = document.createElement("div");
   container.style.width = "210mm";
-  container.style.padding = "15mm";
+  container.style.padding = "20mm";
   container.style.backgroundColor = "#fff";
   container.style.fontFamily = "Arial, sans-serif";
   container.style.direction = "rtl";
   container.style.position = "absolute";
   container.style.left = "-99999px";
 
+  const externalContainers = data.externalContainers || [];
+  const unexaminedContent = data.unexaminedItems
+    ? `
+    <div style="margin-top:20px; text-align:right; line-height:1.6">
+      <div style="font-weight:bold; margin-bottom:6px">بالإضافة إلى وجود مواد لا يمكن فحصها مثل شريط لاصق.</div>
+      <div>${data.unexaminedItems}</div>
+    </div>
+  `
+    : "";
+
   container.innerHTML = `
     <style>
       * { box-sizing: border-box; margin:0; padding:0; }
+      body { font-family: 'Arial', sans-serif; }
     </style>
     
-    <!-- Header -->
-    <table style="width:100%; border-collapse:collapse; margin-bottom:8px; font-size:9px">
-      <tr>
-        <td style="width:30%; text-align:right; padding:4px">
-          <div style="font-weight:bold">المرجع رقم: ${
-            data.refNumber || "789962"
-          }</div>
-        </td>
-        <td style="width:40%; text-align:center; padding:4px">
-          <div style="font-weight:bold; font-size:11px">رقم التقرير في النظام</div>
-          <div style="font-size:8px">In System</div>
-        </td>
-        <td style="width:30%; text-align:left; padding:4px">
-          <div style="font-weight:bold">التاريخ: ${formatDate(data.date)}</div>
-        </td>
-      </tr>
-    </table>
-    
-    <hr style="border:none; border-top:1px solid #000; margin:8px 0" />
-    
-    <!-- Introduction Section -->
-    <div style="margin-bottom:12px">
-      <div style="font-weight:bold; font-size:10px; margin-bottom:6px; text-align:right">:المقدمة</div>
-      <div style="font-size:9px; text-align:right; line-height:1.6">
-        <div>تاريخ الإنتاج: ${formatDate(data.producedDate) || "غير محدد"}</div>
-        <div>تاريخ انتهاء الصلاحية: ${
-          formatDate(data.expiredDate) || "غير محدد"
-        }</div>
-        <div style="margin-top:4px">تم استلام كل شيء وكان في حالة جيدة.</div>
-      </div>
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:30px; font-size:16px">
+      <div style="text-align:left; font-weight:bold">${formatDate(
+        data.date
+      )}</div>
+      <div style="text-align:center; font-weight:bold; font-size:18px">${
+        data.employee?.name || "هدى سالم"
+      }</div>
+      <div style="text-align:right; font-weight:bold">القضية رقم:${
+        data.refNumber || "000000"
+      }</div>
     </div>
     
-    <hr style="border:none; border-top:1px solid #ccc; margin:8px 0" />
-    
-    <!-- External Appearance -->
-    <div style="margin-bottom:12px">
-      <div style="font-weight:bold; font-size:10px; margin-bottom:6px; text-align:right">:المظهر الخارجي</div>
-      <div style="font-size:9px; text-align:right">
-        تم استلام ${
-          data.externalContainers && data.externalContainers.length > 0
-            ? data.externalContainers
-                .filter((c: any) => c.type && c.quantity)
-                .map((c: any) => `(${c.quantity}) ${c.type}`)
-                .join(" + ")
-            : "حاويات"
-        }
-        ${data.senderShop ? ` في ${data.senderShop}` : ""}
+    <div style="text-align:right; font-size:14px; line-height:1.8">
+      <div style="margin-bottom:25px">
+        الطرد عبارة عن عدد (${
+          externalContainers.filter((c) => c.type).length || 2
+        }) ${
+    externalContainers[0]?.type || "كيس بلاستيكي"
+  } ابيض اللون من النوع المستخدم في سوق الخضار، بهما:
       </div>
+      
+      ${buildSampleContent(data)}
+      ${unexaminedContent}
     </div>
     
-    <hr style="border:none; border-top:1px solid #ccc; margin:8px 0" />
-    
-    <!-- Storage -->
-    <div style="margin-bottom:12px">
-      <div style="font-weight:bold; font-size:10px; margin-bottom:6px; text-align:right">:التخزين</div>
-      <div style="font-size:9px; text-align:right">
-        تم وضع العينات في ${data.samples?.[0]?.storageLocation || "التخزين"}
-      </div>
-    </div>
-    
-    <hr style="border:none; border-top:1px solid #ccc; margin:8px 0" />
-    
-    <!-- Contents -->
-    <div style="margin-bottom:12px">
-      <div style="font-weight:bold; font-size:10px; margin-bottom:6px; text-align:right">:ما كان بالداخل</div>
-      <div style="font-size:9px; text-align:right">
-        تم فتح العينات وتحتوي على أطعمة ومشروبات.
-      </div>
-    </div>
-    
-    <hr style="border:none; border-top:1px solid #000; margin:8px 0" />
-    
-    <!-- Samples Table -->
-    <div style="font-weight:bold; font-size:10px; margin:10px 0 6px 0; text-align:right">:جدول العينات</div>
-    <table style="width:100%; border-collapse:collapse; font-size:8px">
-      <thead>
-        <tr style="background:#333; color:#fff">
-          <th style="border:1px solid #666; padding:6px; text-align:center; font-weight:bold">الحاوية الخارجية</th>
-          <th style="border:1px solid #666; padding:6px; text-align:center; font-weight:bold">رقم العينة</th>
-          <th style="border:1px solid #666; padding:6px; text-align:center; font-weight:bold">شكل العينة</th>
-          <th style="border:1px solid #666; padding:6px; text-align:center; font-weight:bold">الوزن</th>
-          <th style="border:1px solid #666; padding:6px; text-align:center; font-weight:bold">المستخدم</th>
+    <div style="margin-top:60px; page-break-inside:avoid">
+      <table style="width:100%; border-collapse:collapse; border:1px solid #000">
+        <tr>
+          <td style="border:1px solid #000; padding:15px; width:50%; text-align:center">
+            <div style="font-weight:bold; font-size:16px; margin-bottom:10px">التقدم بالفحص</div>
+            <div style="margin:10px 0; font-size:14px">
+              ${
+                data.employee?.roles?.name || "Senior Expert"
+              } - استشاري و الفاحص المختبر الموقع المعتمد<br/>
+              ${data.employee?.name || ""}
+            </div>
+            ${
+              data.employee?.signature
+                ? `
+              <div style="margin:20px 0">
+                <img src="${data.employee.signature}" style="height:60px; max-width:150px" />
+              </div>
+            `
+                : `<div style="margin:30px 0">_______________________</div>`
+            }
+            <div style="font-size:13px; margin-top:10px">
+              رقم الفحص: ${data.refNumber || data.reportNumber || ""}<br/>
+              التاريخ: ${formatDate(data.date)}
+            </div>
+          </td>
+          <td style="border:1px solid #000; padding:15px; width:50%; text-align:center">
+            <div style="font-weight:bold; font-size:16px; margin-bottom:10px">التقدم بالعرض</div>
+            <div style="margin:10px 0; font-size:14px">
+              خبير مساعد الفاحص الموقع المعتمد
+            </div>
+            <div style="margin:30px 0">_______________________</div>
+            <div style="font-size:13px; margin-top:10px">
+              التاريخ: ${formatDate(data.date)}
+            </div>
+          </td>
         </tr>
-      </thead>
-      <tbody>
-        ${
-          data.samples && data.samples.length > 0
-            ? data.samples
-                .map(
-                  (sample: any, idx: number) => `
-          <tr style="background:${idx % 2 === 0 ? "#fff" : "#f5f5f5"}">
-            <td style="border:1px solid #ccc; padding:5px; text-align:center">
-              ${
-                sample.internalContainers &&
-                sample.internalContainers.length > 0
-                  ? sample.internalContainers
-                      .map((c: any) => `(${c.quantity}) ${c.type}`)
-                      .join(" ")
-                  : "(1) حاوية"
-              }
-            </td>
-            <td style="border:1px solid #ccc; padding:5px; text-align:center">${
-              sample.sampleNumber || "S1"
-            }</td>
-            <td style="border:1px solid #ccc; padding:5px; text-align:center">
-              ${sample.sampleName || "طعام"}
-              ${
-                sample.systemCaseNumber
-                  ? `<div style="font-size:7px; color:#666">${sample.systemCaseNumber}</div>`
-                  : ""
-              }
-            </td>
-            <td style="border:1px solid #ccc; padding:5px; text-align:center">
-              ${sample.netWeight || 0} ${
-                    sample.weightUnit === "kg" ? "كجم" : "جرام"
-                  }
-              <div style="font-size:7px; color:#666">(${
-                sample.pureOrTotal === "pure"
-                  ? "الوزن الصافي"
-                  : "الوزن الإجمالي"
-              })</div>
-            </td>
-            <td style="border:1px solid #ccc; padding:5px; text-align:center">${
-              sample.weightUsed || 0
-            } جرام</td>
-          </tr>
-        `
-                )
-                .join("")
-            : '<tr><td colspan="5" style="border:1px solid #ccc; padding:8px; text-align:center">لا توجد عينات</td></tr>'
-        }
-      </tbody>
-    </table>
-    
-    <!-- Signature -->
-    <div style="margin-top:20px; border:1px solid #000; padding:12px">
-      <div style="text-align:right; font-size:10px; font-weight:bold; margin-bottom:8px">:التوقيع</div>
-      ${
-        data.employee?.signature
-          ? `
-        <div style="text-align:right">
-          <img src="${
-            data.employee.signature
-          }" style="height:50px; border:1px solid #ccc; padding:3px; background:#fff" />
-          <div style="margin-top:8px; font-size:8px; line-height:1.6">
-            <div>الاسم: ${data.employee.name || ""}</div>
-            <div>المنصب: ${data.employee.roles?.name || "Expert"}</div>
-            <div>التاريخ: ${formatDate(data.date)}</div>
-          </div>
-        </div>
-      `
-          : `<div style="border-bottom:1px solid #000; width:150px; height:40px"></div>`
-      }
+      </table>
+      
+      <div style="text-align:center; margin-top:15px; font-size:12px">
+        مركز الفحص المركزي للأغذية<br/>
+        صفحة 1 من 1
+      </div>
     </div>
   `;
 
   document.body.appendChild(container);
 
   const canvas = await html2canvas(container, {
-    scale: 3,
+    scale: 2.5,
     useCORS: true,
     backgroundColor: "#ffffff",
     logging: false,
@@ -413,12 +337,9 @@ export const generateReportPDFBlob = async (
   const imgWidth = 210;
   const imgHeight = (canvas.height * imgWidth) / canvas.width;
 
-  // Check if content fits on one page (297mm height)
   if (imgHeight <= 297) {
-    // Single page
     pdf.addImage(imgData, "PNG", 0, 0, imgWidth, imgHeight);
   } else {
-    // Split across two pages
     const pageHeight = 297;
     pdf.addImage(imgData, "PNG", 0, 0, imgWidth, pageHeight);
     pdf.addPage();

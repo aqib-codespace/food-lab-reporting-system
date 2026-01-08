@@ -32,13 +32,15 @@ export interface Sample {
   sampleNumber: string;
   sampleName: string;
   internalContainers: InternalContainerEntry[];
-  netWeight: number;
+  netWeight: number | string;
   weightUnit: "gram" | "kg";
   pureOrTotal: "pure" | "total";
-  weightUsed: number;
+  weightUsed: number | string;
   colorCode: string;
   storageLocation: string;
   systemCaseNumber?: string;
+  weightNotes?: string;
+  isSwabOnly?: boolean;
 }
 
 export interface ReportData {
@@ -51,8 +53,12 @@ export interface ReportData {
   internalContainers: ContainerEntry[];
   samples: Sample[];
   barcodeNumber: string;
-  producedDate: string;
-  expiredDate: string;
+  bagNumber?: string;
+  dispatchNumber?: string;
+  dateReceivedByDepartment?: string;
+  systemRegistrationDate?: string;
+  consumerNotes?: string;
+  unexaminedItems?: string;
   reportNumber: string;
   status?: "pending" | "completed";
   pdfUrl?: string | null;
