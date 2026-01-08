@@ -73,12 +73,13 @@
 
 #### Laboratory Operations
 
+- ✅ **Two-Team Workflow** - Opening Team handles intake, Examination Team finalizes reports
 - ✅ **Multi-Sample Processing** - Handle multiple samples per report with unique tracking
-- ✅ **Digital Signatures** - Secure employee authentication with SVG signatures
-- ✅ **Container Management** - Track external and internal container types
-- ✅ **Reference System** - Auto-generated unique report reference numbers
-- ✅ **Date Tracking** - Production, expiration, and processing dates
-- ✅ **Barcode Integration** - Scanner support for rapid data entry
+- ✅ **Digital Signatures** - Employee signatures integrated into exported documents
+- ✅ **Container Management** - Track external and internal container types with images
+- ✅ **Reference System** - System-generated case numbers and barcodes
+- ✅ **Date Tracking** - Comprehensive date management (intake, examination, dispatch)
+- ✅ **Barcode Integration** - Barcode number tracking for sample identification
 
 </td>
 <td width="50%" valign="top">
@@ -96,14 +97,30 @@
 </tr>
 </table>
 
-### 👥 Advanced Team Management
+### �️ Master Data Management (Admin Only)
+
+```
+Master Data Categories:
+├── Employees - Manage staff with roles and signatures
+├── Container Types - External and internal container types with images
+├── Sample Names - Predefined sample types for standardization
+└── Sender Shops - Origin locations for samples
+```
+
+- **Employee Management**: Add/edit employees with roles, initials, and digital signatures
+- **Container Types**: Define container categories (external/internal) with visual references
+- **Sample Names**: Maintain standardized sample nomenclature
+- **Sender Shops**: Track and manage sample origin locations
+- **Admin-Only Access**: Protected by role-based middleware
+
+### �👥 Advanced Team Management
 
 - **Role-Based Access Control (RBAC)**
 
-  - Admin: Full system access and master data management
-  - Examiner: Sample examination and report creation
-  - Opener: Container opening and initial processing
-  - User: View-only access to reports
+  - **Admin**: Full system access including master data management (employees, container types, sample names, sender shops)
+  - **Opener**: Opening team access for initial sample intake and container processing
+  - **Examiner**: Examination team access for sample examination and report finalization
+  - **User**: General access to view reports and data
 
 - **Employee Profiles**
   - Complete contact information
@@ -160,10 +177,10 @@
 ┌─────────────────────────────────────────────────────┐
 │                Authentication Layer                  │
 ├─────────────────────────────────────────────────────┤
-│  JWT (jose 6.1.3)                                   │
-│  HTTP-Only Cookies                                  │
-│  Role-Based Access Control                          │
-│  Middleware Route Protection                        │
+│  JWT (jose 6.1.3) - Token-based authentication      │
+│  HTTP-Only Cookies - Secure token storage           │
+│  Role-Based Access Control - Admin/Opener/Examiner  │
+│  Middleware Route Protection - Next.js middleware    │
 └─────────────────────────────────────────────────────┘
 
 ┌─────────────────────────────────────────────────────┐
@@ -403,13 +420,14 @@ food-lab-reporting-system/
 
 ### Security Features
 
-- **JWT Authentication** - Secure token-based authentication with jose library
+- **JWT Authentication** - Secure token-based authentication with jose library (HS256 algorithm)
 - **HTTP-Only Cookies** - Prevents XSS attacks by storing tokens in HTTP-only cookies
 - **24-Hour Token Expiration** - Automatic session timeout for security
-- **Role-Based Access Control** - Granular permissions per user role
-- **Middleware Protection** - Server-side route guards
+- **Role-Based Access Control** - Granular permissions (Admin, Opener, Examiner, User)
+- **Middleware Protection** - Server-side route guards with Next.js middleware
 - **Client-Side Guards** - Component-level protection for sensitive pages
-- **Password Security** - Prepared for bcrypt hashing (currently plain text for development)
+- **Master Data Protection** - Admin-only routes enforced at middleware level
+- **Secure Cookie Settings** - SameSite=strict, HttpOnly, Secure (in production)
 
 ### Authentication Flow
 
@@ -433,15 +451,19 @@ food-lab-reporting-system/
 
 ### Role Permissions Matrix
 
-| Feature          | Admin | Examiner | Opener | User |
-| ---------------- | ----- | -------- | ------ | ---- |
-| View Dashboard   | ✅    | ✅       | ✅     | ✅   |
-| Create Reports   | ✅    | ✅       | ✅     | ❌   |
-| View Reports     | ✅    | ✅       | ✅     | ✅   |
-| Export Reports   | ✅    | ✅       | ✅     | ❌   |
-| Manage Employees | ✅    | ❌       | ❌     | ❌   |
-| Master Data      | ✅    | ❌       | ❌     | ❌   |
-| System Settings  | ✅    | ❌       | ❌     | ❌   |
+| Feature               | Admin | Examiner | Opener | User |
+| --------------------- | ----- | -------- | ------ | ---- |
+| View Dashboard        | ✅    | ✅       | ✅     | ✅   |
+| Opening Team View     | ✅    | ✅       | ✅     | ❌   |
+| Examination Team View | ✅    | ✅       | ✅     | ❌   |
+| View Reports          | ✅    | ✅       | ✅     | ✅   |
+| Export Reports        | ✅    | ✅       | ✅     | ❌   |
+| Manage Employees      | ✅    | ❌       | ❌     | ❌   |
+| Master Data           | ✅    | ❌       | ❌     | ❌   |
+| Container Types       | ✅    | ❌       | ❌     | ❌   |
+| Sample Names          | ✅    | ❌       | ❌     | ❌   |
+| Sender Shops          | ✅    | ❌       | ❌     | ❌   |
+| System Settings       | ✅    | ❌       | ❌     | ❌   |
 
 ---
 
@@ -999,30 +1021,30 @@ A multi-section form for creating detailed food lab reports:
 
 ---
 
-## 🗃️ State Management
+## 🗃️ Data Management
 
-### Redux Architecture
+### Supabase Integration
+
+The application uses **Supabase** (PostgreSQL) for data persistence:
 
 ```typescript
-Store Structure
-├── reports
-│   └── reportsSlice
-│       ├── reports: SavedReport[]
-│       ├── addReport()
-│       ├── deleteReport()
-│       ├── updateReport()
-│       └── setReports()
-└── [Future slices...]
+Data Tables
+├── users - User accounts with authentication
+├── roles - User role definitions (admin, opener, examiner)
+├── employees - Employee profiles with signatures
+├── reports - Laboratory reports and case data
+├── container_types - Container definitions
+├── sample_names - Sample type definitions
+└── sender_shops - Origin location definitions
 ```
 
-### Data Persistence
+### Custom React Hooks
 
-The application uses **Redux Persist** to maintain data across browser sessions:
-
-- Reports stored in localStorage
-- Automatic rehydration on app load
-- Configurable persistence settings
-- Seamless state recovery
+- **useReports()**: Fetch and manage reports
+- **useEmployees()**: Employee CRUD operations
+- **useContainerTypes()**: Container type management
+- **useSampleNames()**: Sample name operations
+- **useSenderShops()**: Sender shop management
 
 ---
 

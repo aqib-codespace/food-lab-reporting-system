@@ -33,26 +33,41 @@ export default function Documentation() {
       </div>
 
       {/* Main Tabs */}
-      <Tabs defaultValue="overview" className="w-full">
-        <TabsList className="flex gap-1 overflow-x-auto scrollbar-thin-light p-2 sm:grid sm:grid-cols-3 lg:grid-cols-7">
-          <TabsTrigger value="overview" className="gap-2 min-w-[120px] sm:min-w-0">
+      <Tabs defaultValue="overview" className="w-full ">
+        <TabsList className="flex gap-1 overflow-x-auto overflow-y-hidden scrollbar-thin-light p-2 sm:grid sm:grid-cols-3 lg:grid-cols-7">
+          <TabsTrigger
+            value="overview"
+            className="gap-2 min-w-[120px] sm:min-w-0"
+          >
             <BookOpen className="w-4 h-4" />
             <span className="hidden sm:inline">Overview</span>
           </TabsTrigger>
-          <TabsTrigger value="getting-started" className="gap-2 min-w-[120px] sm:min-w-0">
+          <TabsTrigger
+            value="getting-started"
+            className="gap-2 min-w-[120px] sm:min-w-0"
+          >
             <PlayCircle className="w-4 h-4" />
             <span className="hidden sm:inline">Getting Started</span>
           </TabsTrigger>
-          <TabsTrigger value="reports" className="gap-2 min-w-[120px] sm:min-w-0">
+          <TabsTrigger
+            value="reports"
+            className="gap-2 min-w-[120px] sm:min-w-0"
+          >
             <FileText className="w-4 h-4" />
-            <span className="hidden sm:inline">Reports</span>
+            <span className="hidden sm:inline">Cases</span>
           </TabsTrigger>
 
-          <TabsTrigger value="employees" className="gap-2 min-w-[120px] sm:min-w-0">
+          <TabsTrigger
+            value="employees"
+            className="gap-2 min-w-[120px] sm:min-w-0"
+          >
             <Users className="w-4 h-4" />
             <span className="hidden sm:inline">Employees</span>
           </TabsTrigger>
-          <TabsTrigger value="export" className="gap-2 min-w-[120px] sm:min-w-0">
+          <TabsTrigger
+            value="export"
+            className="gap-2 min-w-[120px] sm:min-w-0"
+          >
             <Download className="w-4 h-4" />
             <span className="hidden sm:inline">Export</span>
           </TabsTrigger>
@@ -68,31 +83,40 @@ export default function Documentation() {
             </CardHeader>
             <CardContent className="space-y-4">
               <p className="text-gray-700 dark:text-gray-300 leading-relaxed">
-                The Food Lab Reporting System is a modern, easy-to-use web
-                application designed to help food testing laboratories manage
-                their daily operations efficiently. Whether you're testing food
-                samples, tracking containers, or generating professional
-                reports, this system simplifies your workflow.
+                The Food Lab Reporting System is a modern, enterprise-grade web
+                application designed to streamline food testing laboratory
+                operations. The system uses a two-team workflow: the Opening
+                Team handles initial sample intake and container processing,
+                while the Examination Team conducts detailed examinations and
+                finalizes reports. With role-based access control, master data
+                management, and professional export capabilities, this system
+                ensures efficient laboratory operations.
               </p>
 
-              <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 mt-6">
+              <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4 mt-6">
+                <FeatureCard
+                  icon={<Users className="w-6 h-6" />}
+                  title="Two-Team Workflow"
+                  description="Opening Team and Examination Team collaborate for efficient processing"
+                  color="green"
+                />
                 <FeatureCard
                   icon={<FileText className="w-6 h-6" />}
                   title="Create Reports"
-                  description="Generate detailed food lab reports quickly and easily"
+                  description="Generate detailed food lab reports with comprehensive sample tracking"
                   color="blue"
                 />
 
                 <FeatureCard
                   icon={<BarChart3 className="w-6 h-6" />}
-                  title="View Analytics"
-                  description="Get insights into lab performance and productivity"
+                  title="Master Data"
+                  description="Centralized management of employees, containers, and sample types"
                   color="purple"
                 />
                 <FeatureCard
                   icon={<Download className="w-6 h-6" />}
                   title="Export Reports"
-                  description="Download reports as PDF or Word documents"
+                  description="Download reports as PDF or Word documents with signatures"
                   color="amber"
                 />
               </div>
@@ -108,12 +132,12 @@ export default function Documentation() {
             </CardHeader>
             <CardContent>
               <div className="grid sm:grid-cols-2 gap-4">
-                <BenefitItem text="Save time with automated report generation" />
-                <BenefitItem text="Reduce errors with built-in validation" />
-                <BenefitItem text="Access data anytime, anywhere" />
-                <BenefitItem text="Professional, standardized reports" />
-                <BenefitItem text="Easy team collaboration" />
-                <BenefitItem text="Secure data storage" />
+                <BenefitItem text="Two-team workflow for efficient laboratory operations" />
+                <BenefitItem text="Role-based access control (Admin, Opener, Examiner)" />
+                <BenefitItem text="Master data management for standardization" />
+                <BenefitItem text="Professional reports with digital signatures" />
+                <BenefitItem text="Supabase-powered real-time data storage" />
+                <BenefitItem text="Secure JWT-based authentication" />
               </div>
             </CardContent>
           </Card>
@@ -136,36 +160,36 @@ export default function Documentation() {
 
               <StepCard
                 number="1"
-                title="Access the Dashboard"
-                description="When you first open the application, you'll see the Dashboard. This is your main hub showing all important information at a glance."
+                title="Login and Access Dashboard"
+                description="Log in with your credentials. Your role (Admin, Opener, or Examiner) determines which features you can access."
                 tips={[
-                  "View total number of reports and samples",
-                  "See recent activity and statistics",
-                  "Quick access to create new reports",
+                  "View total cases and samples on the dashboard",
+                  "Access opening team or examination team views based on your role",
+                  "Admins can manage master data and employees",
                 ]}
               />
 
               <StepCard
                 number="2"
-                title="Create Your First Report"
-                description="Click on 'New Report' in the sidebar or the dashboard to start creating a report."
+                title="Opening Team - Initial Processing"
+                description="The Opening Team handles the initial intake of samples and containers."
                 tips={[
-                  "Fill in the reference number (e.g., REF-001)",
-                  "Select the employee responsible for the report",
-                  "Choose the report date",
-                  "Add container and sample information",
+                  "Click 'Opening Team' in the sidebar",
+                  "Enter system case number and barcode information",
+                  "Record external and internal containers",
+                  "Add sample details with weights and storage locations",
                 ]}
               />
 
               <StepCard
                 number="3"
-                title="Fill in Sample Details"
-                description="Add information about the samples being tested. You can add multiple samples to a single report."
+                title="Examination Team - Finalize Reports"
+                description="The Examination Team reviews and completes the reports with examination details."
                 tips={[
-                  "Enter sample name and number",
-                  "Record weight measurements",
-                  "Assign a color code for easy identification",
-                  "Specify storage location (store, fridge, or both)",
+                  "Access reports through 'Examination Team' view",
+                  "Review sample information and add examination notes",
+                  "Select the examining employee for signature inclusion",
+                  "Verify all data before finalizing",
                 ]}
               />
 
@@ -182,12 +206,13 @@ export default function Documentation() {
 
               <StepCard
                 number="5"
-                title="Export Your Report"
-                description="Once saved, you can export your report in professional formats."
+                title="Export Professional Reports"
+                description="Once saved, export your reports in PDF or Word format with employee signatures."
                 tips={[
-                  "Go to 'All Reports' to view your saved reports",
-                  "Click on any report to view details",
-                  "Use the export buttons to download as PDF or Word",
+                  "Navigate to the examination team view to find completed reports",
+                  "Click on any report to view full details",
+                  "Use export buttons for PDF (read-only) or Word (editable)",
+                  "Employee signatures are automatically included in exports",
                 ]}
               />
             </CardContent>
@@ -199,24 +224,27 @@ export default function Documentation() {
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <FileText className="w-5 h-5 text-blue-600" />
-                Managing Reports
+                Managing Cases
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-6">
               <Section
-                title="Creating a New Report"
+                title="Creating a New Case"
                 icon={<Plus className="w-5 h-5 text-green-600" />}
               >
                 <p className="text-gray-700 dark:text-gray-300 mb-4">
-                  To create a new report, follow these sections:
+                  To create a new case, follow these sections:
                 </p>
                 <div className="space-y-3">
                   <InfoBox
                     title="Basic Information"
                     items={[
-                      "Reference Number: A unique identifier for your report (e.g., REF-2026-001)",
-                      "Employee: Select who is responsible for this report",
-                      "Date: Choose the date when the samples were received",
+                      "System Case Number: Unique identifier for tracking the case",
+                      "Barcode Number: Barcode tracking number for sample identification",
+                      "Bag Number: Optional bag identification number",
+                      "Dispatch Number: Dispatch tracking number",
+                      "Date Received: When samples were received by the department",
+                      "System Registration Date: Date of system registration",
                     ]}
                   />
                   <InfoBox
@@ -239,52 +267,40 @@ export default function Documentation() {
               </Section>
 
               <Section
-                title="Viewing Reports"
+                title="Viewing and Managing Cases"
                 icon={<Eye className="w-5 h-5 text-purple-600" />}
               >
                 <p className="text-gray-700 dark:text-gray-300 mb-4">
-                  All your saved reports can be accessed from the "All Reports"
-                  page:
+                  Cases can be accessed through the Opening Team and Examination
+                  Team views:
                 </p>
                 <ul className="space-y-2 text-gray-700 dark:text-gray-300">
                   <li className="flex items-start gap-2">
                     <CheckCircle2 className="w-5 h-5 text-green-600 mt-0.5 flex-shrink-0" />
                     <span>
-                      Use the search bar to find reports by reference number
+                      Opening Team view shows all cases for initial processing
                     </span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <CheckCircle2 className="w-5 h-5 text-green-600 mt-0.5 flex-shrink-0" />
-                    <span>Click on any report to view full details</span>
                   </li>
                   <li className="flex items-start gap-2">
                     <CheckCircle2 className="w-5 h-5 text-green-600 mt-0.5 flex-shrink-0" />
                     <span>
-                      Sort reports by date, employee, or reference number
+                      Examination Team view displays cases ready for examination
+                    </span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <CheckCircle2 className="w-5 h-5 text-green-600 mt-0.5 flex-shrink-0" />
+                    <span>
+                      Use search and filter options to find specific cases
+                    </span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <CheckCircle2 className="w-5 h-5 text-green-600 mt-0.5 flex-shrink-0" />
+                    <span>
+                      Click on any case to view complete details including all
+                      samples
                     </span>
                   </li>
                 </ul>
-              </Section>
-
-              <Section
-                title="Editing Reports"
-                icon={<Settings className="w-5 h-5 text-amber-600" />}
-              >
-                <div className="bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
-                  <div className="flex gap-3">
-                    <AlertCircle className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
-                    <div className="space-y-2 text-sm">
-                      <p className="font-medium text-blue-900 dark:text-blue-300">
-                        Currently, reports cannot be edited after saving.
-                      </p>
-                      <p className="text-blue-800 dark:text-blue-400">
-                        Make sure to preview your report carefully before
-                        saving. If you need to make changes, you can create a
-                        new report with the correct information.
-                      </p>
-                    </div>
-                  </div>
-                </div>
               </Section>
             </CardContent>
           </Card>
@@ -300,9 +316,16 @@ export default function Documentation() {
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-6">
+              <p className="text-gray-700 dark:text-gray-300">
+                Employee management is available to administrators only. This
+                section allows you to manage laboratory staff, assign roles, and
+                maintain digital signatures for official documents.
+              </p>
+
               <Section title="About Employee Profiles">
                 <p className="text-gray-700 dark:text-gray-300 mb-4">
-                  Each employee in the system has a profile that includes:
+                  Each employee in the system has a comprehensive profile that
+                  includes:
                 </p>
                 <div className="grid sm:grid-cols-2 gap-4">
                   <div className="space-y-2">
@@ -316,7 +339,7 @@ export default function Documentation() {
                       </li>
                       <li className="flex items-center gap-2">
                         <div className="w-1.5 h-1.5 rounded-full bg-blue-600"></div>
-                        Job Role
+                        System Role (Admin/Opener/Examiner/User)
                       </li>
                       <li className="flex items-center gap-2">
                         <div className="w-1.5 h-1.5 rounded-full bg-blue-600"></div>
@@ -324,39 +347,67 @@ export default function Documentation() {
                       </li>
                       <li className="flex items-center gap-2">
                         <div className="w-1.5 h-1.5 rounded-full bg-blue-600"></div>
-                        Color Code
+                        Active/Inactive Status
                       </li>
                     </ul>
                   </div>
                   <div className="space-y-2">
                     <h4 className="font-medium text-gray-900 dark:text-gray-100">
-                      Contact Details
+                      Digital Assets
                     </h4>
                     <ul className="space-y-1 text-sm text-gray-700 dark:text-gray-300">
                       <li className="flex items-center gap-2">
                         <div className="w-1.5 h-1.5 rounded-full bg-green-600"></div>
-                        Email Address
+                        Profile Photo (Optional)
                       </li>
                       <li className="flex items-center gap-2">
                         <div className="w-1.5 h-1.5 rounded-full bg-green-600"></div>
-                        Phone Number
+                        Digital Signature (Required)
                       </li>
                       <li className="flex items-center gap-2">
                         <div className="w-1.5 h-1.5 rounded-full bg-green-600"></div>
-                        Active Status
+                        Supabase Storage Integration
                       </li>
                       <li className="flex items-center gap-2">
                         <div className="w-1.5 h-1.5 rounded-full bg-green-600"></div>
-                        Digital Signature
+                        Automatic Export Inclusion
                       </li>
                     </ul>
                   </div>
                 </div>
               </Section>
 
+              <Section title="User Roles">
+                <p className="text-gray-700 dark:text-gray-300 mb-4">
+                  The system uses role-based access control with four distinct
+                  roles:
+                </p>
+                <div className="space-y-3">
+                  <div className="p-3 bg-purple-50 dark:bg-purple-950/30 border border-purple-200 dark:border-purple-800 rounded-lg">
+                    <p className="font-medium text-purple-900 dark:text-purple-300">
+                      Admin
+                    </p>
+                    <p className="text-sm text-purple-800 dark:text-purple-400 mt-1">
+                      Full system access including master data management
+                      (employees, container types, sample names, sender shops)
+                    </p>
+                  </div>
+
+                  <div className="p-3 bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800 rounded-lg">
+                    <p className="font-medium text-blue-900 dark:text-blue-300">
+                      Examiner
+                    </p>
+                    <p className="text-sm text-blue-800 dark:text-blue-400 mt-1">
+                      Examination Team access for sample examination and report
+                      finalization
+                    </p>
+                  </div>
+                </div>
+              </Section>
+
               <Section title="Assigning Employees to Reports">
                 <p className="text-gray-700 dark:text-gray-300 mb-4">
-                  When creating a report, you need to assign an employee:
+                  When creating a report, you need to assign an examiner:
                 </p>
                 <div className="space-y-3">
                   <div className="flex items-start gap-3 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
@@ -369,7 +420,7 @@ export default function Documentation() {
                       </p>
                       <p className="text-sm text-gray-600 dark:text-gray-400">
                         Click the employee dropdown in the report form to see
-                        all available employees
+                        all active employees
                       </p>
                     </div>
                   </div>
@@ -382,7 +433,7 @@ export default function Documentation() {
                         View Employee Details
                       </p>
                       <p className="text-sm text-gray-600 dark:text-gray-400">
-                        Each employee shows their name, role, and color code for
+                        Each employee shows their name, role, and initials for
                         easy identification
                       </p>
                     </div>
@@ -393,11 +444,11 @@ export default function Documentation() {
                     </div>
                     <div>
                       <p className="font-medium text-gray-900 dark:text-gray-100">
-                        Digital Signature
+                        Digital Signature Inclusion
                       </p>
                       <p className="text-sm text-gray-600 dark:text-gray-400">
                         The selected employee's digital signature will
-                        automatically appear on the report
+                        automatically appear on exported PDF and Word documents
                       </p>
                     </div>
                   </div>
@@ -412,49 +463,49 @@ export default function Documentation() {
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Download className="w-5 h-5 text-blue-600" />
-                Exporting Reports
+                Exporting Cases
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-6">
               <Section title="Export Formats">
                 <p className="text-gray-700 dark:text-gray-300 mb-4">
-                  You can export your reports in two professional formats:
+                  You can export your cases in two professional formats:
                 </p>
                 <div className="grid sm:grid-cols-2 gap-4">
                   <ExportFormatCard
                     format="PDF"
                     icon="📄"
                     features={[
-                      "Professional formatting with company branding",
+                      "Professional Arabic formatting with right-to-left text",
                       "Cannot be edited (preserves report integrity)",
-                      "Perfect for official documentation",
-                      "Easy to share via email",
-                      "Includes employee signatures",
-                      "Print-ready format",
+                      "Includes employee digital signatures automatically",
+                      "Perfect for official documentation and compliance",
+                      "Generated using jsPDF library",
+                      "Print-ready A4 format",
                     ]}
                     useCases={[
-                      "Official report submissions",
-                      "Client deliverables",
-                      "Archive copies",
-                      "Regulatory compliance",
+                      "Official report submissions to authorities",
+                      "Client deliverables and final reports",
+                      "Archive copies for records",
+                      "Regulatory compliance documentation",
                     ]}
                   />
                   <ExportFormatCard
                     format="Word Document"
                     icon="📝"
                     features={[
-                      "Fully editable content",
-                      "Professional table formatting",
-                      "Compatible with Microsoft Word",
-                      "Easy to customize",
-                      "Add additional notes",
-                      "Flexible layout modifications",
+                      "Fully editable .docx format",
+                      "Professional table formatting with Arabic support",
+                      "Compatible with Microsoft Word and LibreOffice",
+                      "Includes employee signatures in document",
+                      "Easy to customize and add annotations",
+                      "Generated using docx library",
                     ]}
                     useCases={[
-                      "Draft reports needing revisions",
-                      "Internal documentation",
-                      "Custom report templates",
-                      "Collaborative editing",
+                      "Draft reports needing revisions or additions",
+                      "Internal documentation and collaboration",
+                      "Custom report templates and modifications",
+                      "Reports requiring additional management notes",
                     ]}
                   />
                 </div>
@@ -587,57 +638,6 @@ function InfoBox({ title, items }: { title: string; items: string[] }) {
   );
 }
 
-function FieldExplanation({
-  field,
-  explanation,
-}: {
-  field: string;
-  explanation: string;
-}) {
-  return (
-    <div className="flex gap-3 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
-      <div className="flex-shrink-0 w-2 h-2 rounded-full bg-green-600 mt-2"></div>
-      <div>
-        <p className="font-medium text-gray-900 dark:text-gray-100">{field}</p>
-        <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-          {explanation}
-        </p>
-      </div>
-    </div>
-  );
-}
-
-function TipCard({ tip, description }: { tip: string; description: string }) {
-  return (
-    <div className="flex gap-3 p-3 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-lg">
-      <AlertCircle className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
-      <div>
-        <p className="font-medium text-amber-900 dark:text-amber-300">{tip}</p>
-        <p className="text-sm text-amber-800 dark:text-amber-400 mt-1">
-          {description}
-        </p>
-      </div>
-    </div>
-  );
-}
-
-function RoleCard({
-  role,
-  description,
-}: {
-  role: string;
-  description: string;
-}) {
-  return (
-    <div className="p-3 bg-purple-50 dark:bg-purple-950/30 border border-purple-200 dark:border-purple-800 rounded-lg">
-      <p className="font-medium text-purple-900 dark:text-purple-300">{role}</p>
-      <p className="text-sm text-purple-800 dark:text-purple-400 mt-1">
-        {description}
-      </p>
-    </div>
-  );
-}
-
 function ExportFormatCard({
   format,
   icon,
@@ -691,27 +691,6 @@ function ExportFormatCard({
           </ul>
         </div>
       </div>
-    </div>
-  );
-}
-
-function ChecklistItem({ text }: { text: string }) {
-  return (
-    <div className="flex items-start gap-2 p-2 bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-800 rounded">
-      <CheckCircle2 className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
-      <span className="text-sm text-gray-700 dark:text-gray-300">{text}</span>
-    </div>
-  );
-}
-
-function FAQItem({ question, answer }: { question: string; answer: string }) {
-  return (
-    <div className="border border-gray-200 dark:border-gray-700 rounded-lg p-4 bg-white dark:bg-gray-800">
-      <h3 className="font-semibold text-gray-900 dark:text-gray-100 mb-2 flex items-start gap-2">
-        <HelpCircle className="w-5 h-5 text-purple-600 flex-shrink-0 mt-0.5" />
-        <span>{question}</span>
-      </h3>
-      <p className="text-gray-700 dark:text-gray-300 text-sm pl-7">{answer}</p>
     </div>
   );
 }
